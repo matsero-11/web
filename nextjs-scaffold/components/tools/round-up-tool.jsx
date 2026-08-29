@@ -1,0 +1,79 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import {
+  Target, PiggyBank, Plane, Home as HomeIcon,
+  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
+  MoreHorizontal, CalendarCheck,
+} from "lucide-react";
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+} from "recharts";
+import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
+import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import ToolHeader from "@/components/ToolHeader";
+import { useSharedState } from "@/lib/persistence";
+import { CopySummaryButton } from "@/components/ExportActions";
+import RelatedTools from "@/components/RelatedTools";
+
+function RoundUpTool({ onBack, onNavigate }) {
+  const [purchasesPerWeek, setPurchasesPerWeek] = useSharedState("roundup_purchasesPerWeek", 8);
+  const [avgAmount, setAvgAmount] = useSharedState("roundup_avgAmount", 6.5);
+  const [roundTo, setRoundTo] = useSharedState("roundup_roundTo", 1);
+
+  const rem = avgAmount % roundTo;
+  const roundUpPerPurchase = rem === 0 ? 0 : roundTo - rem;
+  const weekly = purchasesPerWeek * roundUpPerPurchase;
+  const monthly = weekly * 4.33;
+  const annual = weekly * 52;
+
+  const animatedMonthly = useAnimatedNumber(monthly);
+  const animatedAnnual = useAnimatedNumber(annual);
+
+  return (
+    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+      <ToolHeader title="Ahorro por redondeo" subtitle="Cada compra se redondea hacia arriba y la diferencia se ahorra." onBack={onBack} />
+
+      <div className="flex gap-2">
+        {[1, 2, 5].map((v) => (
+          <Chip key={v} label={`Redondear a ${v} €`} active={roundTo === v} onClick={() => setRoundTo(v)} />
+        ))}
+      </div>
+
+      <Card glow result style={{ textAlign: "center" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Ahorro estimado al mes</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
+          {fmtEUR(animatedMonthly)}
+        </div>
+        <div style={{ ...fontBody, color: T.lavender, fontSize: "0.85rem" }}>{fmtEUR(animatedAnnual)} al año</div>
+      </Card>
+
+      <AdviceBlock
+        text={
+          roundUpPerPurchase < 0.3
+            ? "Con este importe medio, el redondeo a 1€ apenas suma. Prueba a redondear a 2€ o 5€ para notar más diferencia."
+            : "Es dinero que casi no notas al gastarlo, así que es un buen candidato para dirigirlo automáticamente a un objetivo de ahorro."
+        }
+      />
+
+      <div className="flex flex-col gap-5">
+        <SliderControl label="Compras por semana" value={purchasesPerWeek} min={0} max={30} step={1} unit="compras" onChange={setPurchasesPerWeek} />
+        <SliderControl label="Importe medio por compra" value={avgAmount} min={0.5} max={50} step={0.5} unit="€" onChange={setAvgAmount} accent="lavender" />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center" }}>
+        Estimación simplificada a partir de un importe medio fijo; en la práctica el redondeo varía en cada compra.
+      </div>
+      <RelatedTools ids={["daily", "challenge"]} onNavigate={onNavigate} />
+      <div className="flex justify-center">
+        <CopySummaryButton
+          getText={() => `Ahorro por redondeo: redondeando a ${roundTo}€ con ${purchasesPerWeek} compras/semana de ${fmtEUR(avgAmount)} de media → ${fmtEUR(monthly)}/mes.`}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default RoundUpTool;
