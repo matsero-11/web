@@ -28,26 +28,6 @@ const EXPENSE_CATEGORIES = [
   { id: "otros", label: "Otros", icon: MoreHorizontal, default: 60 },
 ];
 
-
-function BarRow({ label, icon: Icon, value, max, color }) {
-  const pct = max > 0 ? (value / max) * 100 : 0;
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <div className="flex items-center gap-2">
-          <Icon size={14} color={T.textMuted} />
-          <span style={{ ...fontBody, color: T.text, fontSize: "0.85rem" }}>{label}</span>
-        </div>
-        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>{fmtEUR(value)}</span>
-      </div>
-      <div style={{ height: "7px", borderRadius: "999px", background: T.surfaceAlt, overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "999px", transition: "width 0.5s cubic-bezier(0.22,1,0.36,1)" }} />
-      </div>
-    </div>
-  );
-}
-
-
 function BudgetTool({ onBack, onNavigate }) {
   const [selected, setSelected] = usePersistentState("budget_selected", ["vivienda", "comida", "transporte"]);
   const [amounts, setAmounts] = usePersistentState("budget_amounts", Object.fromEntries(EXPENSE_CATEGORIES.map((c) => [c.id, c.default])));
@@ -59,9 +39,16 @@ function BudgetTool({ onBack, onNavigate }) {
   const activeCats = EXPENSE_CATEGORIES.filter((c) => selected.includes(c.id));
   const total = activeCats.reduce((sum, c) => sum + amounts[c.id], 0);
   const available = income - total;
-  const maxAmount = Math.max(...activeCats.map((c) => amounts[c.id]), 1);
   const animatedAvailable = useAnimatedNumber(available);
   const spentPct = income > 0 ? Math.min((total / income) * 100, 100) : 0;
+
+  // Datos ordenados para la gráfica interactiva de Recharts
+  const chartData = activeCats
+    .map((c) => ({
+      name: c.label,
+      importe: amounts[c.id],
+    }))
+    .sort((a, b) => b.importe - a.importe);
 
   return (
     <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
@@ -98,16 +85,21 @@ function BudgetTool({ onBack, onNavigate }) {
       <SliderControl label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} accent="lavender" />
 
       {activeCats.length > 0 && (
-        <Card>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "1rem" }}>
+        <Card style={{ paddingBottom: "0.5rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.5rem" }}>
             Desglose por categoría
           </div>
-          <div className="flex flex-col gap-3.5">
-            {activeCats
-              .sort((a, b) => amounts[b.id] - amounts[a.id])
-              .map((c) => (
-                <BarRow key={c.id} label={c.label} icon={c.icon} value={amounts[c.id]} max={maxAmount} color={T.lime} />
-              ))}
+          <div style={{ width: "100%", height: "160px", marginTop: "0.2rem" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <XAxis dataKey="name" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  formatter={(value) => [`${value} €`, "Gasto"]}
+                  contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
+                />
+                <Bar dataKey="importe" fill={T.lime} radius={[4, 4, 0, 0]} animationDuration={300} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </Card>
       )}
@@ -141,3 +133,4 @@ function BudgetTool({ onBack, onNavigate }) {
 }
 
 export default BudgetTool;
+         
