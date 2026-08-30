@@ -64,35 +64,35 @@ function ChallengeTool({ onBack, onNavigate }) {
   }, [weeks, baseAmount]);
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Reto de ahorro" subtitle="Cada semana ahorras un poco más. Marca las semanas completadas." onBack={onBack} />
 
-      <Card glow result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Llevas ahorrado</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.3rem", fontWeight: 700, margin: "0.2rem 0" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Llevas ahorrado</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {fmtEUR(animatedSaved)}
         </div>
         <ProgressBar pct={animatedPct} gradientEnd={T.lavender} />
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.5rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginTop: "0.6rem" }}>
           Objetivo del reto: {fmtEUR(totalGoal)} en {weeks} semanas
         </div>
       </Card>
 
       {/* GRÁFICA DE ÁREA DINÁMICA DE PROGRESIÓN SEMANAL */}
-      <Card style={{ paddingBottom: "0.5rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.5rem" }}>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
           Evolución del ahorro semanal
         </div>
-        <div style={{ width: "100%", height: "130px", marginTop: "0.2rem" }}>
+        <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorImporte" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={T.lime} stopOpacity={0.4}/>
                   <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="semana" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} interval={weeks > 26 ? 6 : 3} />
+              <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} interval={weeks > 26 ? 6 : 3} />
               <Tooltip 
                 formatter={(value) => [`${value} €`, "Ahorro semanal"]}
                 contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
@@ -113,17 +113,18 @@ function ChallengeTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
         <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
       </div>
+
       <SliderControl label="Incremento semanal base" value={baseAmount} min={1} max={20} step={1} unit="€" onChange={setBaseAmount} accent="lavender" />
 
       <Card>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.9rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           Tus semanas
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "0.4rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "0.5rem" }}>
           {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => {
             const active = done.has(w);
             return (
@@ -133,12 +134,12 @@ function ChallengeTool({ onBack, onNavigate }) {
                 title={`Semana ${w}: ${fmtEUR(weekAmount(w))}`}
                 style={{
                   aspectRatio: "1",
-                  borderRadius: "0.5rem",
+                  borderRadius: "0.6rem",
                   border: `1px solid ${active ? T.lime : T.border}`,
                   background: active ? T.limeSoft : T.surfaceAlt,
                   color: active ? T.lime : T.textMuted,
                   ...fontBody,
-                  fontSize: "0.68rem",
+                  fontSize: "0.72rem",
                   fontWeight: 600,
                   cursor: "pointer",
                   transition: "all 0.15s ease",
@@ -150,8 +151,10 @@ function ChallengeTool({ onBack, onNavigate }) {
           })}
         </div>
       </Card>
+
       <RelatedTools ids={["savings", "roundup"]} onNavigate={onNavigate} />
-      <div className="flex justify-center gap-2.5">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Reto de ahorro: ${weeks} semanas, incremento base ${fmtEUR(baseAmount)} — objetivo total ${fmtEUR(totalGoal)}, llevas ahorrado ${fmtEUR(savedSoFar)}.`
@@ -173,3 +176,4 @@ function ChallengeTool({ onBack, onNavigate }) {
 }
 
 export default ChallengeTool;
+
