@@ -34,28 +34,28 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
   }));
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Comparador de escenarios" subtitle="Compara dos formas de ahorrar y ve la diferencia real." onBack={onBack} />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", marginBottom: "0.6rem" }}>Situación actual</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Situación actual</div>
           <SliderControl label="Ahorro mensual" value={current} min={0} max={2000} step={10} unit="€" onChange={setCurrent} />
         </Card>
-        <Card>
-          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.78rem", marginBottom: "0.6rem" }}>Nuevo escenario</div>
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Nuevo escenario</div>
           <SliderControl label="Ahorro mensual" value={alternative} min={0} max={2000} step={10} unit="€" onChange={setAlternative} accent="lavender" />
         </Card>
       </div>
 
-      <Card result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
           {positive ? "Ahorrarías de más al año" : "Ahorrarías de menos al año"}
         </div>
-        <div style={{ ...fontDisplay, color: positive ? T.lime : T.coral, fontSize: "2.2rem", fontWeight: 700, margin: "0.2rem 0" }}>
+        <div style={{ ...fontDisplay, color: positive ? T.lime : T.coral, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {positive ? "+" : "−"}{fmtEUR(animatedAnnualDiff)}
         </div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
           {positive ? "+" : "−"}{fmtEUR(Math.abs(monthlyDiff))} al mes de diferencia
         </div>
       </Card>
@@ -72,25 +72,29 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
         }
       />
 
-      <Card style={{ height: "190px", padding: "0.9rem 0.6rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.85rem", marginBottom: "0.4rem" }}>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
           Acumulado a lo largo del tiempo
         </div>
-        <ResponsiveContainer width="100%" height="85%">
-          <BarChart data={barData} barGap={6}>
-            <XAxis dataKey="years" tick={{ fill: T.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis hide />
-            <Tooltip
-              contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-              formatter={(v, n) => [fmtEUR(v), n === "actual" ? "Actual" : "Nuevo"]}
-            />
-            <Bar dataKey="actual" fill={T.textMuted} radius={[6, 6, 0, 0]} maxBarSize={22} isAnimationActive={true} animationDuration={400} />
-            <Bar dataKey="nuevo" fill={T.lavender} radius={[6, 6, 0, 0]} maxBarSize={22} isAnimationActive={true} animationDuration={400} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div style={{ width: "100%", height: "200px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData} barGap={6} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+              <XAxis dataKey="years" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                formatter={(v, n) => [fmtEUR(v), n === "actual" ? "Actual" : "Nuevo"]}
+              />
+              <Bar dataKey="actual" fill={T.textMuted} radius={[6, 6, 0, 0]} maxBarSize={24} isAnimationActive={true} animationDuration={400} />
+              <Bar dataKey="nuevo" fill={T.lavender} radius={[6, 6, 0, 0]} maxBarSize={24} isAnimationActive={true} animationDuration={400} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
+
       <RelatedTools ids={["savings", "interest"]} onNavigate={onNavigate} />
-      <div className="flex justify-center gap-2.5">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Comparador: actual ${fmtEUR(current)}/mes vs. nuevo ${fmtEUR(alternative)}/mes → ${fmtEUR(Math.abs(monthlyDiff))}/mes de diferencia.`
@@ -106,3 +110,4 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
 }
 
 export default ScenarioComparatorTool;
+          
