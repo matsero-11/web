@@ -38,11 +38,16 @@ function SavingsPercentTool({ onBack, onNavigate }) {
   const displayAmount = period === "mes" ? savings : savings * 12;
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Porcentaje de ahorro" subtitle="Qué parte de tu ingreso estás ahorrando." onBack={onBack} />
 
-      <Card style={{ textAlign: "center", paddingBottom: "0.4rem" }}>
-        <div style={{ height: "140px", position: "relative" }}>
+      <div className="flex gap-2 justify-center">
+        <Chip label="Al mes" active={period === "mes"} onClick={() => setPeriod("mes")} />
+        <Chip label="Al año" active={period === "año"} onClick={() => setPeriod("año")} />
+      </div>
+
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ height: "170px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
               innerRadius="72%"
@@ -63,20 +68,16 @@ function SavingsPercentTool({ onBack, onNavigate }) {
             </RadialBarChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "0.6rem" }}>
-            <div style={{ ...fontDisplay, color: band.color, fontSize: "2.3rem", fontWeight: 700 }}>{animatedPct.toFixed(1)}%</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>de tu ingreso</div>
+            <div style={{ ...fontDisplay, color: band.color, fontSize: "2.4rem", fontWeight: 700 }}>{animatedPct.toFixed(1)}%</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>de tu ingreso</div>
           </div>
         </div>
-        <div style={{ ...fontBody, color: band.color, fontSize: "0.85rem", marginTop: "0.3rem", fontWeight: 500 }}>
+        <div style={{ ...fontBody, color: band.color, fontSize: "0.88rem", marginTop: "0.5rem", fontWeight: 500 }}>
           {band.text}
         </div>
       </Card>
 
-      <div className="flex gap-2 items-center justify-center">
-        <Chip label="Al mes" active={period === "mes"} onClick={() => setPeriod("mes")} />
-        <Chip label="Al año" active={period === "año"} onClick={() => setPeriod("año")} />
-      </div>
-      <div style={{ ...fontBody, color: T.text, textAlign: "center", fontSize: "0.95rem" }}>
+      <div style={{ ...fontBody, color: T.text, textAlign: "center", fontSize: "0.98rem" }}>
         Eso son <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(displayAmount)}</span> {period === "mes" ? "cada mes" : "cada año"}
       </div>
 
@@ -90,16 +91,20 @@ function SavingsPercentTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
-        <SliderControl label="Ahorro mensual" value={savings} min={0} max={income} step={10} unit="€" onChange={setSavings} accent="lavender" />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
+          <SliderControl label="Ahorro mensual" value={savings} min={0} max={income} step={10} unit="€" onChange={setSavings} accent="lavender" />
+        </div>
+      </Card>
 
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Referencia orientativa, no un dato verificado ni una recomendación personalizada.
       </div>
+
       <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${pct.toFixed(1)}%.`}
         />
@@ -109,4 +114,4 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 }
 
 export default SavingsPercentTool;
-      
+            
