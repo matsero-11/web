@@ -44,9 +44,11 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Planificador de ahorro anual" subtitle="Marca los meses más difíciles: el resto se ajusta solo para llegar al objetivo." onBack={onBack} />
 
-      <SliderControl label="Objetivo anual" value={goal} min={200} max={20000} step={100} unit="€" onChange={setGoal} />
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <SliderControl label="Objetivo anual" value={goal} min={200} max={20000} step={100} unit="€" onChange={setGoal} />
+      </Card>
 
-      <Card glow result style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+      <Card glow result style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div style={{ textAlign: "center", marginBottom: "0.4rem" }}>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Total del plan</div>
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700, margin: "0.2rem 0" }}>
@@ -76,7 +78,7 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
         }
       />
 
-      <Card>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           Toca un mes para marcarlo como "flojo"
         </div>
@@ -128,4 +130,4 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
 }
 
 export default AnnualPlannerTool;
-          
+
