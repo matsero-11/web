@@ -32,6 +32,12 @@ function RoundUpTool({ onBack, onNavigate }) {
   const animatedMonthly = useAnimatedNumber(monthly);
   const animatedAnnual = useAnimatedNumber(annual);
 
+  const barData = [
+    { periodo: "Semana", valor: weekly },
+    { periodo: "Mes", valor: monthly },
+    { periodo: "Año", valor: annual },
+  ];
+
   return (
     <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
       <ToolHeader title="Ahorro por redondeo" subtitle="Cada compra se redondea hacia arriba y la diferencia se ahorra." onBack={onBack} />
@@ -48,6 +54,24 @@ function RoundUpTool({ onBack, onNavigate }) {
           {fmtEUR(animatedMonthly)}
         </div>
         <div style={{ ...fontBody, color: T.lavender, fontSize: "0.85rem" }}>{fmtEUR(animatedAnnual)} al año</div>
+      </Card>
+
+      <Card style={{ height: "170px", padding: "0.9rem 0.6rem" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+            <XAxis type="number" hide domain={[0, "auto"]} />
+            <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 12 }} axisLine={false} tickLine={false} width={55} />
+            <Tooltip
+              contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+              formatter={(v) => [fmtEUR(v), "Ahorro"]}
+            />
+            <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={26} animationDuration={400}>
+              {barData.map((_, i) => (
+                <Cell key={i} fill={[T.textMuted, T.lime, T.lavender][i]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </Card>
 
       <AdviceBlock
@@ -77,3 +101,4 @@ function RoundUpTool({ onBack, onNavigate }) {
 }
 
 export default RoundUpTool;
+    
