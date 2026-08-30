@@ -23,25 +23,21 @@ function ChallengeTool({ onBack, onNavigate }) {
   const [baseAmount, setBaseAmount] = useSharedState("challenge_baseAmount", 5);
   const [done, setDone] = useState(() => new Set());
 
-  // Al cambiar 'weeks' o 'baseAmount', las semanas marcadas más allá
-  // del nuevo total dejan de contar (evita progreso fantasma).
   useEffect(() => {
     setDone((prev) => new Set([...prev].filter((w) => w <= weeks)));
   }, [weeks]);
 
-  const weekAmount = (w) => baseAmount * w; // reto progresivo: semana 1 = base, semana 2 = base*2...
+  const weekAmount = (w) => baseAmount * w;
   const totalGoal = useMemo(() => {
     let sum = 0;
     for (let w = 1; w <= weeks; w++) sum += weekAmount(w);
     return sum;
-    // eslint-disable-next-line
   }, [weeks, baseAmount]);
 
   const savedSoFar = useMemo(() => {
     let sum = 0;
     done.forEach((w) => (sum += weekAmount(w)));
     return sum;
-    // eslint-disable-next-line
   }, [done, baseAmount]);
 
   const pct = totalGoal > 0 ? (savedSoFar / totalGoal) * 100 : 0;
@@ -57,6 +53,16 @@ function ChallengeTool({ onBack, onNavigate }) {
     });
   };
 
+  const chartData = useMemo(() => {
+    return Array.from({ length: weeks }, (_, i) => {
+      const w = i + 1;
+      return {
+        semana: `S${w}`,
+        importe: weekAmount(w),
+      };
+    });
+  }, [weeks, baseAmount]);
+
   return (
     <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
       <ToolHeader title="Reto de ahorro" subtitle="Cada semana ahorras un poco más. Marca las semanas completadas." onBack={onBack} />
@@ -69,6 +75,31 @@ function ChallengeTool({ onBack, onNavigate }) {
         <ProgressBar pct={animatedPct} gradientEnd={T.lavender} />
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.5rem" }}>
           Objetivo del reto: {fmtEUR(totalGoal)} en {weeks} semanas
+        </div>
+      </Card>
+
+      {/* GRÁFICA DE ÁREA DINÁMICA DE PROGRESIÓN SEMANAL */}
+      <Card style={{ paddingBottom: "0.5rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.5rem" }}>
+          Evolución del ahorro semanal
+        </div>
+        <div style={{ width: "100%", height: "130px", marginTop: "0.2rem" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorImporte" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={T.lime} stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="semana" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} interval={weeks > 26 ? 6 : 3} />
+              <Tooltip 
+                formatter={(value) => [`${value} €`, "Ahorro semanal"]}
+                contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
+              />
+              <Area type="monotone" dataKey="importe" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </Card>
 
