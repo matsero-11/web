@@ -9,18 +9,18 @@ function RelatedTools({ ids, onNavigate }) {
   const items = ids.map((id) => ALL_TOOLS.find((t) => t.id === id)).filter(Boolean);
   if (items.length === 0) return null;
   return (
-    <div style={{ marginTop: "0.4rem" }}>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", marginBottom: "0.6rem" }}>
+    <div style={{ marginTop: "2.5rem" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginBottom: "0.8rem", fontWeight: 500 }}>
         También puede interesarte
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {items.map((t) => (
-          <Card key={t.id} onClick={() => onNavigate(t.id)} style={{ padding: "0.75rem 0.9rem" }}>
-            <div className="flex items-center gap-3">
+          <Card key={t.id} onClick={() => onNavigate(t.id)} style={{ padding: "1rem" }}>
+            <div className="flex items-center gap-3.5">
               <IconTile icon={t.icon} tone={t.tone} />
               <div>
-                <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.85rem" }}>{t.label}</div>
-                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{t.desc}</div>
+                <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.88rem" }}>{t.label}</div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.76rem", marginTop: "0.15rem" }}>{t.desc}</div>
               </div>
             </div>
           </Card>
@@ -31,3 +31,4 @@ function RelatedTools({ ids, onNavigate }) {
 }
 
 export default RelatedTools;
+
