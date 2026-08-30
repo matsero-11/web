@@ -1,18 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
+  Repeat,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -23,9 +16,19 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
   const [rate, setRate] = useSharedState("currency_rate", 1.08);
   const [fromLabel, setFromLabel] = usePersistentState("currency_fromLabel", "EUR");
   const [toLabel, setToLabel] = usePersistentState("currency_toLabel", "USD");
+  const [isRotated, setIsRotated] = useState(false);
 
   const converted = amount * rate;
   const animatedConverted = useAnimatedNumber(converted);
+
+  const handleSwap = () => {
+    setFromLabel(toLabel);
+    setToLabel(fromLabel);
+    if (rate > 0) {
+      setRate(Number((1 / rate).toFixed(4)));
+    }
+    setIsRotated((prev) => !prev);
+  };
 
   return (
     <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
@@ -46,7 +49,7 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex gap-2.5">
+      <div className="flex items-center gap-2">
         <input
           value={fromLabel}
           onChange={(e) => setFromLabel(e.target.value.toUpperCase().slice(0, 4))}
@@ -56,6 +59,31 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
           onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
         />
+        
+        <button
+          onClick={handleSwap}
+          title="Invertir monedas"
+          style={{
+            background: T.surfaceAlt,
+            border: `1px solid ${T.border}`,
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: T.lime,
+            transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease",
+            transform: isRotated ? "rotate(180deg)" : "rotate(0deg)",
+            flexShrink: 0,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = T.limeSoft; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = T.surfaceAlt; }}
+        >
+          <Repeat size={16} />
+        </button>
+
         <input
           value={toLabel}
           onChange={(e) => setToLabel(e.target.value.toUpperCase().slice(0, 4))}
@@ -86,3 +114,4 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
 }
 
 export default CurrencyConverterTool;
+            
