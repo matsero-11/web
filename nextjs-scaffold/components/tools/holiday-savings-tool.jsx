@@ -34,10 +34,10 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
   const animatedRequired = useAnimatedNumber(requiredMonthly);
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Ahorro para Navidad" subtitle="Calculamos los meses que faltan hasta diciembre por ti." onBack={onBack} />
 
-      <Card style={{ textAlign: "center" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
         <div style={{ height: "140px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -60,12 +60,12 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.7rem", fontWeight: 700 }}>{monthsLeft}</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.7rem" }}>{monthsLeft === 1 ? "mes" : "meses"}</div>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.8rem", fontWeight: 700 }}>{monthsLeft}</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{monthsLeft === 1 ? "mes" : "meses"}</div>
           </div>
         </div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.3rem" }}>Ahorra al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2rem", fontWeight: 700, margin: "0.1rem 0" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>Ahorra al mes</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {fmtEUR(animatedRequired)}
         </div>
       </Card>
@@ -78,13 +78,17 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Mes actual" value={currentMonth} min={1} max={12} step={1} unit="" onChange={setCurrentMonth} />
-        <SliderControl label="Presupuesto de Navidad" value={budget} min={50} max={5000} step={25} unit="€" onChange={setBudget} />
-        <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={10} unit="€" onChange={setCurrent} accent="lavender" />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Mes actual" value={currentMonth} min={1} max={12} step={1} unit="" onChange={setCurrentMonth} />
+          <SliderControl label="Presupuesto de Navidad" value={budget} min={50} max={5000} step={25} unit="€" onChange={setBudget} />
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={10} unit="€" onChange={setCurrent} accent="lavender" />
+        </div>
+      </Card>
+
       <RelatedTools ids={["savings", "challenge"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Ahorro para Navidad: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses restantes → ${fmtEUR(requiredMonthly)}/mes.`
@@ -96,4 +100,3 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
 }
 
 export default HolidaySavingsTool;
-                       
