@@ -19,7 +19,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
-        {children}
+        <div className="max-w-md md:max-w-xl lg:max-w-3xl mx-auto w-full">
+          {children}
+        </div>
         <RegisterServiceWorker />
       </body>
     </html>
