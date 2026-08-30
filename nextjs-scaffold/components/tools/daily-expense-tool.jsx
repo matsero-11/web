@@ -41,27 +41,29 @@ function DailyExpenseTool({ onBack, onNavigate }) {
   ];
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Gastos diarios" subtitle="Un gasto pequeño cada día también se acumula. Míralo en conjunto." onBack={onBack} />
 
       <SliderControl label="Gasto diario" value={daily} min={0} max={60} step={0.5} unit="€" onChange={setDaily} />
 
-      <Card style={{ height: "180px", padding: "0.9rem 0.6rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
-            <XAxis type="number" hide domain={[0, "auto"]} />
-            <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 12 }} axisLine={false} tickLine={false} width={55} />
-            <Tooltip
-              contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-              formatter={(v) => [fmtEUR(v), "Total"]}
-            />
-            <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={26} animationDuration={400}>
-              {barData.map((_, i) => (
-                <Cell key={i} fill={[T.textMuted, T.lime, T.lavender][i]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div style={{ width: "100%", height: "190px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+              <XAxis type="number" hide domain={[0, "auto"]} />
+              <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                formatter={(v) => [fmtEUR(v), "Total"]}
+              />
+              <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={26} animationDuration={400}>
+                {barData.map((_, i) => (
+                  <Cell key={i} fill={[T.textMuted, T.lime, T.lavender][i]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       <AdviceBlock
@@ -74,19 +76,23 @@ function DailyExpenseTool({ onBack, onNavigate }) {
         }
       />
 
-      <Card>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.7rem" }}>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           ¿Y si lo reduces un poco?
         </div>
-        <SliderControl label="Reducir gasto diario en" value={reduction} min={0} max={daily} step={0.5} unit="€" onChange={setReduction} accent="lavender" />
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Reducir gasto diario en" value={reduction} min={0} max={daily} step={0.5} unit="€" onChange={setReduction} accent="lavender" />
+        </div>
         {reduction > 0 && (
-          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.85rem", marginTop: "0.7rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.88rem", marginTop: "1rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
             <TrendingUp size={14} /> Ahorrarías {fmtEUR(animatedReductionSavings)} al año
           </div>
         )}
       </Card>
+
       <RelatedTools ids={["roundup", "budget"]} onNavigate={onNavigate} />
-      <div className="flex justify-center gap-2.5">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() => `Gasto diario: ${fmtEUR(daily)}/día → ${fmtEUR(monthly)}/mes, ${fmtEUR(annual)}/año.`}
         />
@@ -97,4 +103,4 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 }
 
 export default DailyExpenseTool;
-                           
+                              
