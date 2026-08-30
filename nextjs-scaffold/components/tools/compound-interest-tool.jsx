@@ -50,41 +50,43 @@ function CompoundInterestTool({ onBack, onNavigate }) {
   const animatedInterest = useAnimatedNumber(Math.max(interestEarned, 0));
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Interés compuesto" subtitle="Descubre cuánto puede crecer tu dinero con el tiempo." onBack={onBack} />
 
-      <Card glow result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Al cabo de {years} años tendrías</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Al cabo de {years} años tendrías</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {fmtEUR(animatedFinal)}
         </div>
-        <div style={{ ...fontBody, color: T.lavender, fontSize: "0.85rem" }}>
+        <div style={{ ...fontBody, color: T.lavender, fontSize: "0.88rem" }}>
           {fmtEUR(animatedInterest)} son intereses generados
         </div>
       </Card>
 
-      <Card style={{ height: "170px", padding: "0.8rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="fillSaldo" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={T.lime} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis hide />
-            <Tooltip
-              contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-              formatter={(v, name) => [fmtEUR(v), name === "saldo" ? "Saldo total" : "Aportado"]}
-              labelFormatter={(l) => `Mes ${l}`}
-            />
-            <Area type="monotone" dataKey="saldo" stroke={T.lime} strokeWidth={2} fill="url(#fillSaldo)" />
-            <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
-          </ComposedChart>
-        </ResponsiveContainer>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div style={{ width: "100%", height: "190px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fillSaldo" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={T.lime} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                formatter={(v, name) => [fmtEUR(v), name === "saldo" ? "Saldo total" : "Aportado"]}
+                labelFormatter={(l) => `Mes ${l}`}
+              />
+              <Area type="monotone" dataKey="saldo" stroke={T.lime} strokeWidth={2} fill="url(#fillSaldo)" />
+              <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center", marginTop: "-0.5rem" }}>
         Lima: saldo total · Lavanda: solo lo aportado
       </div>
 
@@ -98,17 +100,20 @@ function CompoundInterestTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         <SliderControl label="Capital inicial" value={initial} min={0} max={50000} step={100} unit="€" onChange={setInitial} />
         <SliderControl label="Aportación mensual" value={monthly} min={0} max={2000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
         <SliderControl label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" onChange={setRate} />
         <SliderControl label="Años" value={years} min={1} max={40} step={1} unit="años" onChange={setYears} />
       </div>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center" }}>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Resultado orientativo. No constituye asesoramiento financiero ni garantiza rentabilidad futura.
       </div>
+
       <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} />
-      <div className="flex justify-center gap-2.5">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Interés compuesto: capital inicial ${fmtEUR(initial)}, aportación ${fmtEUR(monthly)}/mes al ${rate}% anual durante ${years} años → ${fmtEUR(finalAmount)} (${fmtEUR(interestEarned)} en intereses).`
@@ -126,3 +131,4 @@ function CompoundInterestTool({ onBack, onNavigate }) {
 }
 
 export default CompoundInterestTool;
+                  
