@@ -53,7 +53,13 @@ function SavingsPercentTool({ onBack, onNavigate }) {
               barSize={16}
             >
               <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-              <RadialBar dataKey="value" cornerRadius={8} background={{ fill: T.surfaceAlt }} />
+              <RadialBar
+                dataKey="value"
+                cornerRadius={8}
+                background={{ fill: T.surfaceAlt }}
+                isAnimationActive={true}
+                animationDuration={500}
+              />
             </RadialBarChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "0.6rem" }}>
@@ -103,3 +109,4 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 }
 
 export default SavingsPercentTool;
+      
