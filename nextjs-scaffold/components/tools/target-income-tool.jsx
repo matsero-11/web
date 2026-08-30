@@ -48,8 +48,8 @@ function TargetIncomeTool({ onBack, onNavigate }) {
               contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
               formatter={(v, n) => [fmtEUR(v), n === "gastos" ? "Gastos" : "Ahorro"]}
             />
-            <Bar dataKey="gastos" stackId="a" fill={T.textMuted} radius={[6, 0, 0, 6]} barSize={34} />
-            <Bar dataKey="ahorro" stackId="a" fill={T.lime} radius={[0, 6, 6, 0]} barSize={34} />
+            <Bar dataKey="gastos" stackId="a" fill={T.textMuted} radius={[6, 0, 0, 6]} barSize={34} isAnimationActive={true} animationDuration={400} />
+            <Bar dataKey="ahorro" stackId="a" fill={T.lime} radius={[0, 6, 6, 0]} barSize={34} isAnimationActive={true} animationDuration={400} />
           </BarChart>
         </ResponsiveContainer>
         <div className="flex justify-between mt-1">
@@ -87,3 +87,4 @@ function TargetIncomeTool({ onBack, onNavigate }) {
 }
 
 export default TargetIncomeTool;
+        
