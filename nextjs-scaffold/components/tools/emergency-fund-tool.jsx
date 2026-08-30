@@ -32,26 +32,29 @@ function EmergencyFundTool({ onBack, onNavigate }) {
   }, [goal, current]);
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Fondo de emergencia" subtitle="Cuánto necesitas ahorrar para estar cubierto ante un imprevisto." onBack={onBack} />
 
-      <Card>
-        <SliderControl label="Gasto esencial mensual" value={expenses} min={300} max={4000} step={50} unit="€" onChange={setExpenses} />
-        <div style={{ marginTop: "1rem" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.5rem" }}>Meses de cobertura</div>
-          <div className="flex gap-2">
-            {[3, 6, 12].map((m) => (
-              <Chip key={m} label={`${m} meses`} active={monthsTarget === m} onClick={() => setMonthsTarget(m)} />
-            ))}
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Gasto esencial mensual" value={expenses} min={300} max={4000} step={50} unit="€" onChange={setExpenses} />
+          <div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.5rem" }}>Meses de cobertura</div>
+            <div className="flex gap-2">
+              {[3, 6, 12].map((m) => (
+                <Chip key={m} label={`${m} meses`} active={monthsTarget === m} onClick={() => setMonthsTarget(m)} />
+              ))}
+            </div>
           </div>
         </div>
       </Card>
 
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", textAlign: "center" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", textAlign: "center", marginTop: "-0.5rem" }}>
         Objetivo calculado: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(goal)}</span>
       </div>
 
       <GoalProjection goal={goal} current={current} monthly={monthly} extra={0} monthsSavedLabel="" />
+
       <AdviceBlock
         text={
           current >= goal
@@ -62,21 +65,25 @@ function EmergencyFundTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Ya ahorrado" value={current} min={0} max={goal} step={50} unit="€" onChange={setCurrent} />
-        <SliderControl label="Aportación mensual" value={monthly} min={10} max={1000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
-      </div>
-      <div className="flex justify-center">
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={goal} step={50} unit="€" onChange={setCurrent} />
+          <SliderControl label="Aportación mensual" value={monthly} min={10} max={1000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
+        </div>
+      </Card>
+
+      <RelatedTools ids={["savings", "budget", "percent"]} onNavigate={onNavigate} />
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Fondo de emergencia: gasto esencial ${fmtEUR(expenses)}/mes × ${monthsTarget} meses = objetivo ${fmtEUR(expenses * monthsTarget)}. Ya ahorrado ${fmtEUR(current)}, aportando ${fmtEUR(monthly)}/mes.`
           }
         />
       </div>
-      <RelatedTools ids={["savings", "budget", "percent"]} onNavigate={onNavigate} />
     </div>
   );
 }
 
 export default EmergencyFundTool;
-
+          
