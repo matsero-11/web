@@ -41,23 +41,23 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
   }));
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Planificador de ahorro anual" subtitle="Marca los meses más difíciles: el resto se ajusta solo para llegar al objetivo." onBack={onBack} />
 
       <SliderControl label="Objetivo anual" value={goal} min={200} max={20000} step={100} unit="€" onChange={setGoal} />
 
-      <Card glow result style={{ paddingBottom: "0.5rem" }}>
-        <div style={{ textAlign: "center", marginBottom: "0.2rem" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Total del plan</div>
-          <div style={{ ...fontDisplay, color: T.lime, fontSize: "2rem", fontWeight: 700, margin: "0.1rem 0" }}>
+      <Card glow result style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div style={{ textAlign: "center", marginBottom: "0.4rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Total del plan</div>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700, margin: "0.2rem 0" }}>
             {fmtEUR(total)}
           </div>
         </div>
 
-        <div style={{ width: "100%", height: "130px", marginTop: "0.5rem" }}>
+        <div style={{ width: "100%", height: "170px", marginTop: "0.8rem" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-              <XAxis dataKey="mes" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
+            <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <XAxis dataKey="mes" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip 
                 formatter={(value) => [`${value} €`, "Ahorro"]}
                 contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
@@ -77,10 +77,10 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
       />
 
       <Card>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.9rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           Toca un mes para marcarlo como "flojo"
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem" }}>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {MONTHS.map((m, i) => {
             const low = lowMonths.has(i);
             const amount = low ? lowShare : normalShare;
@@ -89,8 +89,8 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
                 key={m}
                 onClick={() => toggleMonth(i)}
                 style={{
-                  borderRadius: "0.6rem",
-                  padding: "0.55rem 0.3rem",
+                  borderRadius: "0.8rem",
+                  padding: "0.75rem 0.4rem",
                   border: `1px solid ${low ? T.lavender : T.border}`,
                   background: low ? T.lavenderSoft : T.surfaceAlt,
                   cursor: "pointer",
@@ -98,15 +98,17 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
                   transition: "all 0.2s ease",
                 }}
               >
-                <div style={{ ...fontBody, color: low ? T.lavender : T.text, fontSize: "0.72rem", fontWeight: 600 }}>{m}</div>
-                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.65rem", marginTop: "0.15rem" }}>{fmtEUR(amount)}</div>
+                <div style={{ ...fontBody, color: low ? T.lavender : T.text, fontSize: "0.78rem", fontWeight: 600 }}>{m}</div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.7rem", marginTop: "0.25rem" }}>{fmtEUR(amount)}</div>
               </button>
             );
           })}
         </div>
       </Card>
+      
       <RelatedTools ids={["savings", "challenge"]} onNavigate={onNavigate} />
-      <div className="flex justify-center gap-2.5">
+      
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() => `Plan de ahorro anual: objetivo ${fmtEUR(goal)}, con ${lowMonths.size} meses flojos marcados.`}
         />
@@ -126,3 +128,4 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
 }
 
 export default AnnualPlannerTool;
+          
