@@ -29,9 +29,6 @@ function Rule502030Tool({ onBack, onNavigate }) {
   const [savings, setSavings] = useState(recSavings);
   const [donutView, setDonutView] = useState("actual");
 
-  // Si cambia el ingreso, reescalamos proporcionalmente las 3 partidas
-  // en vez de dejarlas fijas con un ingreso distinto (evita que el
-  // total quede descuadrado tras mover el primer slider).
   const prevIncome = useRef(income);
   useEffect(() => {
     const ratio = prevIncome.current > 0 ? income / prevIncome.current : 1;
@@ -39,7 +36,6 @@ function Rule502030Tool({ onBack, onNavigate }) {
     setWants((w) => w * ratio);
     setSavings((s) => s * ratio);
     prevIncome.current = income;
-    // eslint-disable-next-line
   }, [income]);
 
   const total = needs + wants + savings;
@@ -79,7 +75,16 @@ function Rule502030Tool({ onBack, onNavigate }) {
         <div style={{ height: "160px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={donutData} dataKey="value" innerRadius="60%" outerRadius="95%" paddingAngle={3} stroke="none" isAnimationActive>
+              <Pie
+                data={donutData}
+                dataKey="value"
+                innerRadius="60%"
+                outerRadius="95%"
+                paddingAngle={3}
+                stroke="none"
+                isAnimationActive={true}
+                animationDuration={500}
+              >
                 {donutData.map((d, i) => (
                   <Cell key={i} fill={d.color} />
                 ))}
