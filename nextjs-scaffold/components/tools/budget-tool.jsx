@@ -51,23 +51,23 @@ function BudgetTool({ onBack, onNavigate }) {
     .sort((a, b) => b.importe - a.importe);
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Presupuesto mensual" subtitle="Elige en qué gastas y ajusta cada cantidad." onBack={onBack} />
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>¿En qué gastas normalmente?</div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2.5">
         {EXPENSE_CATEGORIES.map((c) => (
           <Chip key={c.id} label={c.label} icon={c.icon} active={selected.includes(c.id)} onClick={() => toggle(c.id)} />
         ))}
       </div>
 
-      <Card glow result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Te queda disponible</div>
-        <div style={{ ...fontDisplay, color: available >= 0 ? T.lime : T.coral, fontSize: "2.3rem", fontWeight: 700, margin: "0.2rem 0" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Te queda disponible</div>
+        <div style={{ ...fontDisplay, color: available >= 0 ? T.lime : T.coral, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {fmtEUR(animatedAvailable)}
         </div>
         <ProgressBar pct={spentPct} gradientEnd={T.lavender} />
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.5rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginTop: "0.6rem" }}>
           {spentPct.toFixed(0)}% de tus ingresos ya asignado
         </div>
       </Card>
@@ -85,14 +85,14 @@ function BudgetTool({ onBack, onNavigate }) {
       <SliderControl label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} accent="lavender" />
 
       {activeCats.length > 0 && (
-        <Card style={{ paddingBottom: "0.5rem" }}>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.92rem", marginBottom: "0.5rem" }}>
+        <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
             Desglose por categoría
           </div>
-          <div style={{ width: "100%", height: "160px", marginTop: "0.2rem" }}>
+          <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <XAxis dataKey="name" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip 
                   formatter={(value) => [`${value} €`, "Gasto"]}
                   contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
@@ -105,7 +105,7 @@ function BudgetTool({ onBack, onNavigate }) {
       )}
 
       {activeCats.length > 0 && (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
           {activeCats.map((c) => (
             <SliderControl
               key={c.id}
@@ -120,8 +120,10 @@ function BudgetTool({ onBack, onNavigate }) {
           ))}
         </div>
       )}
+
       <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex justify-center pt-2">
         <CopySummaryButton
           getText={() =>
             `Presupuesto mensual: ingresos ${fmtEUR(income)}, gastos ${fmtEUR(total)}, disponible ${fmtEUR(available)}.`
@@ -133,4 +135,4 @@ function BudgetTool({ onBack, onNavigate }) {
 }
 
 export default BudgetTool;
-         
+            
