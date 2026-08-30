@@ -30,29 +30,29 @@ function TipCalculatorTool({ onBack, onNavigate }) {
   const animatedPerPerson = useAnimatedNumber(perPerson);
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Calculadora de propina" subtitle="Añade la propina y reparte la cuenta sin hacer cuentas a mano." onBack={onBack} />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card result style={{ textAlign: "center" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Total con propina</div>
-          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.2rem" }}>{fmtEUR(animatedTotal)}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Total con propina</div>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedTotal)}</div>
         </Card>
-        <Card style={{ textAlign: "center" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Por persona</div>
-          <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.2rem" }}>{fmtEUR(animatedPerPerson)}</div>
+        <Card style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Por persona</div>
+          <div style={{ ...fontDisplay, color: T.lavender, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedPerPerson)}</div>
         </Card>
       </div>
 
-      <Card>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", marginBottom: "0.6rem" }}>Composición del total</div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>Composición del total</div>
         <div style={{ display: "flex", height: "22px", borderRadius: "999px", overflow: "hidden" }}>
           <div style={{ width: `${total > 0 ? (bill / total) * 100 : 50}%`, background: T.surfaceAlt, transition: "width 0.4s ease" }} />
           <div style={{ width: `${total > 0 ? (tipAmount / total) * 100 : 50}%`, background: T.lime, transition: "width 0.4s ease" }} />
         </div>
-        <div className="flex justify-between mt-2">
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>Cuenta: {fmtEUR(bill)}</span>
-          <span style={{ ...fontBody, color: T.lime, fontSize: "0.75rem" }}>Propina: {fmtEUR(tipAmount)}</span>
+        <div className="flex justify-between mt-2 px-1">
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Cuenta: {fmtEUR(bill)}</span>
+          <span style={{ ...fontBody, color: T.lime, fontSize: "0.78rem" }}>Propina: {fmtEUR(tipAmount)}</span>
         </div>
       </Card>
 
@@ -64,19 +64,23 @@ function TipCalculatorTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 justify-center">
         {[5, 10, 15, 20].map((p) => (
           <Chip key={p} label={`${p}%`} active={tipPct === p} onClick={() => setTipPct(p)} />
         ))}
       </div>
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Importe de la cuenta" value={bill} min={0} max={500} step={1} unit="€" onChange={setBill} />
-        <SliderControl label="Propina" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
-        <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Importe de la cuenta" value={bill} min={0} max={500} step={1} unit="€" onChange={setBill} />
+          <SliderControl label="Propina" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
+          <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
+        </div>
+      </Card>
+
       <RelatedTools ids={["groupsplit"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)} total, ${fmtEUR(perPerson)}/persona entre ${people}.`
@@ -88,4 +92,4 @@ function TipCalculatorTool({ onBack, onNavigate }) {
 }
 
 export default TipCalculatorTool;
-      
+                        
