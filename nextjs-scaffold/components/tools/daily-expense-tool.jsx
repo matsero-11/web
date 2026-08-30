@@ -55,7 +55,7 @@ function DailyExpenseTool({ onBack, onNavigate }) {
               contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
               formatter={(v) => [fmtEUR(v), "Total"]}
             />
-            <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={26}>
+            <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={26} animationDuration={400}>
               {barData.map((_, i) => (
                 <Cell key={i} fill={[T.textMuted, T.lime, T.lavender][i]} />
               ))}
@@ -97,3 +97,4 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 }
 
 export default DailyExpenseTool;
+                           
