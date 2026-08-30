@@ -34,23 +34,23 @@ function TripSavingsTool({ onBack, onNavigate }) {
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Ahorro para un viaje" subtitle="Fija cuándo te vas y calculamos cuánto ahorrar cada mes." onBack={onBack} />
 
-      <Card glow result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Necesitas ahorrar al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Necesitas ahorrar al mes</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {monthsLeft > 0 ? fmtEUR(animatedRequired) : "—"}
         </div>
         <ProgressBar pct={animatedPct} gradientEnd={T.lavender} />
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.5rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>
           {pct.toFixed(0)}% del presupuesto ya cubierto
         </div>
       </Card>
 
       {monthsLeft > 0 && (
-        <Card style={{ padding: "1.1rem 0.9rem" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", marginBottom: "0.9rem" }}>
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.9rem" }}>
             Cada punto es un mes de ahorro hasta el viaje
           </div>
           <div style={{ position: "relative", paddingTop: "0.3rem" }}>
@@ -75,7 +75,7 @@ function TripSavingsTool({ onBack, onNavigate }) {
                     }}
                   />
                   {(i === 0 || i === monthsLeft) && (
-                    <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.65rem" }}>
+                    <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.7rem" }}>
                       {i === 0 ? "Hoy" : <Plane size={12} color={T.lavender} />}
                     </span>
                   )}
@@ -86,8 +86,8 @@ function TripSavingsTool({ onBack, onNavigate }) {
         </Card>
       )}
       {monthsLeft === 0 && (
-        <Card>
-          <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem", textAlign: "center" }}>
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.coral, fontSize: "0.9rem", textAlign: "center" }}>
             Con 0 meses no hay margen para ahorrar: necesitarías tener ya {fmtEUR(remaining)} disponibles.
           </div>
         </Card>
@@ -103,13 +103,17 @@ function TripSavingsTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Presupuesto del viaje" value={budget} min={100} max={10000} step={50} unit="€" onChange={setBudget} />
-        <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={25} unit="€" onChange={setCurrent} />
-        <SliderControl label="Meses hasta el viaje" value={monthsLeft} min={0} max={24} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Presupuesto del viaje" value={budget} min={100} max={10000} step={50} unit="€" onChange={setBudget} />
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={25} unit="€" onChange={setCurrent} />
+          <SliderControl label="Meses hasta el viaje" value={monthsLeft} min={0} max={24} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
+        </div>
+      </Card>
+
       <RelatedTools ids={["tripdaily", "currency"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Ahorro para un viaje: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses hasta el viaje → necesitas ${fmtEUR(requiredMonthly)}/mes.`
