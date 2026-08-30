@@ -58,27 +58,29 @@ function Rule502030Tool({ onBack, onNavigate }) {
   const Row = ({ label, value, setValue, rec, accent }) => (
     <div>
       <div className="flex justify-between items-baseline mb-1">
-        <span style={{ ...fontBody, color: T.text, fontSize: "0.88rem", fontWeight: 500 }}>{label}</span>
-        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>recomendado: {fmtEUR(rec)}</span>
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>recomendado: {fmtEUR(rec)}</span>
       </div>
       <SliderControl label="" value={Math.round(value)} min={0} max={income} step={10} unit="€" onChange={setValue} accent={accent} />
     </div>
   );
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Regla 50/30/20" subtitle="Reparte tu ingreso entre necesidades, deseos y ahorro." onBack={onBack} />
 
-      <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
+      </Card>
 
-      <Card style={{ textAlign: "center" }}>
-        <div style={{ height: "160px", position: "relative" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ height: "170px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={donutData}
                 dataKey="value"
-                innerRadius="60%"
+                innerRadius="65%"
                 outerRadius="95%"
                 paddingAngle={3}
                 stroke="none"
@@ -96,13 +98,13 @@ function Rule502030Tool({ onBack, onNavigate }) {
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.5rem", fontWeight: 700 }}>
+            <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
               {fmtEUR(Math.abs(animatedDiff))}
             </div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.7rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
           </div>
         </div>
-        <div className="flex gap-2 justify-center mt-2">
+        <div className="flex gap-2 justify-center mt-3">
           <Chip label="Tu reparto" active={donutView === "actual"} onClick={() => setDonutView("actual")} />
           <Chip label="Recomendado" active={donutView === "recomendado"} onClick={() => setDonutView("recomendado")} />
         </div>
@@ -118,17 +120,21 @@ function Rule502030Tool({ onBack, onNavigate }) {
         }
       />
 
-      <Card style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-        <Row label="Necesidades (50%)" value={needs} setValue={setNeeds} rec={recNeeds} accent="lime" />
-        <Row label="Deseos (30%)" value={wants} setValue={setWants} rec={recWants} accent="lavender" />
-        <Row label="Ahorro (20%)" value={savings} setValue={setSavings} rec={recSavings} accent="lime" />
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <Row label="Necesidades (50%)" value={needs} setValue={setNeeds} rec={recNeeds} accent="lime" />
+          <Row label="Deseos (30%)" value={wants} setValue={setWants} rec={recWants} accent="lavender" />
+          <Row label="Ahorro (20%)" value={savings} setValue={setSavings} rec={recSavings} accent="lime" />
+        </div>
       </Card>
 
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         50/30/20 es una guía orientativa, no una recomendación financiera personalizada.
       </div>
+
       <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} />
-      <div className="flex justify-center gap-2.5">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Regla 50/30/20 con ingreso ${fmtEUR(income)}: necesidades ${fmtEUR(needs)}, deseos ${fmtEUR(wants)}, ahorro ${fmtEUR(savings)}.`
@@ -148,3 +154,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
+      
