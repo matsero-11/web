@@ -82,3 +82,4 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
 }
 
 export default TripDailyBudgetTool;
+      
