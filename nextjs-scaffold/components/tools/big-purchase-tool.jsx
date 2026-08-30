@@ -51,17 +51,17 @@ function BigPurchaseTool({ onBack, onNavigate }) {
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Ahorro para una compra grande" subtitle="Elige qué quieres comprar y cuándo, y calculamos el resto." onBack={onBack} />
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2.5">
         {PURCHASE_TYPES.map((t) => (
           <Chip key={t.id} label={t.label} active={type === t.id} onClick={() => changeType(t.id)} />
         ))}
       </div>
 
-      <Card style={{ textAlign: "center" }}>
-        <div style={{ height: "150px", position: "relative" }}>
+      <Card glow style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ height: "170px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -89,12 +89,12 @@ function BigPurchaseTool({ onBack, onNavigate }) {
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.7rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.7rem" }}>cubierto</div>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.9rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>cubierto</div>
           </div>
         </div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.3rem" }}>Necesitas ahorrar al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2rem", fontWeight: 700, margin: "0.1rem 0" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>Necesitas ahorrar al mes</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700, margin: "0.2rem 0" }}>
           {monthsLeft > 0 ? fmtEUR(animatedRequired) : "—"}
         </div>
       </Card>
@@ -109,13 +109,15 @@ function BigPurchaseTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         <SliderControl label="Presupuesto" value={budget} min={200} max={80000} step={100} unit="€" onChange={setBudget} />
         <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={50} unit="€" onChange={setCurrent} />
         <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={0} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
       </div>
+
       <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex justify-center pt-2">
         <CopySummaryButton
           getText={() =>
             `Ahorro para ${typeInfo.label}: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses → necesitas ${fmtEUR(requiredMonthly)}/mes.`
@@ -127,4 +129,4 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 }
 
 export default BigPurchaseTool;
-      
+
