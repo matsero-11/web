@@ -50,7 +50,8 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
                 endAngle={-270}
                 paddingAngle={4}
                 stroke="none"
-                isAnimationActive={false}
+                isAnimationActive={true}
+                animationDuration={500}
               >
                 {Array.from({ length: 12 }, (_, i) => (
                   <Cell key={i} fill={i + 1 >= currentMonth ? T.lime : T.surfaceAlt} />
@@ -95,3 +96,4 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
 }
 
 export default HolidaySavingsTool;
+                       
