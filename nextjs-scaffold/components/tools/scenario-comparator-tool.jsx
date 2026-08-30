@@ -84,8 +84,8 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
               contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
               formatter={(v, n) => [fmtEUR(v), n === "actual" ? "Actual" : "Nuevo"]}
             />
-            <Bar dataKey="actual" fill={T.textMuted} radius={[6, 6, 0, 0]} maxBarSize={22} />
-            <Bar dataKey="nuevo" fill={T.lavender} radius={[6, 6, 0, 0]} maxBarSize={22} />
+            <Bar dataKey="actual" fill={T.textMuted} radius={[6, 6, 0, 0]} maxBarSize={22} isAnimationActive={true} animationDuration={400} />
+            <Bar dataKey="nuevo" fill={T.lavender} radius={[6, 6, 0, 0]} maxBarSize={22} isAnimationActive={true} animationDuration={400} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
