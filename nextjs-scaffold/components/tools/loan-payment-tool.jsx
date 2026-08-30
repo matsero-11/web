@@ -15,7 +15,7 @@ import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import RelatedTools from "@/components/RelatedTools";
-import { ExportCSVButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 
 function LoanPaymentTool({ onBack, onNavigate }) {
   const [principal, setPrincipal] = useState(10000);
@@ -50,15 +50,15 @@ function LoanPaymentTool({ onBack, onNavigate }) {
   }, [principal, monthlyRate, payment, months]);
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Cuota de un préstamo" subtitle="Calcula la cuota mensual y cuánto pagarás en intereses." onBack={onBack} />
 
-      <Card result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Cuota mensual</div>
-        <div style={{ ...fontDisplay, color: T.text, fontSize: "2.3rem", fontWeight: 700, margin: "0.2rem 0" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Cuota mensual</div>
+        <div style={{ ...fontDisplay, color: T.text, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {fmtEUR(animatedPayment)}
         </div>
-        <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem" }}>{fmtEUR(animatedInterest)} en intereses totales</div>
+        <div style={{ ...fontBody, color: T.coral, fontSize: "0.88rem" }}>{fmtEUR(animatedInterest)} en intereses totales</div>
       </Card>
 
       <div className="flex gap-2 justify-center">
@@ -66,28 +66,30 @@ function LoanPaymentTool({ onBack, onNavigate }) {
         <Chip label="Intereses acumulados" active={chartMode === "intereses"} onClick={() => setChartMode("intereses")} />
       </div>
 
-      <Card style={{ height: "170px", padding: "0.8rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-            <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis hide />
-            <Tooltip
-              contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-              formatter={(v) => [fmtEUR(v), chartMode === "saldo" ? "Pendiente" : "Intereses pagados"]}
-              labelFormatter={(l) => `Mes ${l}`}
-            />
-            <Line
-              type="monotone"
-              dataKey={chartMode}
-              stroke={chartMode === "saldo" ? T.coral : T.lavender}
-              strokeWidth={2.5}
-              dot={false}
-              activeDot={{ r: 5 }}
-              isAnimationActive={true}
-              animationDuration={400}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div style={{ width: "100%", height: "190px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                formatter={(v) => [fmtEUR(v), chartMode === "saldo" ? "Pendiente" : "Intereses pagados"]}
+                labelFormatter={(l) => `Mes ${l}`}
+              />
+              <Line
+                type="monotone"
+                dataKey={chartMode}
+                stroke={chartMode === "saldo" ? T.coral : T.lavender}
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 5 }}
+                isAnimationActive={true}
+                animationDuration={400}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       <AdviceBlock
@@ -100,17 +102,26 @@ function LoanPaymentTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Importe del préstamo" value={principal} min={500} max={100000} step={100} unit="€" onChange={setPrincipal} />
-        <SliderControl label="TAE estimada" value={rate} min={0} max={20} step={0.1} unit="%" onChange={setRate} accent="lavender" />
-        <SliderControl label="Plazo" value={months} min={1} max={360} step={1} unit="meses" onChange={setMonths} />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Importe del préstamo" value={principal} min={500} max={100000} step={100} unit="€" onChange={setPrincipal} />
+          <SliderControl label="TAE estimada" value={rate} min={0} max={20} step={0.1} unit="%" onChange={setRate} accent="lavender" />
+          <SliderControl label="Plazo" value={months} min={1} max={360} step={1} unit="meses" onChange={setMonths} />
+        </div>
+      </Card>
 
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Cálculo orientativo con cuota fija. No incluye comisiones y no constituye una oferta ni asesoramiento financiero.
       </div>
+
       <RelatedTools ids={["targetincome", "budget"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
+        <CopySummaryButton
+          getText={() =>
+            `Préstamo: ${fmtEUR(principal)} al ${rate}% TAE a ${months} meses → cuota mensual ${fmtEUR(payment)}, intereses totales ${fmtEUR(totalInterest)}.`
+          }
+        />
         <ExportCSVButton
           filename="tabla-amortizacion-prestamo"
           getRows={() =>
@@ -127,4 +138,3 @@ function LoanPaymentTool({ onBack, onNavigate }) {
 }
 
 export default LoanPaymentTool;
-                         
