@@ -75,7 +75,7 @@ function GroupSplitTool({ onBack, onNavigate }) {
                 contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
                 formatter={(v) => [fmtEUR(v), v >= 0 ? "Le deben" : "Debe"]}
               />
-              <Bar dataKey="balance" radius={[0, 6, 6, 0]} maxBarSize={24}>
+              <Bar dataKey="balance" radius={[0, 6, 6, 0]} maxBarSize={24} animationDuration={400}>
                 <Cell fill={owedToMe >= 0 ? T.lime : T.coral} />
                 <Cell fill={T.coral} />
               </Bar>
@@ -116,3 +116,4 @@ function GroupSplitTool({ onBack, onNavigate }) {
 }
 
 export default GroupSplitTool;
+            
