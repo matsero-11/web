@@ -40,15 +40,15 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
   const onTrack = dailyAllowanceLeft >= originalDailyPlan * 0.9;
 
   return (
-    <div className="px-5 pt-6 pb-16 max-w-md mx-auto flex flex-col gap-4 view-enter">
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Presupuesto diario de viaje" subtitle="Ajusta lo que llevas gastado y verás cuánto te queda por día." onBack={onBack} />
 
-      <Card glow={onTrack} result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Puedes gastar al día</div>
-        <div style={{ ...fontDisplay, color: onTrack ? T.lime : T.coral, fontSize: "2.3rem", fontWeight: 700, margin: "0.2rem 0" }}>
+      <Card glow={onTrack} result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Puedes gastar al día</div>
+        <div style={{ ...fontDisplay, color: onTrack ? T.lime : T.coral, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {remainingDays > 0 ? fmtEUR(animatedAllowance) : "—"}
         </div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
           Plan original: {fmtEUR(originalDailyPlan)} al día · {remainingDays} {remainingDays === 1 ? "día restante" : "días restantes"}
         </div>
       </Card>
@@ -63,14 +63,18 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-5">
-        <SliderControl label="Presupuesto total del viaje" value={totalBudget} min={50} max={10000} step={50} unit="€" onChange={setTotalBudget} />
-        <SliderControl label="Días totales de viaje" value={totalDays} min={1} max={60} step={1} unit="días" onChange={setTotalDays} />
-        <SliderControl label="Gastado hasta ahora" value={spent} min={0} max={totalBudget} step={10} unit="€" onChange={setSpent} accent="lavender" />
-        <SliderControl label="Días ya pasados" value={daysElapsed} min={0} max={totalDays} step={1} unit="días" onChange={setDaysElapsed} accent="lavender" />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Presupuesto total del viaje" value={totalBudget} min={50} max={10000} step={50} unit="€" onChange={setTotalBudget} />
+          <SliderControl label="Días totales de viaje" value={totalDays} min={1} max={60} step={1} unit="días" onChange={setTotalDays} />
+          <SliderControl label="Gastado hasta ahora" value={spent} min={0} max={totalBudget} step={10} unit="€" onChange={setSpent} accent="lavender" />
+          <SliderControl label="Días ya pasados" value={daysElapsed} min={0} max={totalDays} step={1} unit="días" onChange={setDaysElapsed} accent="lavender" />
+        </div>
+      </Card>
+
       <RelatedTools ids={["trip", "currency"]} onNavigate={onNavigate} />
-      <div className="flex justify-center">
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Presupuesto de viaje: ${fmtEUR(totalBudget)} para ${totalDays} días, gastado ${fmtEUR(spent)} en ${daysElapsed} días → ${fmtEUR(dailyAllowanceLeft)}/día restante.`
@@ -82,4 +86,3 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
 }
 
 export default TripDailyBudgetTool;
-      
