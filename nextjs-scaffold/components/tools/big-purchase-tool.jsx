@@ -24,22 +24,20 @@ const PURCHASE_TYPES = [
   { id: "otro", label: "Otra compra", icon: ShoppingBag, defaultBudget: 3000 },
 ];
 
-
 function BigPurchaseTool({ onBack, onNavigate }) {
   const [type, setType] = usePersistentState("bigpurchase_type", "coche");
-  const typeInfo = PURCHASE_TYPES.find((t) => t.id === type);
+  const typeInfo = PURCHASE_TYPES.find((t) => t.id === type) || PURCHASE_TYPES[0];
   const [budget, setBudget] = useSharedState("bigpurchase_budget", typeInfo.defaultBudget);
   const [current, setCurrent] = useSharedState("bigpurchase_current", 1000);
   const [monthsLeft, setMonthsLeft] = useSharedState("bigpurchase_monthsLeft", 18);
 
-  // Al cambiar de categoría, proponemos el presupuesto típico de esa
-  // categoría en vez de dejar el valor anterior (evita, p. ej., ver
-  // "vivienda" con un presupuesto pensado para "coche").
   const changeType = (id) => {
     setType(id);
     const info = PURCHASE_TYPES.find((t) => t.id === id);
-    setBudget(info.defaultBudget);
-    setCurrent((c) => Math.min(c, info.defaultBudget));
+    if (info) {
+      setBudget(info.defaultBudget);
+      setCurrent((c) => Math.min(c, info.defaultBudget));
+    }
   };
 
   useEffect(() => {
@@ -78,6 +76,8 @@ function BigPurchaseTool({ onBack, onNavigate }) {
                 endAngle={-270}
                 paddingAngle={2}
                 stroke="none"
+                isAnimationActive={true}
+                animationDuration={400}
               >
                 <Cell fill={T.lime} />
                 <Cell fill={T.surfaceAlt} />
@@ -88,8 +88,8 @@ function BigPurchaseTool({ onBack, onNavigate }) {
               />
             </PieChart>
           </ResponsiveContainer>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.7rem", fontWeight: 700 }}>{pct.toFixed(0)}%</div>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.7rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
             <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.7rem" }}>cubierto</div>
           </div>
         </div>
@@ -127,3 +127,4 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 }
 
 export default BigPurchaseTool;
+      
