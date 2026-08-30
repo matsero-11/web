@@ -25,25 +25,25 @@ function GoalProjection({ goal, current, monthly, extra, extraLabel, monthsSaved
   }, [current, effectiveMonthly, goal, months]);
 
   return (
-    <>
-      <Card glow result style={{ textAlign: "center" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>Lo conseguirás en</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.6rem", fontWeight: 700, margin: "0.2rem 0" }}>
-          {Number.isFinite(months) ? Math.round(animatedMonths) : "—"}
+    <div className="flex flex-col space-y-4 pb-8">
+      <Card glow result style={{ textAlign: "center", padding: "1.5rem 1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Lo conseguirás en</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.6rem", fontWeight: 700, margin: "0.4rem 0" }}>
+          {Number.isFinite(months) ? Math.round(animatedMonths) : "–"}
           <span style={{ fontSize: "1.1rem", color: T.textMuted, fontWeight: 400 }}> meses</span>
         </div>
         <ProgressBar pct={animatedPct} gradientEnd={T.lavender} />
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.5rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.7rem" }}>
           {pct.toFixed(0)}% conseguido
         </div>
         {extra > 0 && monthsSaved > 0 && (
-          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.82rem", marginTop: "0.6rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem" }}>
+          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.85rem", marginTop: "0.8rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
             <TrendingUp size={14} /> {monthsSaved} {monthsSaved === 1 ? "mes" : "meses"} {monthsSavedLabel}
           </div>
         )}
       </Card>
 
-      <Card style={{ height: "170px", padding: "0.8rem" }}>
+      <Card style={{ height: "190px", padding: "1.2rem" }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
             <defs>
@@ -56,15 +56,16 @@ function GoalProjection({ goal, current, monthly, extra, extraLabel, monthsSaved
             <YAxis hide domain={[0, goal || 1]} />
             <Tooltip
               contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-              formatter={(v) => [fmtEUR(v), "Ahorrado"]}
+              formatter={(v) => [fmtEUR(v), "Ahorro"]}
               labelFormatter={(l) => `Mes ${l}`}
             />
             <Area type="monotone" dataKey="ahorro" stroke={T.lime} strokeWidth={2} fill="url(#fillGoal)" />
           </AreaChart>
         </ResponsiveContainer>
       </Card>
-    </>
+    </div>
   );
 }
 
 export default GoalProjection;
+          
