@@ -83,6 +83,8 @@ function LoanPaymentTool({ onBack, onNavigate }) {
               strokeWidth={2.5}
               dot={false}
               activeDot={{ r: 5 }}
+              isAnimationActive={true}
+              animationDuration={400}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -125,3 +127,4 @@ function LoanPaymentTool({ onBack, onNavigate }) {
 }
 
 export default LoanPaymentTool;
+                         
