@@ -100,11 +100,13 @@ function GroupSplitTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-6">
-        <SliderControl label="Gasto total" value={total} min={0} max={2000} step={5} unit="€" onChange={setTotal} />
-        <SliderControl label="Número de personas" value={people} min={1} max={20} step={1} unit="personas" onChange={setPeople} accent="lavender" />
-        <SliderControl label="Lo que pagaste tú" value={paidByMe} min={0} max={total} step={5} unit="€" onChange={setPaidByMe} />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Gasto total" value={total} min={0} max={2000} step={5} unit="€" onChange={setTotal} />
+          <SliderControl label="Número de personas" value={people} min={1} max={20} step={1} unit="personas" onChange={setPeople} accent="lavender" />
+          <SliderControl label="Lo que pagaste tú" value={paidByMe} min={0} max={total} step={5} unit="€" onChange={setPaidByMe} />
+        </div>
+      </Card>
 
       <RelatedTools ids={["tip"]} onNavigate={onNavigate} />
 
