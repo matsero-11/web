@@ -24,7 +24,10 @@ function HomeScreen({ onNavigate }) {
         Elige un punto de partida. Te llevará directo a la herramienta adecuada.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-7">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2"
+        style={{ gap: "1rem", marginTop: "1.75rem" }}
+      >
         {CATEGORIES.map((c, i) => (
           <Card
             key={i}
@@ -67,7 +70,10 @@ function HomeScreen({ onNavigate }) {
           onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
         />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+        <div
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          style={{ gap: "1rem" }}
+        >
           {filtered.map((t, i) => (
             <Card
               key={t.id}
@@ -91,4 +97,3 @@ function HomeScreen({ onNavigate }) {
 }
 
 export default HomeScreen;
-
