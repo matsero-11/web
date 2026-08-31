@@ -64,14 +64,13 @@ function TipCalculatorTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex gap-2 justify-center">
-        {[5, 10, 15, 20].map((p) => (
-          <Chip key={p} label={`${p}%`} active={tipPct === p} onClick={() => setTipPct(p)} />
-        ))}
-      </div>
-
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
+          <div className="flex gap-2 justify-center">
+            {[5, 10, 15, 20].map((p) => (
+              <Chip key={p} label={`${p}%`} active={tipPct === p} onClick={() => setTipPct(p)} />
+            ))}
+          </div>
           <SliderControl label="Importe de la cuenta" value={bill} min={0} max={500} step={1} unit="€" onChange={setBill} />
           <SliderControl label="Propina" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
           <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
@@ -92,4 +91,3 @@ function TipCalculatorTool({ onBack, onNavigate }) {
 }
 
 export default TipCalculatorTool;
-                        
