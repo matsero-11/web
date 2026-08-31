@@ -41,10 +41,12 @@ function SavingsPercentTool({ onBack, onNavigate }) {
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Porcentaje de ahorro" subtitle="Qué parte de tu ingreso estás ahorrando." onBack={onBack} />
 
-      <div className="flex gap-2 justify-center">
-        <Chip label="Al mes" active={period === "mes"} onClick={() => setPeriod("mes")} />
-        <Chip label="Al año" active={period === "año"} onClick={() => setPeriod("año")} />
-      </div>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div className="flex gap-2 justify-center">
+          <Chip label="Al mes" active={period === "mes"} onClick={() => setPeriod("mes")} />
+          <Chip label="Al año" active={period === "año"} onClick={() => setPeriod("año")} />
+        </div>
+      </Card>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
         <div style={{ height: "170px", position: "relative" }}>
@@ -114,4 +116,3 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 }
 
 export default SavingsPercentTool;
-            
