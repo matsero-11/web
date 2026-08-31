@@ -118,24 +118,68 @@ function Card({ children, onClick, disabled, style, glow, result }) {
 
 
 function SliderControl({ label, value, min, max, step, unit, onChange, accent = "lime" }) {
-  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  const dynamicMax = Math.max(max, (Number(value) || 0) * 1.5);
+  const pct = dynamicMax > min ? ((value - min) / (dynamicMax - min)) * 100 : 0;
   const color = accent === "lavender" ? T.lavender : T.lime;
+
+  const handleNumberChange = (e) => {
+    const raw = e.target.value;
+    if (raw === "") {
+      onChange(0);
+      return;
+    }
+    const num = Number(raw);
+    if (!Number.isFinite(num)) return;
+    const clamped = Math.max(min, num);
+    onChange(clamped);
+  };
+
   return (
     <div className="w-full">
-      <div className="flex justify-between items-baseline mb-2">
+      <div className="flex justify-between items-baseline mb-2" style={{ gap: "0.75rem" }}>
         <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{label}</span>
-        <span style={{ ...fontDisplay, color, fontSize: "1.1rem", fontWeight: 600 }}>
-          {unit === "€" ? fmtEUR(value) : unit ? `${value} ${unit}` : `${value}`}
-        </span>
+        <div className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
+          <input
+            type="number"
+            value={Number.isFinite(value) ? value : 0}
+            min={min}
+            step={step}
+            onChange={handleNumberChange}
+            aria-label={label ? `${label} (valor numérico)` : "Valor numérico"}
+            style={{
+              ...fontDisplay,
+              width: "5.5rem",
+              background: T.surfaceAlt,
+              border: `1px solid ${T.border}`,
+              borderRadius: "0.5rem",
+              padding: "0.25rem 0.5rem",
+              color,
+              fontSize: "1rem",
+              fontWeight: 600,
+              textAlign: "right",
+              outline: "none",
+              MozAppearance: "textfield",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = color; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = T.border; }}
+          />
+          {unit && (
+            <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{unit}</span>
+          )}
+        </div>
       </div>
       <input
         type="range"
         min={min}
-        max={max}
+        max={dynamicMax}
         step={step}
         value={value}
         aria-label={label || undefined}
+        aria-valuemin={min}
+        aria-valuemax={dynamicMax}
+        aria-valuenow={value}
         aria-valuetext={unit === "€" ? fmtEUR(value) : unit ? `${value} ${unit}` : `${value}`}
+        role="slider"
         onChange={(e) => onChange(Number(e.target.value))}
         className={accent === "lavender" ? "slider-lavender" : "slider-lime"}
         style={{
