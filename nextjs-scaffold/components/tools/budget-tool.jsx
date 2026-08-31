@@ -82,7 +82,9 @@ function BudgetTool({ onBack, onNavigate }) {
         }
       />
 
-      <SliderControl label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} accent="lavender" />
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <SliderControl label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} accent="lavender" />
+      </Card>
 
       {activeCats.length > 0 && (
         <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
@@ -105,20 +107,22 @@ function BudgetTool({ onBack, onNavigate }) {
       )}
 
       {activeCats.length > 0 && (
-        <div className="flex flex-col gap-6">
-          {activeCats.map((c) => (
-            <SliderControl
-              key={c.id}
-              label={c.label}
-              value={amounts[c.id]}
-              min={0}
-              max={2000}
-              step={10}
-              unit="€"
-              onChange={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))}
-            />
-          ))}
-        </div>
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div className="flex flex-col gap-6">
+            {activeCats.map((c) => (
+              <SliderControl
+                key={c.id}
+                label={c.label}
+                value={amounts[c.id]}
+                min={0}
+                max={2000}
+                step={10}
+                unit="€"
+                onChange={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))}
+              />
+            ))}
+          </div>
+        </Card>
       )}
 
       <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} />
@@ -135,4 +139,3 @@ function BudgetTool({ onBack, onNavigate }) {
 }
 
 export default BudgetTool;
-            
