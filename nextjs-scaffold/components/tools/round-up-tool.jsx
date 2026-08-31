@@ -42,11 +42,13 @@ function RoundUpTool({ onBack, onNavigate }) {
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Ahorro por redondeo" subtitle="Cada compra se redondea hacia arriba y la diferencia se ahorra." onBack={onBack} />
 
-      <div className="flex gap-2 justify-center">
-        {[1, 2, 5].map((v) => (
-          <Chip key={v} label={`Redondear a ${v} €`} active={roundTo === v} onClick={() => setRoundTo(v)} />
-        ))}
-      </div>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div className="flex gap-2 justify-center">
+          {[1, 2, 5].map((v) => (
+            <Chip key={v} label={`Redondear a ${v} €`} active={roundTo === v} onClick={() => setRoundTo(v)} />
+          ))}
+        </div>
+      </Card>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Ahorro estimado al mes</div>
@@ -107,4 +109,3 @@ function RoundUpTool({ onBack, onNavigate }) {
 }
 
 export default RoundUpTool;
-              
