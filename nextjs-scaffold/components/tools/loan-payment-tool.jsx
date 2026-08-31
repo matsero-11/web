@@ -61,12 +61,11 @@ function LoanPaymentTool({ onBack, onNavigate }) {
         <div style={{ ...fontBody, color: T.coral, fontSize: "0.88rem" }}>{fmtEUR(animatedInterest)} en intereses totales</div>
       </Card>
 
-      <div className="flex gap-2 justify-center">
-        <Chip label="Saldo pendiente" active={chartMode === "saldo"} onClick={() => setChartMode("saldo")} />
-        <Chip label="Intereses acumulados" active={chartMode === "intereses"} onClick={() => setChartMode("intereses")} />
-      </div>
-
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+        <div className="flex gap-2 justify-center" style={{ marginBottom: "0.8rem" }}>
+          <Chip label="Saldo pendiente" active={chartMode === "saldo"} onClick={() => setChartMode("saldo")} />
+          <Chip label="Intereses acumulados" active={chartMode === "intereses"} onClick={() => setChartMode("intereses")} />
+        </div>
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
