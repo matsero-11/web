@@ -3,8 +3,8 @@ import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 
 export const metadata = {
   title: {
-    default: "Raíz — Herramientas de ahorro y planificación",
-    template: "%s | Raíz",
+    default: "MetaBox — Herramientas de ahorro y planificación",
+    template: "%s | MetaBox",
   },
   description:
     "Herramientas interactivas gratuitas de ahorro, presupuesto y planificación económica personal.",
@@ -27,4 +27,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
