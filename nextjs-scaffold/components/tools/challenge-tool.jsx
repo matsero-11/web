@@ -113,12 +113,15 @@ function ChallengeTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex gap-2.5">
-        <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
-        <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
-      </div>
-
-      <SliderControl label="Incremento semanal base" value={baseAmount} min={1} max={20} step={1} unit="€" onChange={setBaseAmount} accent="lavender" />
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <div className="flex gap-2.5">
+            <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
+            <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
+          </div>
+          <SliderControl label="Incremento semanal base" value={baseAmount} min={1} max={20} step={1} unit="€" onChange={setBaseAmount} accent="lavender" />
+        </div>
+      </Card>
 
       <Card>
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
@@ -176,4 +179,3 @@ function ChallengeTool({ onBack, onNavigate }) {
 }
 
 export default ChallengeTool;
-
