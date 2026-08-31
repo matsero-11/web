@@ -49,7 +49,7 @@ function EmergencyFundTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", textAlign: "center", marginTop: "-0.5rem" }}>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", textAlign: "center" }}>
         Objetivo calculado: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(goal)}</span>
       </div>
 
@@ -86,4 +86,3 @@ function EmergencyFundTool({ onBack, onNavigate }) {
 }
 
 export default EmergencyFundTool;
-          
