@@ -49,56 +49,58 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex items-center gap-3">
-        <input
-          value={fromLabel}
-          onChange={(e) => setFromLabel(e.target.value.toUpperCase().slice(0, 4))}
-          placeholder="EUR"
-          aria-label="Moneda de origen"
-          style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none", transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
-        />
-        
-        <button
-          onClick={handleSwap}
-          title="Invertir monedas"
-          style={{
-            background: T.surfaceAlt,
-            border: `1px solid ${T.border}`,
-            borderRadius: "50%",
-            width: "44px",
-            height: "44px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: T.lime,
-            transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease",
-            transform: isRotated ? "rotate(180deg)" : "rotate(0deg)",
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = T.limeSoft; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = T.surfaceAlt; }}
-        >
-          <Repeat size={18} />
-        </button>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <input
+              value={fromLabel}
+              onChange={(e) => setFromLabel(e.target.value.toUpperCase().slice(0, 4))}
+              placeholder="EUR"
+              aria-label="Moneda de origen"
+              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none", transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
+            />
 
-        <input
-          value={toLabel}
-          onChange={(e) => setToLabel(e.target.value.toUpperCase().slice(0, 4))}
-          placeholder="USD"
-          aria-label="Moneda de destino"
-          style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none", transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
-        />
-      </div>
+            <button
+              onClick={handleSwap}
+              title="Invertir monedas"
+              style={{
+                background: T.surfaceAlt,
+                border: `1px solid ${T.border}`,
+                borderRadius: "50%",
+                width: "44px",
+                height: "44px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: T.lime,
+                transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease",
+                transform: isRotated ? "rotate(180deg)" : "rotate(0deg)",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = T.limeSoft; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = T.surfaceAlt; }}
+            >
+              <Repeat size={18} />
+            </button>
 
-      <div className="flex flex-col gap-6">
-        <SliderControl label={`Importe en ${fromLabel || "origen"}`} value={amount} min={0} max={5000} step={5} unit="" onChange={setAmount} />
-        <SliderControl label="Tipo de cambio" value={rate} min={0.01} max={5} step={0.01} unit="" onChange={setRate} accent="lavender" />
-      </div>
+            <input
+              value={toLabel}
+              onChange={(e) => setToLabel(e.target.value.toUpperCase().slice(0, 4))}
+              placeholder="USD"
+              aria-label="Moneda de destino"
+              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none", transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
+            />
+          </div>
+
+          <SliderControl label={`Importe en ${fromLabel || "origen"}`} value={amount} min={0} max={5000} step={5} unit="" onChange={setAmount} />
+          <SliderControl label="Tipo de cambio" value={rate} min={0.01} max={5} step={0.01} unit="" onChange={setRate} accent="lavender" />
+        </div>
+      </Card>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         El tipo de cambio no se actualiza automáticamente: introduce el del día antes de viajar.
@@ -116,4 +118,3 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
 }
 
 export default CurrencyConverterTool;
-              
