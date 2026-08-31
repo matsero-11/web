@@ -24,9 +24,6 @@ function CompoundInterestTool({ onBack, onNavigate }) {
   const [rate, setRate] = useSharedState("interest_rate", 5);
   const [years, setYears] = useSharedState("interest_years", 10);
 
-  // Cálculo mes a mes para que la aportación mensual y el interés
-  // compuesto se reflejen con precisión (evita fórmulas cerradas
-  // que asumen aportaciones a final de año únicamente).
   const monthlyRate = rate / 100 / 12;
   const totalMonths = years * 12;
 
@@ -85,10 +82,10 @@ function CompoundInterestTool({ onBack, onNavigate }) {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center", marginTop: "0.6rem" }}>
+          Lima: saldo total · Lavanda: solo lo aportado
+        </div>
       </Card>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center", marginTop: "-0.5rem" }}>
-        Lima: saldo total · Lavanda: solo lo aportado
-      </div>
 
       <AdviceBlock
         text={
@@ -100,12 +97,14 @@ function CompoundInterestTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-6">
-        <SliderControl label="Capital inicial" value={initial} min={0} max={50000} step={100} unit="€" onChange={setInitial} />
-        <SliderControl label="Aportación mensual" value={monthly} min={0} max={2000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
-        <SliderControl label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" onChange={setRate} />
-        <SliderControl label="Años" value={years} min={1} max={40} step={1} unit="años" onChange={setYears} />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Capital inicial" value={initial} min={0} max={50000} step={100} unit="€" onChange={setInitial} />
+          <SliderControl label="Aportación mensual" value={monthly} min={0} max={2000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
+          <SliderControl label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" onChange={setRate} />
+          <SliderControl label="Años" value={years} min={1} max={40} step={1} unit="años" onChange={setYears} />
+        </div>
+      </Card>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Resultado orientativo. No constituye asesoramiento financiero ni garantiza rentabilidad futura.
@@ -131,4 +130,3 @@ function CompoundInterestTool({ onBack, onNavigate }) {
 }
 
 export default CompoundInterestTool;
-                  
