@@ -209,16 +209,17 @@ function IconTile({ icon: Icon, tone = "lime" }) {
 }
 
 
-function AdviceBlock({ children, icon: Icon, tone = "lime" }) {
+function AdviceBlock({ text, children, icon: Icon, tone = "lime" }) {
   const bg = tone === "lavender" ? T.lavenderSoft : T.limeSoft;
   const fg = tone === "lavender" ? T.lavender : T.lime;
+  const content = text ?? children;
+  if (!content) return null;
   return (
     <div style={{ background: bg, borderRadius: "0.9rem", padding: "1rem", display: "flex", gap: "0.75rem", alignItems: "flex-start", marginTop: "1rem" }}>
       {Icon && <Icon size={20} color={fg} style={{ marginTop: "0.1rem", flexShrink: 0 }} />}
-      <div style={{ ...fontBody, fontSize: "0.9rem", color: T.text, lineHeight: 1.4 }}>{children}</div>
+      <div style={{ ...fontBody, fontSize: "0.9rem", color: T.text, lineHeight: 1.4 }}>{content}</div>
     </div>
   );
 }
 
 export { Button, Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock };
-    
