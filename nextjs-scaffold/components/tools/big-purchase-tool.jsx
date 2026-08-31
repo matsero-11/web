@@ -54,13 +54,13 @@ function BigPurchaseTool({ onBack, onNavigate }) {
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Ahorro para una compra grande" subtitle="Elige qué quieres comprar y cuándo, y calculamos el resto." onBack={onBack} />
 
-      <div className="flex flex-wrap gap-2.5">
+      <div className="flex flex-wrap gap-2.5 justify-center">
         {PURCHASE_TYPES.map((t) => (
           <Chip key={t.id} label={t.label} active={type === t.id} onClick={() => changeType(t.id)} />
         ))}
       </div>
 
-      <Card glow style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
         <div style={{ height: "170px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -109,15 +109,17 @@ function BigPurchaseTool({ onBack, onNavigate }) {
         }
       />
 
-      <div className="flex flex-col gap-6">
-        <SliderControl label="Presupuesto" value={budget} min={200} max={80000} step={100} unit="€" onChange={setBudget} />
-        <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={50} unit="€" onChange={setCurrent} />
-        <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={0} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
-      </div>
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Presupuesto" value={budget} min={200} max={80000} step={100} unit="€" onChange={setBudget} />
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={50} unit="€" onChange={setCurrent} />
+          <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={0} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
+        </div>
+      </Card>
 
       <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} />
 
-      <div className="flex justify-center pt-2">
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Ahorro para ${typeInfo.label}: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses → necesitas ${fmtEUR(requiredMonthly)}/mes.`
@@ -129,4 +131,3 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 }
 
 export default BigPurchaseTool;
-
