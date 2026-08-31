@@ -44,7 +44,9 @@ function DailyExpenseTool({ onBack, onNavigate }) {
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <ToolHeader title="Gastos diarios" subtitle="Un gasto pequeño cada día también se acumula. Míralo en conjunto." onBack={onBack} />
 
-      <SliderControl label="Gasto diario" value={daily} min={0} max={60} step={0.5} unit="€" onChange={setDaily} />
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <SliderControl label="Gasto diario" value={daily} min={0} max={60} step={0.5} unit="€" onChange={setDaily} />
+      </Card>
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div style={{ width: "100%", height: "190px" }}>
@@ -103,4 +105,3 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 }
 
 export default DailyExpenseTool;
-                              
