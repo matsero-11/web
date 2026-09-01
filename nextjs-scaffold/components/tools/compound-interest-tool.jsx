@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,22 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Qué es el interés compuesto?",
+    a: "Es el interés que se calcula no solo sobre tu capital inicial, sino también sobre los intereses ya generados en periodos anteriores, por lo que tu dinero crece de forma acelerada cuanto más tiempo lo dejas invertido.",
+  },
+  {
+    q: "¿Cuánto influye la aportación mensual frente al capital inicial?",
+    a: "A largo plazo, las aportaciones mensuales constantes suelen pesar más que el capital inicial en el resultado final, especialmente en plazos de 10 años o más. Compara ambos sliders para verlo.",
+  },
+  {
+    q: "¿Este cálculo garantiza esa rentabilidad?",
+    a: "No. Es una simulación orientativa con un interés anual estimado y constante; la rentabilidad real de cualquier producto financiero puede variar y no está garantizada.",
+  },
+];
 
 function CompoundInterestTool({ onBack, onNavigate }) {
   const [initial, setInitial] = useSharedState("interest_initial", 1000);
@@ -46,8 +63,61 @@ function CompoundInterestTool({ onBack, onNavigate }) {
   const animatedFinal = useAnimatedNumber(finalAmount);
   const animatedInterest = useAnimatedNumber(Math.max(interestEarned, 0));
 
+  const pageTitle = "Calculadora de interés compuesto: simula el crecimiento de tu dinero | MetaBox";
+  const pageDescription =
+    "Simula cuánto puede crecer tu capital con el interés compuesto según tu aportación inicial, aportación mensual, tipo de interés anual y plazo en años. Gráfica interactiva y gratis.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/interest";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="calculadora de interés compuesto, simulador interés compuesto, cómo funciona el interés compuesto, interés compuesto mensual"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/interest.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/interest.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Interés compuesto",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Interés compuesto" subtitle="Descubre cuánto puede crecer tu dinero con el tiempo." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
@@ -106,6 +176,8 @@ function CompoundInterestTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Resultado orientativo. No constituye asesoramiento financiero ni garantiza rentabilidad futura.
       </div>
@@ -124,6 +196,12 @@ function CompoundInterestTool({ onBack, onNavigate }) {
             chartData.map((row) => ({ mes: row.mes, saldo: row.saldo.toFixed(2), aportado: row.aportado.toFixed(2) }))
           }
         />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          El interés compuesto es uno de los mecanismos más potentes para hacer crecer el ahorro a largo plazo, porque cada año generas intereses también sobre los intereses acumulados previamente, no solo sobre el capital inicial. Ajusta el capital de partida, la aportación mensual, el tipo de interés estimado y el número de años para ver cómo se transforma tu dinero con el tiempo.
+        </p>
       </div>
     </div>
   );
