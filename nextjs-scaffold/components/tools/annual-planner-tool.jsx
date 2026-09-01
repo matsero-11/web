@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, Tooltip
 } from "recharts";
@@ -40,8 +41,48 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
     importe: Math.round(lowMonths.has(i) ? lowShare : normalShare),
   }));
 
+  const pageTitle = "Planificador de ahorro anual gratis | MetaBox";
+  const pageDescription =
+    "Reparte tu objetivo de ahorro anual entre los 12 meses, marca los meses más difíciles y deja que el resto se ajuste automáticamente. Herramienta gratuita e interactiva.";
+  const pageUrl = "https://metabox-web.vercel.app/planificador-ahorro-anual";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/planificador-ahorro-anual.png" />
+        <meta property="og:site_name" content="MetaBox" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/planificador-ahorro-anual.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Planificador de ahorro anual",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "EUR",
+            },
+            description: pageDescription,
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Planificador de ahorro anual" subtitle="Marca los meses más difíciles: el resto se ajusta solo para llegar al objetivo." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
@@ -130,4 +171,3 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
 }
 
 export default AnnualPlannerTool;
-
