@@ -43,29 +43,30 @@ function GoalProjection({ goal, current, monthly, extra, extraLabel, monthsSaved
         )}
       </Card>
 
-      <Card style={{ height: "190px", padding: "1.2rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="fillGoal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={T.lime} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis hide domain={[0, goal || 1]} />
-            <Tooltip
-              contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-              formatter={(v) => [fmtEUR(v), "Ahorro"]}
-              labelFormatter={(l) => `Mes ${l}`}
-            />
-            <Area type="monotone" dataKey="ahorro" stroke={T.lime} strokeWidth={2} fill="url(#fillGoal)" />
-          </AreaChart>
-        </ResponsiveContainer>
+      <Card style={{ padding: "1.2rem" }}>
+        <div style={{ width: "100%", height: "190px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fillGoal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={T.lime} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis hide domain={[0, goal || 1]} />
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                formatter={(v) => [fmtEUR(v), "Ahorro"]}
+                labelFormatter={(l) => `Mes ${l}`}
+              />
+              <Area type="monotone" dataKey="ahorro" stroke={T.lime} strokeWidth={2} fill="url(#fillGoal)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
     </div>
   );
 }
 
 export default GoalProjection;
-          
