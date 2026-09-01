@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,22 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Cómo funciona el reto de ahorro de 52 semanas?",
+    a: "Cada semana ahorras una cantidad progresiva: la semana 1 ahorras el importe base, la semana 2 el doble, y así sucesivamente. Al final del reto habrás acumulado el total de todas las semanas.",
+  },
+  {
+    q: "¿Qué pasa si me salto una semana del reto?",
+    a: "No pasa nada: puedes marcarla como pendiente y recuperarla más adelante, combinando dos semanas en una si lo necesitas, sin perder el objetivo final del reto.",
+  },
+  {
+    q: "¿Es mejor el reto de 26 o el de 52 semanas?",
+    a: "El de 26 semanas es más intenso pero más corto; el de 52 semanas reparte el esfuerzo en todo el año con cuotas más bajas. Depende de cuánto margen mensual tengas disponible.",
+  },
+];
 
 function ChallengeTool({ onBack, onNavigate }) {
   const [weeks, setWeeks] = useSharedState("challenge_weeks", 26);
@@ -63,8 +80,61 @@ function ChallengeTool({ onBack, onNavigate }) {
     });
   }, [weeks, baseAmount]);
 
+  const pageTitle = "Reto de ahorro de 26 o 52 semanas gratis | MetaBox";
+  const pageDescription =
+    "Sigue un reto de ahorro progresivo semana a semana, con 26 o 52 semanas a elegir, marca las semanas completadas y ve tu evolución en una gráfica en tiempo real. Gratis y sin registro.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/challenge";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="reto de ahorro 52 semanas, reto de ahorro 26 semanas, cómo hacer el reto de las 52 semanas, calculadora reto de ahorro"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/challenge.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/challenge.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Reto de ahorro",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Reto de ahorro" subtitle="Cada semana ahorras un poco más. Marca las semanas completadas." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
@@ -78,7 +148,6 @@ function ChallengeTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
-      {/* GRÁFICA DE ÁREA DINÁMICA DE PROGRESIÓN SEMANAL */}
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
           Evolución del ahorro semanal
@@ -155,6 +224,8 @@ function ChallengeTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <RelatedTools ids={["savings", "roundup"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -173,6 +244,12 @@ function ChallengeTool({ onBack, onNavigate }) {
             }))
           }
         />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          El reto de ahorro progresivo (26 o 52 semanas) es una forma popular de ahorrar sin apenas notarlo: empiezas con cantidades pequeñas y vas subiendo semana a semana. Marca aquí las semanas que completes y consulta en cualquier momento cuánto llevas acumulado frente al objetivo total.
+        </p>
       </div>
     </div>
   );
