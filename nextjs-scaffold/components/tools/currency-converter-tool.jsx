@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Repeat,
 } from "lucide-react";
@@ -10,6 +11,18 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Este conversor usa el tipo de cambio actualizado en tiempo real?",
+    a: "No. El tipo de cambio lo introduces tú manualmente, por lo que conviene consultarlo justo antes de viajar (por ejemplo en tu banco o una app de cambio) para que el resultado sea preciso.",
+  },
+  {
+    q: "¿Por qué el tipo de cambio de mi banco es distinto al que veo aquí?",
+    a: "Los bancos y tarjetas suelen aplicar un margen sobre el tipo de cambio de mercado. Cuanto mayor sea el importe que cambies, más se nota esa diferencia — compara varias opciones antes de viajar.",
+  },
+];
 
 function CurrencyConverterTool({ onBack, onNavigate }) {
   const [amount, setAmount] = useSharedState("currency_amount", 100);
@@ -30,8 +43,61 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
     setIsRotated((prev) => !prev);
   };
 
+  const pageTitle = "Conversor de moneda para viajes con tipo de cambio manual | MetaBox";
+  const pageDescription =
+    "Convierte entre divisas al instante introduciendo el tipo de cambio del día, ideal para calcular presupuestos de viaje antes de salir. Gratis y sin registro.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/currency";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="conversor de moneda para viajes, calculadora tipo de cambio, convertir euros a dólares, presupuesto de viaje en divisas"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/currency.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/currency.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Conversor de moneda para viajes",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Conversor de moneda para viajes" subtitle="Introduce el tipo de cambio del día y convierte al instante." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
@@ -102,6 +168,8 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         El tipo de cambio no se actualiza automáticamente: introduce el del día antes de viajar.
       </div>
@@ -112,6 +180,12 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
         <CopySummaryButton
           getText={() => `${amount} ${fromLabel} = ${converted.toFixed(2)} ${toLabel} (tipo de cambio: ${rate}).`}
         />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          Antes de viajar al extranjero conviene saber a cuánto equivale tu presupuesto en la moneda local. Este conversor te permite introducir el tipo de cambio del día que hayas consultado y ver al instante cuánto es tu dinero en la divisa de destino, además de invertir la conversión con un solo toque.
+        </p>
       </div>
     </div>
   );
