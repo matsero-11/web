@@ -20,7 +20,7 @@ function HomeScreen({ onNavigate }) {
   return (
     <div className="pt-8 pb-28 w-full">
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", letterSpacing: "0.08em" }}>
-        RAÍZ · PLANIFICACIÓN PERSONAL
+        METABOX · HERRAMIENTAS FINANCIERAS
       </div>
       <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.9rem", lineHeight: 1.15, marginTop: "0.5rem" }}>
         ¿Qué quieres conseguir?
