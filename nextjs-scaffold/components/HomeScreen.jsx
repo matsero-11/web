@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
@@ -11,6 +12,10 @@ function HomeScreen({ onNavigate }) {
       t.label.toLowerCase().includes(query.toLowerCase()) ||
       t.desc.toLowerCase().includes(query.toLowerCase())
   );
+
+  const handleClear = () => {
+    setQuery("");
+  };
 
   return (
     <div className="pt-8 pb-28 w-full">
@@ -50,26 +55,68 @@ function HomeScreen({ onNavigate }) {
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1.1rem", marginBottom: "1rem" }}>
           Todas las herramientas
         </div>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar una herramienta..."
-          style={{
-            ...fontBody,
-            width: "100%",
-            background: T.surface,
-            border: `1px solid ${T.border}`,
-            borderRadius: "0.8rem",
-            padding: "0.85rem 1.1rem",
-            color: T.text,
-            fontSize: "0.95rem",
-            outline: "none",
-            marginBottom: "1.5rem",
-            transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
-        />
+
+        <div role="search" aria-label="Buscar herramientas" style={{ position: "relative" }}>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar una herramienta..."
+            aria-label="Buscar herramientas por nombre o descripción"
+            style={{
+              ...fontBody,
+              width: "100%",
+              background: T.surface,
+              border: `1px solid ${T.border}`,
+              borderRadius: "0.8rem",
+              padding: "0.85rem 1.1rem",
+              color: T.text,
+              fontSize: "0.95rem",
+              outline: "none",
+              marginBottom: "1.5rem",
+              transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+              paddingRight: query ? "2.5rem" : "1.1rem",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
+          />
+
+          {query && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Limpiar búsqueda"
+              style={{
+                position: "absolute",
+                right: "0.7rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "transparent",
+                border: "none",
+                color: T.textMuted,
+                cursor: "pointer",
+                padding: "0.25rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "44px",
+                minWidth: "44px",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = T.text; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = T.textMuted; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          )}
+        </div>
+
+        <div aria-live="polite" style={{ position: "absolute", width: "1px", height: "1px", padding: "0", margin: "-1px", overflow: "hidden", clip: "rect(0,0,0,0)", border: "0" }}>
+          {query ? `${filtered.length} herramientas encontradas` : `${ALL_TOOLS.length} herramientas disponibles`}
+        </div>
+
         <div
           className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           style={{ gap: "1rem" }}
