@@ -4,6 +4,22 @@ const BASE_URL = "https://metabox-web.vercel.app";
 const LAST_MODIFIED = new Date("2026-09-02T00:00:00.000Z");
 
 export default function sitemap() {
+  const toolUrls = ALL_TOOLS
+    .filter(
+      (tool) =>
+        tool &&
+        typeof tool.id === "string" &&
+        tool.id.trim().length > 0,
+    )
+    .map((tool) => ({
+      url: `${BASE_URL}/herramientas/${encodeURIComponent(
+        tool.id,
+      )}`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    }));
+
   return [
     {
       url: `${BASE_URL}/`,
@@ -11,11 +27,6 @@ export default function sitemap() {
       changeFrequency: "weekly",
       priority: 1,
     },
-    ...ALL_TOOLS.map((tool) => ({
-      url: `${BASE_URL}/herramientas/${tool.id}`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    })),
+    ...toolUrls,
   ];
 }
