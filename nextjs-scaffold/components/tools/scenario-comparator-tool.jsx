@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,18 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Para qué sirve comparar dos escenarios de ahorro?",
+    a: "Te permite ver de forma clara el impacto real de subir (o bajar) tu ahorro mensual a lo largo del tiempo, algo que no siempre es intuitivo cuando solo miras la diferencia mes a mes.",
+  },
+  {
+    q: "¿Por qué la diferencia parece pequeña al mes pero grande a 10 años?",
+    a: "Porque se acumula: una diferencia de 20€ al mes son solo 240€ al año, pero a 10 años son 2.400€ — el efecto se magnifica con el tiempo, aunque cada mes por separado parezca poco relevante.",
+  },
+];
 
 function ScenarioComparatorTool({ onBack, onNavigate }) {
   const [current, setCurrent] = useSharedState("comparator_current", 150);
@@ -33,8 +46,61 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
     nuevo: alternative * 12 * years,
   }));
 
+  const pageTitle = "Comparador de escenarios de ahorro: compara dos ritmos a la vez | MetaBox";
+  const pageDescription =
+    "Compara tu ahorro mensual actual con un nuevo escenario y descubre la diferencia real a 1, 5 y 10 años en una gráfica interactiva. Ideal para decidir si merece la pena subir tu aportación. Gratis.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/comparator";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="comparador de ahorro, comparar dos escenarios de ahorro, cuánto ahorraría si subo mi ahorro mensual, simulador de ahorro a largo plazo"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/comparator.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/comparator.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Comparador de escenarios",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Comparador de escenarios" subtitle="Compara dos formas de ahorrar y ve la diferencia real." onBack={onBack} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -92,6 +158,8 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <RelatedTools ids={["savings", "interest"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -105,9 +173,14 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
           getRows={() => barData.map((r) => ({ periodo: r.years, actual: r.actual.toFixed(2), nuevo: r.nuevo.toFixed(2) }))}
         />
       </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          A veces cuesta ver el impacto real de ahorrar un poco más cada mes. Este comparador pone lado a lado tu ritmo de ahorro actual y un nuevo escenario, y proyecta la diferencia acumulada a 1, 5 y 10 años para que decidas con datos si merece la pena el esfuerzo extra.
+        </p>
+      </div>
     </div>
   );
 }
 
 export default ScenarioComparatorTool;
-          
