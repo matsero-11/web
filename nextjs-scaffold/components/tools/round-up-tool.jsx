@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,18 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Qué es el ahorro por redondeo?",
+    a: "Es una técnica de ahorro pasivo: cada compra se redondea al alza (por ejemplo a 1€, 2€ o 5€) y la diferencia entre el precio real y el redondeo se destina automáticamente a ahorro.",
+  },
+  {
+    q: "¿A qué cantidad conviene redondear las compras?",
+    a: "Depende de cuánto quieras ahorrar sin notarlo demasiado: redondear a 1€ genera menos ahorro pero pasa más desapercibido; redondear a 5€ acumula más, aunque se nota algo más en cada compra.",
+  },
+];
 
 function RoundUpTool({ onBack, onNavigate }) {
   const [purchasesPerWeek, setPurchasesPerWeek] = useSharedState("roundup_purchasesPerWeek", 8);
@@ -38,8 +51,61 @@ function RoundUpTool({ onBack, onNavigate }) {
     { periodo: "Año", valor: annual },
   ];
 
+  const pageTitle = "Calculadora de ahorro por redondeo de compras | MetaBox";
+  const pageDescription =
+    "Descubre cuánto ahorrarías al mes y al año redondeando tus compras diarias a 1€, 2€ o 5€, según cuántas compras haces por semana y el importe medio. Gratis y sin registro.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/roundup";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="ahorro por redondeo, cómo funciona el redondeo de compras, ahorrar redondeando compras, calculadora ahorro automático"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/roundup.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/roundup.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Ahorro por redondeo",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Ahorro por redondeo" subtitle="Cada compra se redondea hacia arriba y la diferencia se ahorra." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
@@ -93,6 +159,8 @@ function RoundUpTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Estimación simplificada a partir de un importe medio fijo; en la práctica el redondeo varía en cada compra.
       </div>
@@ -103,6 +171,12 @@ function RoundUpTool({ onBack, onNavigate }) {
         <CopySummaryButton
           getText={() => `Ahorro por redondeo: redondeando a ${roundTo}€ con ${purchasesPerWeek} compras/semana de ${fmtEUR(avgAmount)} de media → ${fmtEUR(monthly)}/mes.`}
         />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          El ahorro por redondeo es una de las formas más populares de ahorrar sin esfuerzo: cada vez que pagas, la diferencia hasta la cifra redonda más cercana se destina a tu ahorro. Ajusta cuántas compras haces por semana, el importe medio y a qué cifra quieres redondear para ver cuánto acumularías al mes y al año.
+        </p>
       </div>
     </div>
   );
