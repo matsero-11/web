@@ -107,31 +107,74 @@ function Card({
 }) {
   const clickable = typeof onClick === "function" && !disabled;
 
-  const baseStyle = {
-    position: "relative",
-    width: "100%",
-    textAlign: "left",
-    color: T.text,
-    font: "inherit",
-    background: result ? "transparent" : T.surface,
-    border: result ? "none" : `1px solid ${T.border}`,
-    borderBottom: result ? `1px solid ${T.border}` : undefined,
-    borderRadius: result ? 0 : "1.1rem",
-    padding: result ? "1.1rem 0.5rem 1.4rem" : "1.25rem",
-    cursor: clickable ? "pointer" : "default",
-    opacity: disabled ? 0.5 : 1,
-    overflow: "hidden",
-    boxSizing: "border-box",
-    outline: "none",
-    WebkitAppearance: "none",
-    appearance: "none",
-    transition:
-      "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
-    ...style,
-  };
+  return (
+    <div
+      className={className}
+      onClick={clickable ? onClick : undefined}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      aria-label={ariaLabel}
+      aria-disabled={disabled || undefined}
+      onKeyDown={
+        clickable
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      style={{
+        position: "relative",
+        width: "100%",
+        textAlign: "left",
+        color: T.text,
+        font: "inherit",
+        background: result ? "transparent" : T.surface,
+        border: result ? "none" : `1px solid ${T.border}`,
+        borderBottom: result ? `1px solid ${T.border}` : undefined,
+        borderRadius: result ? 0 : "1.1rem",
+        padding: result ? "1.1rem 0.5rem 1.4rem" : "1.25rem",
+        cursor: clickable ? "pointer" : "default",
+        opacity: disabled ? 0.5 : 1,
+        overflow: "hidden",
+        boxSizing: "border-box",
+        outline: "none",
+        WebkitAppearance: "none",
+        appearance: "none",
+        transition:
+          "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
+        ...style,
+      }}
+      onMouseEnter={(event) => {
+        if (!clickable) return;
 
-  const content = (
-    <>
+        event.currentTarget.style.borderColor = T.borderStrong || T.lime;
+        event.currentTarget.style.transform = "translateY(-2px)";
+        event.currentTarget.style.boxShadow =
+          "0 10px 24px -12px rgba(0,0,0,0.55)";
+      }}
+      onMouseLeave={(event) => {
+        if (!clickable) return;
+
+        event.currentTarget.style.borderColor = T.border;
+        event.currentTarget.style.transform = "translateY(0)";
+        event.currentTarget.style.boxShadow = "none";
+      }}
+      onFocus={(event) => {
+        if (!clickable) return;
+
+        event.currentTarget.style.borderColor = T.lime;
+        event.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`;
+      }}
+      onBlur={(event) => {
+        if (!clickable) return;
+
+        event.currentTarget.style.borderColor = T.border;
+        event.currentTarget.style.boxShadow = "none";
+      }}
+    >
       {glow && (
         <div
           aria-hidden="true"
@@ -147,46 +190,6 @@ function Card({
       <div style={{ position: "relative", width: "100%" }}>
         {children}
       </div>
-    </>
-  );
-
-  if (clickable) {
-    return (
-      <button
-        type="button"
-        className={className}
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        style={baseStyle}
-        onMouseEnter={(event) => {
-          event.currentTarget.style.borderColor = T.borderStrong || T.lime;
-          event.currentTarget.style.transform = "translateY(-2px)";
-          event.currentTarget.style.boxShadow =
-            "0 10px 24px -12px rgba(0,0,0,0.55)";
-        }}
-        onMouseLeave={(event) => {
-          event.currentTarget.style.borderColor = T.border;
-          event.currentTarget.style.transform = "translateY(0)";
-          event.currentTarget.style.boxShadow = "none";
-        }}
-        onFocus={(event) => {
-          event.currentTarget.style.borderColor = T.lime;
-          event.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`;
-        }}
-        onBlur={(event) => {
-          event.currentTarget.style.borderColor = T.border;
-          event.currentTarget.style.boxShadow = "none";
-        }}
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return (
-    <div className={className} aria-label={ariaLabel} style={baseStyle}>
-      {content}
     </div>
   );
 }
