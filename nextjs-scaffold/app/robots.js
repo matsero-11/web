@@ -1,4 +1,4 @@
-const BASE_URL = "https://ejemplo.com"; // cambiar por el dominio real
+const BASE_URL = "https://metabox-web.vercel.app";
 
 export default function robots() {
   return {
