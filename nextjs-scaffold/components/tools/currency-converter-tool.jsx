@@ -1,9 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 const API_BASE = "https://api.frankfurter.dev/v2";
-const STORAGE_KEY = "currency-converter-state-v5";
+const STORAGE_KEY = "currency-converter-lime-coral-v2";
 const CACHE_TTL = 15 * 60 * 1000;
 
 const DEFAULT_STATE = {
@@ -49,25 +55,23 @@ const FALLBACK_CURRENCIES = [
   ["ZAR", "Rand sudafricano"],
 ].map(([code, name]) => ({ code, name }));
 
-function getSafeStoredState() {
+function readStoredState() {
   if (typeof window === "undefined") return null;
 
   try {
-    const value = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = value ? JSON.parse(value) : null;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
 
-    if (!parsed || typeof parsed !== "object") {
-      return null;
-    }
-
-    return parsed;
+    return parsed && typeof parsed === "object"
+      ? parsed
+      : null;
   } catch {
     return null;
   }
 }
 
 function getInitialState() {
-  const stored = getSafeStoredState();
+  const stored = readStoredState();
 
   if (typeof window === "undefined") {
     return DEFAULT_STATE;
@@ -75,25 +79,22 @@ function getInitialState() {
 
   const params = new URLSearchParams(window.location.search);
 
-  const amount =
-    params.get("amount") ||
-    stored?.amount ||
-    DEFAULT_STATE.amount;
-
-  const from =
-    params.get("from") ||
-    stored?.from ||
-    DEFAULT_STATE.from;
-
-  const to =
-    params.get("to") ||
-    stored?.to ||
-    DEFAULT_STATE.to;
-
   return {
-    amount: String(amount),
-    from: String(from).toUpperCase(),
-    to: String(to).toUpperCase(),
+    amount: String(
+      params.get("amount") ||
+        stored?.amount ||
+        DEFAULT_STATE.amount,
+    ),
+    from: String(
+      params.get("from") ||
+        stored?.from ||
+        DEFAULT_STATE.from,
+    ).toUpperCase(),
+    to: String(
+      params.get("to") ||
+        stored?.to ||
+        DEFAULT_STATE.to,
+    ).toUpperCase(),
   };
 }
 
@@ -139,23 +140,21 @@ function parseAmount(input) {
 function normalizeCurrencies(data) {
   if (Array.isArray(data)) {
     return data
-      .map((item) => {
-        const code = String(
+      .map((item) => ({
+        code: String(
           item?.iso_code ||
             item?.code ||
             item?.currency ||
             "",
-        ).toUpperCase();
-
-        const name = String(
+        ).toUpperCase(),
+        name: String(
           item?.name ||
             item?.currency_name ||
-            code ||
+            item?.iso_code ||
+            item?.code ||
             "",
-        ).trim();
-
-        return { code, name };
-      })
+        ).trim(),
+      }))
       .filter((currency) => currency.code && currency.name);
   }
 
@@ -213,7 +212,7 @@ function CopyButton({ text, children }) {
 
     try {
       if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard unavailable");
+        throw new Error("Clipboard API unavailable");
       }
 
       await navigator.clipboard.writeText(text);
@@ -232,7 +231,7 @@ function CopyButton({ text, children }) {
       type="button"
       onClick={handleCopy}
       disabled={!text}
-      className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+      className="rounded-2xl border border-[#FF806F]/35 bg-[#202A25] px-4 py-3 text-sm font-black text-[#FF806F] transition duration-300 hover:-translate-y-0.5 hover:border-[#FF806F] hover:bg-[#FF806F]/10 focus:outline-none focus:ring-4 focus:ring-[#FF806F]/15 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {copied ? "Copiado" : children}
     </button>
@@ -254,10 +253,14 @@ export default function CurrencyConverterTool() {
   const [rateDate, setRateDate] = useState("");
   const [rateStatus, setRateStatus] = useState("idle");
   const [rateError, setRateError] = useState("");
+
+  const [hasConverted, setHasConverted] = useState(false);
+  const [resultVisible, setResultVisible] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const cacheRef = useRef(new Map());
   const requestRef = useRef(null);
+  const animationTimerRef = useRef(null);
 
   const parsedAmount = useMemo(
     () => parseAmount(amount),
@@ -267,7 +270,9 @@ export default function CurrencyConverterTool() {
   const allCurrencies = useMemo(
     () =>
       mergeCurrencies(
-        currencies.length ? currencies : FALLBACK_CURRENCIES,
+        currencies.length
+          ? currencies
+          : FALLBACK_CURRENCIES,
         FALLBACK_CURRENCIES,
       ),
     [currencies],
@@ -300,16 +305,24 @@ export default function CurrencyConverterTool() {
   }, [allCurrencies, search, selectedCurrencies]);
 
   const convertedAmount = useMemo(() => {
-    if (parsedAmount.value === null || rate === null) {
+    if (!hasConverted || parsedAmount.value === null) {
+      return null;
+    }
+
+    if (rate === null) {
       return null;
     }
 
     return parsedAmount.value * rate;
-  }, [parsedAmount.value, rate]);
+  }, [hasConverted, parsedAmount.value, rate]);
 
   const summary = useMemo(() => {
     if (parsedAmount.value === null) {
       return parsedAmount.error;
+    }
+
+    if (!hasConverted) {
+      return "Pulsa «Convertir ahora» para obtener el resultado.";
     }
 
     if (convertedAmount === null) {
@@ -323,6 +336,7 @@ export default function CurrencyConverterTool() {
   }, [
     convertedAmount,
     fromCurrency,
+    hasConverted,
     parsedAmount.error,
     parsedAmount.value,
     rate,
@@ -358,14 +372,14 @@ export default function CurrencyConverterTool() {
     }
   }, []);
 
-  const loadRate = useCallback(async () => {
+  const requestRate = useCallback(async () => {
     if (parsedAmount.value === null) {
       requestRef.current?.abort();
       setRate(null);
       setRateDate("");
       setRateStatus("idle");
       setRateError("");
-      return;
+      return false;
     }
 
     if (fromCurrency === toCurrency) {
@@ -374,7 +388,7 @@ export default function CurrencyConverterTool() {
       setRateDate(new Date().toISOString().slice(0, 10));
       setRateStatus("success");
       setRateError("");
-      return;
+      return true;
     }
 
     const cacheKey = `${fromCurrency}:${toCurrency}`;
@@ -388,7 +402,7 @@ export default function CurrencyConverterTool() {
       setRateDate(cached.date);
       setRateStatus("success");
       setRateError("");
-      return;
+      return true;
     }
 
     requestRef.current?.abort();
@@ -423,21 +437,23 @@ export default function CurrencyConverterTool() {
         throw new Error("Invalid exchange rate");
       }
 
-      const value = {
+      const nextValue = {
         rate: nextRate,
         date: data?.date || "",
         timestamp: Date.now(),
       };
 
-      cacheRef.current.set(cacheKey, value);
+      cacheRef.current.set(cacheKey, nextValue);
 
-      setRate(value.rate);
-      setRateDate(value.date);
+      setRate(nextValue.rate);
+      setRateDate(nextValue.date);
       setRateStatus("success");
       setRateError("");
+
+      return true;
     } catch (error) {
       if (error?.name === "AbortError") {
-        return;
+        return false;
       }
 
       setRate(null);
@@ -446,6 +462,8 @@ export default function CurrencyConverterTool() {
       setRateError(
         "No se pudo obtener el tipo de cambio. Inténtalo de nuevo.",
       );
+
+      return false;
     }
   }, [fromCurrency, parsedAmount.value, toCurrency]);
 
@@ -454,6 +472,10 @@ export default function CurrencyConverterTool() {
 
     return () => {
       requestRef.current?.abort();
+
+      if (animationTimerRef.current) {
+        window.clearTimeout(animationTimerRef.current);
+      }
     };
   }, [loadCurrencies]);
 
@@ -472,17 +494,41 @@ export default function CurrencyConverterTool() {
         }),
       );
     } catch {
-      // El componente continúa funcionando sin localStorage.
+      // Continúa funcionando aunque localStorage no esté disponible.
     }
   }, [amount, fromCurrency, toCurrency]);
 
   useEffect(() => {
-    const timeout = window.setTimeout(loadRate, 350);
+    setHasConverted(false);
+    setResultVisible(false);
+    setRate(null);
+    setRateDate("");
+    setRateStatus("idle");
+    setRateError("");
+  }, [amount, fromCurrency, toCurrency]);
 
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [loadRate]);
+  async function handleConvert() {
+    if (parsedAmount.value === null) {
+      setHasConverted(false);
+      setResultVisible(false);
+      return;
+    }
+
+    if (animationTimerRef.current) {
+      window.clearTimeout(animationTimerRef.current);
+    }
+
+    setHasConverted(true);
+    setResultVisible(false);
+
+    const success = await requestRate();
+
+    if (success) {
+      animationTimerRef.current = window.setTimeout(() => {
+        setResultVisible(true);
+      }, 120);
+    }
+  }
 
   function swapCurrencies() {
     setFromCurrency(toCurrency);
@@ -504,7 +550,7 @@ export default function CurrencyConverterTool() {
 
     try {
       if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard unavailable");
+        throw new Error("Clipboard API unavailable");
       }
 
       await navigator.clipboard.writeText(url.toString());
@@ -518,209 +564,179 @@ export default function CurrencyConverterTool() {
     }
   }
 
+  const usesCfa =
+    fromCurrency === "XAF" ||
+    fromCurrency === "XOF" ||
+    toCurrency === "XAF" ||
+    toCurrency === "XOF";
+
   return (
     <section
       aria-labelledby="currency-converter-title"
-      className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
+      className="relative mx-auto w-full max-w-4xl overflow-hidden rounded-[2rem] border border-[#C7F36B]/25 bg-[#101413] p-5 text-[#F5F7EF] shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-8"
     >
-      <header className="mb-6">
-        <p className="mb-2 text-sm font-semibold text-blue-600">
-          Herramienta financiera
-        </p>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-[#FF806F]/15 blur-3xl"
+      />
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-[#C7F36B]/10 blur-3xl"
+      />
+
+      <header className="relative mb-8">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#C7F36B] text-xl font-black text-[#101413] shadow-[0_8px_24px_rgba(199,243,107,0.2)]">
+            ⇄
+          </div>
+
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#C7F36B]">
+              Mercado global
+            </p>
+
+            <p className="text-xs text-[#AAB5A9]">
+              Conversión monetaria
+            </p>
+          </div>
+        </div>
 
         <h1
           id="currency-converter-title"
-          className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl"
+          className="text-3xl font-black tracking-tight text-[#F5F7EF] sm:text-5xl"
         >
           Conversor de divisas
         </h1>
 
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Convierte importes entre monedas con tipos de cambio diarios.
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#AAB5A9]">
+          Convierte cualquier importe de forma rápida, clara y sin
+          complicaciones.
         </p>
       </header>
 
-      <div className="mb-5">
-        <label
-          htmlFor="currency-search"
-          className="mb-2 block text-sm font-medium text-slate-800"
-        >
-          Buscar moneda
-        </label>
-
-        <input
-          id="currency-search"
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Busca por código o nombre"
-          className="h-11 w-full rounded-xl border border-slate-300 px-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-        <label>
-          <span className="mb-2 block text-sm font-medium text-slate-800">
-            Importe
-          </span>
-
-          <input
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            aria-invalid={Boolean(parsedAmount.error)}
-            aria-describedby="amount-message"
-            className={`h-12 w-full rounded-xl border px-4 text-lg outline-none transition focus:ring-4 ${
-              parsedAmount.error
-                ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
-            }`}
-          />
-
-          <span
-            id="amount-message"
-            className={`mt-2 block text-xs ${
-              parsedAmount.error
-                ? "text-red-600"
-                : "text-slate-500"
-            }`}
-          >
-            {parsedAmount.error ||
-              "Admite coma o punto decimal."}
-          </span>
-        </label>
-
-        <button
-          type="button"
-          onClick={swapCurrencies}
-          aria-label="Intercambiar monedas"
-          title="Intercambiar monedas"
-          className="h-12 w-12 rounded-xl border border-slate-300 text-xl text-slate-700 transition hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
-        >
-          ⇄
-        </button>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label>
-            <span className="mb-2 block text-sm font-medium text-slate-800">
-              Desde
-            </span>
-
-            <select
-              value={fromCurrency}
-              onChange={(event) => setFromCurrency(event.target.value)}
-              aria-label="Moneda de origen"
-              className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 font-medium outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-            >
-              {filteredCurrencies.map((currency) => (
-                <option key={currency.code} value={currency.code}>
-                  {currency.code} — {currency.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span className="mb-2 block text-sm font-medium text-slate-800">
-              A
-            </span>
-
-            <select
-              value={toCurrency}
-              onChange={(event) => setToCurrency(event.target.value)}
-              aria-label="Moneda de destino"
-              className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 font-medium outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-            >
-              {filteredCurrencies.map((currency) => (
-                <option key={currency.code} value={currency.code}>
-                  {currency.code} — {currency.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div
-        aria-live="polite"
-        className="mt-6 rounded-2xl bg-slate-950 p-5 text-white sm:p-6"
-      >
-        <p className="text-sm text-slate-300">Resultado</p>
-
-        {rateStatus === "loading" ? (
-          <p className="mt-3 text-lg">
-            Consultando el tipo de cambio…
-          </p>
-        ) : rateStatus === "error" ? (
-          <div className="mt-3">
-            <p className="text-lg text-red-300">{rateError}</p>
-
-            <button
-              type="button"
-              onClick={loadRate}
-              className="mt-3 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-100 transition hover:bg-red-950 focus:outline-none focus:ring-4 focus:ring-red-900"
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : convertedAmount === null ? (
-          <p className="mt-3 text-lg text-amber-300">{summary}</p>
-        ) : (
-          <>
-            <p className="mt-3 break-words text-3xl font-bold tracking-tight sm:text-4xl">
-              {formatCurrency(convertedAmount, toCurrency)}
+      <div className="relative rounded-3xl border border-[#C7F36B]/15 bg-[#18201D] p-4 sm:p-6">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#FF806F]">
+              Paso 1
             </p>
 
-            <p className="mt-3 text-sm text-slate-300">{summary}</p>
+            <h2 className="mt-1 text-lg font-bold text-[#F5F7EF]">
+              Indica el importe y las monedas
+            </h2>
+          </div>
 
-            {rateDate ? (
-              <p className="mt-2 text-xs text-slate-400">
-                Fecha del tipo de cambio: {rateDate}
-              </p>
-            ) : null}
-          </>
-        )}
-      </div>
+          <span className="rounded-full bg-[#C7F36B] px-3 py-1 text-xs font-black text-[#101413]">
+            Fácil y rápido
+          </span>
+        </div>
 
-      <div className="mt-5 flex flex-wrap gap-3">
-        <CopyButton text={summary}>
-          Copiar resultado
-        </CopyButton>
+        <div className="mb-5">
+          <label
+            htmlFor="currency-search"
+            className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-[#AAB5A9]"
+          >
+            Buscar moneda
+          </label>
 
-        <button
-          type="button"
-          onClick={handleCopyLink}
-          className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
-        >
-          {linkCopied ? "Enlace copiado" : "Copiar enlace"}
-        </button>
+          <input
+            id="currency-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Busca por código o nombre"
+            className="h-12 w-full rounded-2xl border border-[#C7F36B]/20 bg-[#101413] px-4 text-[#F5F7EF] outline-none placeholder:text-[#718077] transition focus:border-[#C7F36B] focus:ring-4 focus:ring-[#C7F36B]/10"
+          />
+        </div>
 
-        <button
-          type="button"
-          onClick={loadRate}
-          disabled={rateStatus === "loading"}
-          className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Actualizar cambio
-        </button>
-      </div>
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+          <label>
+            <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-[#AAB5A9]">
+              Importe
+            </span>
 
-      <footer className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
-        <span>
-          {catalogStatus === "loading"
-            ? "Cargando catálogo…"
-            : catalogStatus === "fallback"
-              ? "Catálogo provisional"
-              : `${currencies.length} divisas disponibles`}
-        </span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              aria-invalid={Boolean(parsedAmount.error)}
+              aria-describedby="amount-message"
+              className={`h-14 w-full rounded-2xl border bg-[#101413] px-4 text-xl font-bold text-[#F5F7EF] outline-none transition focus:ring-4 ${
+                parsedAmount.error
+                  ? "border-[#FF806F] focus:border-[#FF806F] focus:ring-[#FF806F]/15"
+                  : "border-[#C7F36B]/25 focus:border-[#C7F36B] focus:ring-[#C7F36B]/10"
+              }`}
+            />
 
-        <span>
-          {rateStatus === "success"
-            ? "Tipo de cambio disponible"
-            : "Esperando tipo de cambio"}
-        </span>
-      </footer>
-    </section>
-  );
-    }
+            <span
+              id="amount-message"
+              className={`mt-2 block text-xs ${
+                parsedAmount.error
+                  ? "text-[#FF806F]"
+                  : "text-[#AAB5A9]"
+              }`}
+            >
+              {parsedAmount.error ||
+                "Admite coma o punto decimal."}
+            </span>
+          </label>
+
+          <button
+            type="button"
+            onClick={swapCurrencies}
+            aria-label="Intercambiar monedas"
+            title="Intercambiar monedas"
+            className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#FF806F]/40 bg-[#FF806F]/10 text-2xl text-[#FF806F] transition duration-300 hover:rotate-180 hover:bg-[#FF806F]/20 focus:outline-none focus:ring-4 focus:ring-[#FF806F]/15"
+          >
+            ⇄
+          </button>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label>
+              <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-[#AAB5A9]">
+                Desde
+              </span>
+
+              <select
+                value={fromCurrency}
+                onChange={(event) =>
+                  setFromCurrency(event.target.value)
+                }
+                aria-label="Moneda de origen"
+                className="h-14 w-full rounded-2xl border border-[#C7F36B]/25 bg-[#101413] px-3 font-bold text-[#F5F7EF] outline-none transition focus:border-[#C7F36B] focus:ring-4 focus:ring-[#C7F36B]/10"
+              >
+                {filteredCurrencies.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} — {currency.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-[#AAB5A9]">
+                A
+              </span>
+
+              <select
+                value={toCurrency}
+                onChange={(event) =>
+                  setToCurrency(event.target.value)
+                }
+                aria-label="Moneda de destino"
+                className="h-14 w-full rounded-2xl border border-[#C7F36B]/25 bg-[#101413] px-3 font-bold text-[#F5F7EF] outline-none transition focus:border-[#C7F36B] focus:ring-4 focus:ring-[#C7F36B]/10"
+              >
+                {filteredCurrencies.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} — {currency.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        {usesCfa ? (
+          <p className="
