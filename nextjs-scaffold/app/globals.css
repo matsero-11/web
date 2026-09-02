@@ -28,8 +28,6 @@
 
   --border: rgba(245, 242, 234, 0.1);
   --border-strong: rgba(245, 242, 234, 0.2);
-  --border-lime: rgba(196, 222, 78, 0.28);
-  --border-coral: rgba(255, 148, 132, 0.28);
 
   --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.18);
   --shadow-md: 0 16px 42px rgba(0, 0, 0, 0.28);
@@ -125,6 +123,8 @@ img {
   color: var(--text);
 }
 
+/* Scrollbar */
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -144,7 +144,7 @@ img {
   background: var(--lime-strong);
 }
 
-/* Focus y navegación con teclado */
+/* Foco accesible */
 
 button:focus-visible,
 a:focus-visible,
@@ -184,6 +184,12 @@ textarea:focus {
   outline: none;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-subtle);
+  opacity: 1;
+}
+
 input[aria-invalid="true"],
 select[aria-invalid="true"],
 textarea[aria-invalid="true"] {
@@ -206,10 +212,53 @@ select {
   padding-right: 2.75rem;
 }
 
-input::placeholder,
-textarea::placeholder {
-  color: var(--text-subtle);
+/* Cambio principal: inputs numéricos editables */
+
+input[type="number"],
+input[data-slider-input] {
+  position: relative;
+  z-index: 20;
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text;
   opacity: 1;
+}
+
+input[type="number"]:not(:disabled),
+input[data-slider-input]:not(:disabled) {
+  pointer-events: auto !important;
+  cursor: text;
+}
+
+input[type="number"]:disabled,
+input[data-slider-input]:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+input[type="number"]:focus,
+input[data-slider-input]:focus {
+  border-color: var(--lime) !important;
+  box-shadow: 0 0 0 4px var(--lime-soft) !important;
+  outline: none;
+}
+
+input[type="number"]:focus-visible,
+input[data-slider-input]:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  opacity: 0.75;
 }
 
 /* Sliders */
@@ -418,7 +467,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
   animation: spin 800ms linear infinite;
 }
 
-/* Utilidades visuales */
+/* Utilidades */
 
 .text-lime {
   color: var(--lime);
@@ -452,7 +501,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
   border-color: var(--border-strong);
 }
 
-/* Preferencias de movimiento */
+/* Respeto por la reducción de movimiento */
 
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -466,4 +515,4 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-    }
+                    }
