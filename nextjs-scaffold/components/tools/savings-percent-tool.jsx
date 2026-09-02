@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,18 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Qué porcentaje de mis ingresos debería ahorrar?",
+    a: "Una referencia habitual es ahorrar al menos entre el 10% y el 20% de tus ingresos mensuales, aunque el porcentaje ideal depende de tus gastos fijos y objetivos personales.",
+  },
+  {
+    q: "¿Por qué es útil ver el ahorro en porcentaje y no solo en euros?",
+    a: "El porcentaje te permite comparar tu capacidad de ahorro de forma constante aunque tus ingresos cambien, y es más fácil marcarte objetivos realistas ('ahorrar el 15%') que una cifra fija que puede no ajustarse a tu situación.",
+  },
+];
 
 function SavingsPercentTool({ onBack, onNavigate }) {
   const [income, setIncome] = useSharedState("percent_income", 1800);
@@ -37,8 +50,61 @@ function SavingsPercentTool({ onBack, onNavigate }) {
   const gaugeData = [{ name: "ahorro", value: Math.min(pct, 100), fill: band.color }];
   const displayAmount = period === "mes" ? savings : savings * 12;
 
+  const pageTitle = "Calculadora de porcentaje de ahorro sobre tu sueldo | MetaBox";
+  const pageDescription =
+    "Calcula qué porcentaje de tu sueldo estás ahorrando cada mes, compáralo con las referencias habituales (10%, 20%) y visualízalo en un medidor interactivo. Gratis y sin registro.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/percent";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="porcentaje de ahorro sobre el sueldo, cuánto debería ahorrar de mi sueldo, calculadora porcentaje de ahorro, qué porcentaje ahorrar al mes"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/percent.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/percent.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Porcentaje de ahorro",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Porcentaje de ahorro" subtitle="Qué parte de tu ingreso estás ahorrando." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
@@ -100,6 +166,8 @@ function SavingsPercentTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Referencia orientativa, no un dato verificado ni una recomendación personalizada.
       </div>
@@ -110,6 +178,12 @@ function SavingsPercentTool({ onBack, onNavigate }) {
         <CopySummaryButton
           getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${pct.toFixed(1)}%.`}
         />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambian. Introduce tu ingreso y tu ahorro mensual para ver en qué banda te sitúas y cuánto es en euros al mes o al año.
+        </p>
       </div>
     </div>
   );
