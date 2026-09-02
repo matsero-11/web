@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,22 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Qué es la regla 50/30/20?",
+    a: "Es una guía de presupuesto que propone destinar el 50% de tus ingresos a necesidades esenciales, el 30% a deseos y el 20% a ahorro, como punto de partida orientativo, no una norma rígida.",
+  },
+  {
+    q: "¿Qué cuenta como 'necesidad' y qué como 'deseo'?",
+    a: "Las necesidades son gastos imprescindibles como vivienda, suministros o alimentación básica; los deseos son gastos que mejoran tu calidad de vida pero no son esenciales, como ocio, restaurantes o suscripciones.",
+  },
+  {
+    q: "¿Qué hago si no puedo llegar al 20% de ahorro?",
+    a: "No pasa nada si empiezas con un porcentaje menor: lo importante es tener un hábito de ahorro constante y subirlo progresivamente cuando tu situación lo permita.",
+  },
+];
 
 function Rule502030Tool({ onBack, onNavigate }) {
   const [income, setIncome] = useSharedState("rule502030_income", 1800);
@@ -65,8 +82,61 @@ function Rule502030Tool({ onBack, onNavigate }) {
     </div>
   );
 
+  const pageTitle = "Regla 50/30/20: reparte tu ingreso entre necesidades, deseos y ahorro | MetaBox";
+  const pageDescription =
+    "Aplica la regla 50/30/20 a tu ingreso mensual: 50% necesidades, 30% deseos, 20% ahorro. Ajusta cada partida y compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/rule502030";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="regla 50/30/20, qué es la regla 50 30 20, cómo repartir el sueldo, calculadora regla 50 30 20"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/rule502030.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/rule502030.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Regla 50/30/20",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Regla 50/30/20" subtitle="Reparte tu ingreso entre necesidades, deseos y ahorro." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
@@ -128,6 +198,8 @@ function Rule502030Tool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         50/30/20 es una guía orientativa, no una recomendación financiera personalizada.
       </div>
@@ -149,9 +221,14 @@ function Rule502030Tool({ onBack, onNavigate }) {
           ]}
         />
       </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          La regla 50/30/20 es una de las guías de presupuesto más conocidas para organizar el sueldo: la mitad a lo esencial, casi un tercio a lo que te apetece y una quinta parte al ahorro. Introduce tu ingreso mensual, ajusta cada partida con los sliders y compara tu reparto real con el recomendado en el gráfico.
+        </p>
+      </div>
     </div>
   );
 }
 
 export default Rule502030Tool;
-      
