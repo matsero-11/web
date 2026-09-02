@@ -61,21 +61,9 @@ function ToolRecommendationCard({
     }
   };
 
-  const handleKeyDown = (event) => {
-    if (!isNavigable) return;
-
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onNavigate(tool.id);
-    }
-  };
-
   return (
     <Card
-      role={isNavigable ? "button" : undefined}
-      tabIndex={isNavigable ? 0 : undefined}
       onClick={isNavigable ? handleClick : undefined}
-      onKeyDown={isNavigable ? handleKeyDown : undefined}
       aria-label={
         isNavigable
           ? `Abrir ${tool.label}. ${tool.desc}`
@@ -84,7 +72,7 @@ function ToolRecommendationCard({
       style={{
         padding: "1rem",
         border: `1px solid ${style.border}`,
-        background: type === "next" ? style.background : undefined,
+        background: type === "next" ? style.background : T.surface,
         cursor: isNavigable ? "pointer" : "default",
         transition: "transform 0.18s ease, border-color 0.18s ease, background 0.18s ease",
       }}
@@ -97,7 +85,7 @@ function ToolRecommendationCard({
             <div
               style={{
                 ...fontBody,
-                color: type === "next" ? T.text : T.text,
+                color: T.text,
                 fontWeight: 600,
                 fontSize: "0.9rem",
                 lineHeight: 1.3,
