@@ -1,10 +1,26 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
+  /* Colores de fondo */
   --bg: #080f11;
+  --bg-radial: radial-gradient(120% 100% at 50% -10%, #0e1b1d 0%, #080f11 55%);
+  --surface: #121e21;
+  --surface-alt: #1c2c30;
+
+  /* Colores de texto */
+  --text: #f5f2ea;
+  --text-muted: #9fb3b1;
+
+  /* Colores de acento */
   --lime: #c4de4e;
   --lime-soft: rgba(196, 222, 78, 0.16);
   --lavender: #b7a2ff;
+  --lavender-soft: rgba(183, 162, 255, 0.16);
+  --coral: #ff9484;
+
+  /* Bordes */
+  --border: rgba(245, 242, 234, 0.10);
+  --border-strong: rgba(245, 242, 234, 0.20);
 }
 
 * {
@@ -13,11 +29,26 @@
 
 body {
   margin: 0;
-  background: radial-gradient(120% 100% at 50% -10%, #0e1b1d 0%, #080f11 55%);
+  background: var(--bg-radial);
   min-height: 100vh;
   font-family: "Inter", system-ui, sans-serif;
+  color: var(--text);
+  line-height: 1.5;
 }
 
+/* Focus visible global para accesibilidad */
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+/* Selección de texto personalizada */
+::selection {
+  background: var(--lime-soft);
+  color: var(--text);
+}
+
+/* Sliders personalizados */
 input[type="range"].slider-lime::-webkit-slider-thumb {
   appearance: none;
   width: 18px;
@@ -28,6 +59,7 @@ input[type="range"].slider-lime::-webkit-slider-thumb {
   box-shadow: 0 0 0 1px var(--lime);
   cursor: pointer;
 }
+
 input[type="range"].slider-lavender::-webkit-slider-thumb {
   appearance: none;
   width: 18px;
@@ -38,6 +70,18 @@ input[type="range"].slider-lavender::-webkit-slider-thumb {
   box-shadow: 0 0 0 1px var(--lavender);
   cursor: pointer;
 }
+
+input[type="range"].slider-coral::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--coral);
+  cursor: pointer;
+}
+
 input[type="range"]::-moz-range-thumb {
   width: 18px;
   height: 18px;
@@ -46,19 +90,24 @@ input[type="range"]::-moz-range-thumb {
   border: 3px solid var(--bg);
   cursor: pointer;
 }
+
 input[type="range"]::-webkit-slider-thumb {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+
 input[type="range"]:active::-webkit-slider-thumb {
   transform: scale(1.25);
 }
+
 input[type="range"]:focus-visible::-webkit-slider-thumb {
   box-shadow: 0 0 0 4px var(--lime-soft);
 }
+
 input[type="range"]:focus-visible {
   outline: none;
 }
 
+/* Animaciones */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -69,16 +118,64 @@ input[type="range"]:focus-visible {
     transform: translateY(0);
   }
 }
+
 .stagger-item {
   animation: fadeInUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
 .view-enter {
   animation: fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
+
+/* Utilidades de accesibilidad */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus,
+.sr-only:not(:focus) {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Skip link (ya está en layout, pero por si acaso) */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--bg);
+  color: var(--lime);
+  padding: 1rem;
+  z-index: 100;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+    }
