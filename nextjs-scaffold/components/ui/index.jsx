@@ -61,12 +61,17 @@ function Button({
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
         outline: "none",
-        transition: "transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease",
+        WebkitAppearance: "none",
+        appearance: "none",
+        transition:
+          "transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease",
         ...styles[variant],
         ...style,
       }}
       onMouseDown={(event) => {
-        if (!disabled) event.currentTarget.style.transform = "scale(0.98)";
+        if (!disabled) {
+          event.currentTarget.style.transform = "scale(0.98)";
+        }
       }}
       onMouseUp={(event) => {
         event.currentTarget.style.transform = "scale(1)";
@@ -76,7 +81,9 @@ function Button({
         event.currentTarget.style.boxShadow = "none";
       }}
       onFocus={(event) => {
-        if (!disabled) event.currentTarget.style.boxShadow = `0 0 0 4px ${T.limeSoft}`;
+        if (!disabled) {
+          event.currentTarget.style.boxShadow = `0 0 0 4px ${T.limeSoft}`;
+        }
       }}
       onBlur={(event) => {
         event.currentTarget.style.boxShadow = "none";
@@ -104,6 +111,8 @@ function Card({
     position: "relative",
     width: "100%",
     textAlign: "left",
+    color: T.text,
+    font: "inherit",
     background: result ? "transparent" : T.surface,
     border: result ? "none" : `1px solid ${T.border}`,
     borderBottom: result ? `1px solid ${T.border}` : undefined,
@@ -114,7 +123,10 @@ function Card({
     overflow: "hidden",
     boxSizing: "border-box",
     outline: "none",
-    transition: "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
+    WebkitAppearance: "none",
+    appearance: "none",
+    transition:
+      "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
     ...style,
   };
 
@@ -131,7 +143,10 @@ function Card({
           }}
         />
       )}
-      <div style={{ position: "relative", width: "100%" }}>{children}</div>
+
+      <div style={{ position: "relative", width: "100%" }}>
+        {children}
+      </div>
     </>
   );
 
@@ -147,7 +162,8 @@ function Card({
         onMouseEnter={(event) => {
           event.currentTarget.style.borderColor = T.borderStrong || T.lime;
           event.currentTarget.style.transform = "translateY(-2px)";
-          event.currentTarget.style.boxShadow = "0 10px 24px -12px rgba(0,0,0,0.55)";
+          event.currentTarget.style.boxShadow =
+            "0 10px 24px -12px rgba(0,0,0,0.55)";
         }}
         onMouseLeave={(event) => {
           event.currentTarget.style.borderColor = T.border;
@@ -193,13 +209,20 @@ function SliderControl({
 
   const numericMin = Number(min);
   const numericMax = Math.max(Number(max), numericMin);
-  const numericValue = Number.isFinite(Number(value)) ? Number(value) : numericMin;
+  const numericValue = Number.isFinite(Number(value))
+    ? Number(value)
+    : numericMin;
   const numericStep = Number(step) > 0 ? Number(step) : 1;
   const dynamicMax = Math.max(numericMax, numericValue);
   const current = clamp(numericValue, numericMin, dynamicMax);
+
   const percent =
     dynamicMax > numericMin
-      ? clamp(((current - numericMin) / (dynamicMax - numericMin)) * 100, 0, 100)
+      ? clamp(
+          ((current - numericMin) / (dynamicMax - numericMin)) * 100,
+          0,
+          100
+        )
       : 0;
 
   const color =
@@ -218,13 +241,24 @@ function SliderControl({
 
   const update = (nextValue) => {
     const parsed = Number(nextValue);
-    if (!Number.isFinite(parsed) || disabled || typeof onChange !== "function") return;
+
+    if (
+      !Number.isFinite(parsed) ||
+      disabled ||
+      typeof onChange !== "function"
+    ) {
+      return;
+    }
 
     const limited = clamp(parsed, numericMin, dynamicMax);
-    const rounded =
-      Math.round((limited - numericMin) / numericStep) * numericStep + numericMin;
 
-    onChange(Number(rounded.toFixed(String(numericStep).split(".")[1]?.length || 0)));
+    const rounded =
+      Math.round((limited - numericMin) / numericStep) * numericStep +
+      numericMin;
+
+    const decimalPlaces = String(numericStep).split(".")[1]?.length || 0;
+
+    onChange(Number(rounded.toFixed(decimalPlaces)));
   };
 
   return (
@@ -264,7 +298,10 @@ function SliderControl({
           )}
         </div>
 
-        <div className="flex items-center gap-1.5" style={{ minHeight: "40px" }}>
+        <div
+          className="flex items-center gap-1.5"
+          style={{ minHeight: "40px" }}
+        >
           <input
             type="number"
             value={current}
@@ -274,7 +311,9 @@ function SliderControl({
             disabled={disabled}
             inputMode="decimal"
             onChange={(event) => {
-              if (event.target.value !== "") update(event.target.value);
+              if (event.target.value !== "") {
+                update(event.target.value);
+              }
             }}
             aria-label={label ? `${label}. Valor numérico` : "Valor numérico"}
             aria-describedby={descriptionId}
@@ -307,7 +346,11 @@ function SliderControl({
           {unit && (
             <span
               aria-hidden="true"
-              style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}
+              style={{
+                ...fontBody,
+                color: T.textMuted,
+                fontSize: "0.85rem",
+              }}
             >
               {unit}
             </span>
@@ -343,6 +386,7 @@ function SliderControl({
           minHeight: "44px",
           height: "44px",
           appearance: "none",
+          WebkitAppearance: "none",
           cursor: disabled ? "not-allowed" : "pointer",
           accentColor: color,
           background: `linear-gradient(to right, ${color} ${percent}%, ${T.surfaceAlt} ${percent}%)`,
@@ -487,11 +531,15 @@ function Chip({
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
         outline: "none",
+        WebkitAppearance: "none",
+        appearance: "none",
         transition: "all 0.18s ease",
         ...style,
       }}
       onFocus={(event) => {
-        if (!disabled) event.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`;
+        if (!disabled) {
+          event.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`;
+        }
       }}
       onBlur={(event) => {
         event.currentTarget.style.boxShadow = "none";
@@ -505,10 +553,26 @@ function Chip({
 
 function IconTile({ icon: Icon, tone = "lime", size = 20, label }) {
   const colors = {
-    lime: { bg: T.limeSoft, fg: T.lime, border: T.lime },
-    lavender: { bg: T.lavenderSoft, fg: T.lavender, border: T.lavender },
-    coral: { bg: "rgba(255, 119, 102, 0.12)", fg: T.coral, border: T.coral },
-    muted: { bg: T.surfaceAlt, fg: T.textMuted, border: T.border },
+    lime: {
+      bg: T.limeSoft,
+      fg: T.lime,
+      border: T.lime,
+    },
+    lavender: {
+      bg: T.lavenderSoft,
+      fg: T.lavender,
+      border: T.lavender,
+    },
+    coral: {
+      bg: "rgba(255, 119, 102, 0.12)",
+      fg: T.coral,
+      border: T.coral,
+    },
+    muted: {
+      bg: T.surfaceAlt,
+      fg: T.textMuted,
+      border: T.border,
+    },
   };
 
   const selected = colors[tone] || colors.lime;
@@ -529,7 +593,13 @@ function IconTile({ icon: Icon, tone = "lime", size = 20, label }) {
         border: `1px solid ${selected.border}`,
       }}
     >
-      {Icon && <Icon size={size} color={selected.fg} aria-hidden="true" />}
+      {Icon && (
+        <Icon
+          size={size}
+          color={selected.fg}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }
@@ -544,7 +614,10 @@ function AdviceBlock({
   style = {},
 }) {
   const content = text ?? children;
-  if (!content) return null;
+
+  if (!content) {
+    return null;
+  }
 
   const tones = {
     lime: {
@@ -597,7 +670,10 @@ function AdviceBlock({
         size={19}
         color={selected.fg}
         aria-hidden="true"
-        style={{ marginTop: "0.08rem", flexShrink: 0 }}
+        style={{
+          marginTop: "0.08rem",
+          flexShrink: 0,
+        }}
       />
 
       <div style={{ minWidth: 0 }}>
