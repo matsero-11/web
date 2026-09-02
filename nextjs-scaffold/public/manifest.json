@@ -1,8 +1,12 @@
 {
+  "id": "/",
   "name": "MetaBox — Herramientas de ahorro y planificación",
   "short_name": "MetaBox",
   "description": "Herramientas interactivas gratuitas de ahorro, presupuesto y planificación económica personal.",
+  "lang": "es",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#080F11",
   "theme_color": "#080F11",
@@ -24,13 +28,7 @@
       "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/web-app-manifest-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }
