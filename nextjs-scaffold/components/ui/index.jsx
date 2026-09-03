@@ -74,7 +74,7 @@ function roundToStep(value, min, step) {
 function parseInputText(rawValue) {
   const text = String(rawValue)
     .trim()
-    .replace(/s/g, "")
+    .replace(/\s/g, "")
     .replace(",", ".");
 
   if (text === "") {
@@ -85,7 +85,7 @@ function parseInputText(rawValue) {
     };
   }
 
-  if (!/^d+(.d+)?$/.test(text)) {
+  if (!/^\d+(\.\d+)?$/.test(text)) {
     return {
       valid: false,
       empty: false,
@@ -389,11 +389,6 @@ function SliderControl({
     setInputText(nextText);
     setError("");
 
-    /*
-     * Actualiza el estado compartido en cuanto el texto
-     * representa un número válido. Así se actualizan:
-     * casilla, slider, resultados y gráficas.
-     */
     const parsed = parseInputText(nextText);
 
     if (parsed.valid) {
@@ -838,3 +833,4 @@ export {
   IconTile,
   AdviceBlock,
 };
+    
