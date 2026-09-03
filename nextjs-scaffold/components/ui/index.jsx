@@ -1,9 +1,154 @@
 "use client";
-import React, { useState, useEffect } from "react";
+
+import React, {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+} from "react";
+
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
 
-function Button({ children, variant = "primary", onClick, icon: Icon, disabled }) {
+/* -------------------------------------------------------------------------- */
+/* Utilidades                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function toFiniteNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function getSafeMin(min) {
+  const parsed = Number(min);
+
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 0;
+  }
+
+  return parsed;
+}
+
+function getSafeStep(step) {
+  const parsed = Number(step);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 1;
+  }
+
+  return parsed;
+}
+
+function getSafeMax(max, min, step) {
+  const parsed = Number(max);
+
+  if (Number.isFinite(parsed) && parsed > min) {
+    return parsed;
+  }
+
+  return Math.max(1000, min + step);
+}
+
+function getSafeValue(value, min) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return min;
+  }
+
+  return Math.max(min, parsed);
+}
+
+function countDecimals(value) {
+  const stringValue = String(value);
+
+  if (!stringValue.includes(".")) {
+    return 0;
+  }
+
+  return stringValue.split(".")[1].length;
+}
+
+function roundToStep(value, min, step) {
+  const decimals = countDecimals(step);
+  const rounded =
+    Math.round((value - min) / step) * step + min;
+
+  return Number(rounded.toFixed(decimals));
+}
+
+function parseInputText(rawValue) {
+  const text = String(rawValue)
+    .trim()
+    .replace(/s/g, "")
+    .replace(",", ".");
+
+  if (text === "") {
+    return {
+      valid: false,
+      empty: true,
+      value: null,
+    };
+  }
+
+  if (!/^d+(.d+)?$/.test(text)) {
+    return {
+      valid: false,
+      empty: false,
+      value: null,
+    };
+  }
+
+  const value = Number(text);
+
+  if (!Number.isFinite(value)) {
+    return {
+      valid: false,
+      empty: false,
+      value: null,
+    };
+  }
+
+  return {
+    valid: true,
+    empty: false,
+    value,
+  };
+}
+
+function getAccentValues(accent) {
+  if (accent === "lavender") {
+    return {
+      color: T.lavender,
+      className: "slider-lavender",
+    };
+  }
+
+  if (accent === "coral") {
+    return {
+      color: T.coral,
+      className: "slider-coral",
+    };
+  }
+
+  return {
+    color: T.lime,
+    className: "slider-lime",
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Button                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function Button({
+  children,
+  variant = "primary",
+  onClick,
+  icon: Icon,
+  disabled = false,
+  type = "button",
+}) {
   const base = {
     padding: "0.85rem 1.4rem",
     borderRadius: "0.9rem",
@@ -13,286 +158,522 @@ function Button({ children, variant = "primary", onClick, icon: Icon, disabled }
     alignItems: "center",
     justifyContent: "center",
     gap: "0.5rem",
-    transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease, background 0.2s ease, box-shadow 0.22s ease",
+    transition:
+      "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease, background 0.2s ease, box-shadow 0.22s ease",
     cursor: disabled ? "not-allowed" : "pointer",
     border: "none",
     opacity: disabled ? 0.4 : 1,
     width: "100%",
   };
+
   const styles = {
-    primary: { ...base, background: T.lime, color: "#12200A" },
-    ghost: { ...base, background: "transparent", color: T.text, border: `1px solid ${T.border}` },
+    primary: {
+      ...base,
+      background: T.lime,
+      color: "#12200A",
+    },
+    ghost: {
+      ...base,
+      background: "transparent",
+      color: T.text,
+      border: `1px solid ${T.border}`,
+    },
   };
+
   return (
     <button
+      type={type}
       onClick={disabled ? undefined : onClick}
-      style={styles[variant]}
-      onMouseDown={(e) => {
+      disabled={disabled}
+      style={styles[variant] || styles.primary}
+      onMouseDown={(event) => {
         if (disabled) return;
-        e.currentTarget.style.transform = "scale(0.96)";
+        event.currentTarget.style.transform = "scale(0.96)";
       }}
-      onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-      onMouseEnter={(e) => {
+      onMouseUp={(event) => {
+        if (disabled) return;
+        event.currentTarget.style.transform = "scale(1)";
+      }}
+      onMouseEnter={(event) => {
         if (disabled || variant !== "primary") return;
-        e.currentTarget.style.boxShadow = `0 0 0 6px ${T.limeSoft}`;
+
+        event.currentTarget.style.boxShadow =
+          `0 0 0 6px ${T.limeSoft}`;
       }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "none";
+      onMouseLeave={(event) => {
+        event.currentTarget.style.transform = "scale(1)";
+        event.currentTarget.style.boxShadow = "none";
       }}
     >
-      {Icon && <Icon size={17} />}
+      {Icon && <Icon size={17} aria-hidden="true" />}
       {children}
     </button>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* Card                                                                       */
+/* -------------------------------------------------------------------------- */
 
-function Card({ children, onClick, disabled, style, glow, result }) {
-  const clickable = !!onClick && !disabled;
+function Card({
+  children,
+  onClick,
+  disabled = false,
+  style,
+  glow = false,
+  result = false,
+}) {
+  const clickable =
+    typeof onClick === "function" && !disabled;
+
+  const handleKeyDown = (event) => {
+    if (!clickable) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick(event);
+    }
+  };
+
   return (
     <div
-      onClick={disabled ? undefined : onClick}
+      onClick={clickable ? onClick : undefined}
       role={clickable ? "button" : undefined}
       tabIndex={clickable ? 0 : undefined}
       aria-disabled={disabled || undefined}
-      onKeyDown={
-        clickable
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClick();
-              }
-            }
-          : undefined
-      }
+      onKeyDown={clickable ? handleKeyDown : undefined}
       style={{
         position: "relative",
         background: result ? "transparent" : T.surface,
         border: result ? "none" : `1px solid ${T.border}`,
-        borderBottom: result ? `1px solid ${T.border}` : undefined,
+        borderBottom: result
+          ? `1px solid ${T.border}`
+          : undefined,
         borderRadius: result ? 0 : "1.1rem",
-        padding: result ? "1.1rem 0.5rem 1.4rem" : "1.25rem",
+        padding: result
+          ? "1.1rem 0.5rem 1.4rem"
+          : "1.25rem",
         cursor: clickable ? "pointer" : "default",
         opacity: disabled ? 0.45 : 1,
-        transition: "border-color 0.25s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease",
+        transition:
+          "border-color 0.25s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease",
         overflow: "hidden",
         ...style,
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={(event) => {
         if (!clickable) return;
-        e.currentTarget.style.borderColor = T.borderStrong;
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 10px 24px -12px rgba(0,0,0,0.5)";
+
+        event.currentTarget.style.borderColor =
+          T.borderStrong;
+        event.currentTarget.style.transform =
+          "translateY(-2px)";
+        event.currentTarget.style.boxShadow =
+          "0 10px 24px -12px rgba(0,0,0,0.5)";
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={(event) => {
         if (!clickable) return;
-        e.currentTarget.style.borderColor = T.border;
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
+
+        event.currentTarget.style.borderColor = T.border;
+        event.currentTarget.style.transform = "translateY(0)";
+        event.currentTarget.style.boxShadow = "none";
       }}
-      onFocus={(e) => {
+      onFocus={(event) => {
         if (!clickable) return;
-        e.currentTarget.style.borderColor = T.lime;
-        e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`;
+
+        event.currentTarget.style.borderColor = T.lime;
+        event.currentTarget.style.boxShadow =
+          `0 0 0 3px ${T.limeSoft}`;
       }}
-      onBlur={(e) => {
+      onBlur={(event) => {
         if (!clickable) return;
-        e.currentTarget.style.borderColor = T.border;
-        e.currentTarget.style.boxShadow = "none";
+
+        event.currentTarget.style.borderColor = T.border;
+        event.currentTarget.style.boxShadow = "none";
       }}
     >
       {glow && (
         <div
-          aria-hidden
+          aria-hidden="true"
           style={{
-            position: "absolute", inset: 0, pointerEvents: "none",
-            background: `radial-gradient(60% 70% at 50% 0%, ${T.limeSoft} 0%, transparent 70%)`,
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background: `radial-gradient(
+              60% 70% at 50% 0%,
+              ${T.limeSoft} 0%,
+              transparent 70%
+            )`,
           }}
         />
       )}
-      <div style={{ position: "relative" }}>{children}</div>
+
+      <div style={{ position: "relative" }}>
+        {children}
+      </div>
     </div>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* SliderControl                                                              */
+/* -------------------------------------------------------------------------- */
 
-/**
- * SliderControl — input numérico + slider sincronizados.
- *
- * Arquitectura clave para que la escritura nunca se bloquee:
- * - `inputText` es SOLO texto, y es lo único que controla el <input>.
- *   Mientras el usuario edita, este texto puede ser "", "1", "1.", "1.5"...
- *   sin que nada lo fuerce a convertirse en número en cada tecla.
- * - `value` (el número real, viene del padre vía props) NUNCA se escribe
- *   directamente en el input mientras el usuario está editando (`isEditing`).
- * - El slider actualiza `value` inmediatamente (arrastrar debe ser fluido),
- *   y sincroniza `inputText` solo si el usuario NO está escribiendo a la vez.
- * - La validación/limpieza (redondeo, mínimo, etc.) solo ocurre al confirmar
- *   (blur o Enter), nunca en cada pulsación.
- */
-function SliderControl({ label, value, min, max, step, unit, onChange, accent = "lime" }) {
-  const color = accent === "lavender" ? T.lavender : T.lime;
-  const safeValue = Number.isFinite(value) ? value : 0;
+function SliderControl({
+  label,
+  value,
+  min = 0,
+  max = 1000,
+  step = 1,
+  unit,
+  onChange,
+  accent = "lime",
+  disabled = false,
+}) {
+  const inputId = useId();
+  const sliderId = `${inputId}-slider`;
+  const errorId = `${inputId}-error`;
+  const hintId = `${inputId}-hint`;
 
-  const [inputText, setInputText] = useState(String(safeValue));
+  const safeMin = getSafeMin(min);
+  const safeStep = getSafeStep(step);
+  const safeMax = getSafeMax(
+    max,
+    safeMin,
+    safeStep,
+  );
+
+  const safeValue = getSafeValue(value, safeMin);
+  const { color, className } = getAccentValues(accent);
+
+  const [inputText, setInputText] = useState(
+    String(safeValue),
+  );
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState("");
 
-  // Sincroniza el texto del input con el valor externo (p.ej. cambios desde
-  // el slider, o desde otra herramienta vía URL/localStorage) — pero SOLO
-  // cuando el usuario no está escribiendo activamente en la casilla.
   useEffect(() => {
     if (!isEditing) {
       setInputText(String(safeValue));
+      setError("");
     }
-    // eslint-disable-next-line
   }, [safeValue, isEditing]);
 
-  const dynamicMax = Math.max(max, safeValue * 1.5);
-  const pct = dynamicMax > min ? ((safeValue - min) / (dynamicMax - min)) * 100 : 0;
+  const sliderValue = Math.min(
+    Math.max(safeValue, safeMin),
+    safeMax,
+  );
 
-  // Se ejecuta SOLO al confirmar (blur / Enter) — nunca mientras se escribe.
-  const commitText = (rawText) => {
-    const text = rawText.trim();
+  const sliderPosition =
+    safeMax > safeMin
+      ? ((sliderValue - safeMin) /
+          (safeMax - safeMin)) *
+        100
+      : 0;
 
-    if (text === "") {
-      onChange(0);
-      setInputText("0");
-      return;
-    }
+  const clampedSliderPosition = Math.max(
+    0,
+    Math.min(100, sliderPosition),
+  );
 
-    // Admite coma decimal además de punto, por si el usuario escribe "1,5"
-    const normalized = text.replace(",", ".");
-    const num = Number(normalized);
-
-    if (!Number.isFinite(num)) {
-      // Texto no válido: no se sustituye en silencio, se revierte al último
-      // valor válido conocido.
-      setInputText(String(safeValue));
-      return;
-    }
-
-    const clamped = Math.max(min, num);
-    onChange(clamped);
-    setInputText(String(clamped));
+  const handleInputChange = (event) => {
+    setInputText(event.currentTarget.value);
+    setError("");
   };
 
-  const handleTextChange = (e) => {
-    // Sin validar, sin redondear, sin tocar min/max — solo guardamos lo que
-    // el usuario está escribiendo, letra a letra.
-    setInputText(e.target.value);
+  const handleInputFocus = () => {
+    setIsEditing(true);
+    setError("");
   };
 
-  const handleFocus = () => setIsEditing(true);
+  const commitInput = (rawValue) => {
+    const parsed = parseInputText(rawValue);
 
-  const handleBlur = (e) => {
+    if (parsed.empty) {
+      setError("Introduce un número.");
+      return false;
+    }
+
+    if (!parsed.valid) {
+      setError("Introduce un número válido.");
+      return false;
+    }
+
+    const minimumValue = Math.max(
+      safeMin,
+      parsed.value,
+    );
+
+    const nextValue = roundToStep(
+      minimumValue,
+      safeMin,
+      safeStep,
+    );
+
+    if (
+      typeof onChange === "function" &&
+      Number.isFinite(nextValue)
+    ) {
+      onChange(nextValue);
+    }
+
+    setInputText(String(nextValue));
+    setError("");
+
+    return true;
+  };
+
+  const handleInputBlur = (event) => {
+    const committed = commitInput(
+      event.currentTarget.value,
+    );
+
     setIsEditing(false);
-    commitText(e.target.value);
-  };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitText(e.currentTarget.value);
-      e.currentTarget.blur();
+    if (!committed) {
+      setInputText(String(safeValue));
     }
   };
 
-  const handleSliderChange = (e) => {
-    const num = Number(e.target.value);
-    onChange(num);
-    // Si el usuario no está a la vez escribiendo en la casilla, refleja el
-    // nuevo valor ahí también. Si está editando, no la tocamos — así el
-    // slider nunca pisa lo que se está tecleando.
-    if (!isEditing) setInputText(String(num));
+  const handleInputKeyDown = (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+
+    const committed = commitInput(
+      event.currentTarget.value,
+    );
+
+    if (committed) {
+      event.currentTarget.blur();
+    }
   };
+
+  const handleSliderChange = (event) => {
+    const nextValue = Number(
+      event.currentTarget.value,
+    );
+
+    if (!Number.isFinite(nextValue)) {
+      return;
+    }
+
+    if (typeof onChange === "function") {
+      onChange(nextValue);
+    }
+
+    setInputText(String(nextValue));
+    setError("");
+  };
+
+  const formattedValue =
+    unit === "€"
+      ? fmtEUR(safeValue)
+      : unit
+        ? `${safeValue} ${unit}`
+        : String(safeValue);
+
+  const hintText =
+    safeValue > safeMax
+      ? `El slider muestra hasta ${safeMax}; el valor real es ${formattedValue}.`
+      : `Rango visual del slider: ${safeMin} a ${safeMax}.`;
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-baseline mb-2" style={{ gap: "0.75rem" }}>
-        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{label}</span>
-        <div className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={inputText}
-            onChange={handleTextChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            aria-label={label ? `${label} (valor numérico)` : "Valor numérico"}
-            style={{
-              ...fontDisplay,
-              width: "5.5rem",
-              background: T.surfaceAlt,
-              border: `1px solid ${T.border}`,
-              borderRadius: "0.5rem",
-              padding: "0.25rem 0.5rem",
-              color,
-              fontSize: "1rem",
-              fontWeight: 600,
-              textAlign: "right",
-              outline: "none",
-            }}
-            onFocusCapture={(e) => { e.currentTarget.style.borderColor = color; }}
-            onBlurCapture={(e) => { e.currentTarget.style.borderColor = T.border; }}
-          />
-          {unit && (
-            <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{unit}</span>
-          )}
-        </div>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={dynamicMax}
-        step={step}
-        value={safeValue}
-        aria-label={label || undefined}
-        aria-valuemin={min}
-        aria-valuemax={dynamicMax}
-        aria-valuenow={safeValue}
-        aria-valuetext={unit === "€" ? fmtEUR(safeValue) : unit ? `${safeValue} ${unit}` : `${safeValue}`}
-        role="slider"
-        onChange={handleSliderChange}
-        className={accent === "lavender" ? "slider-lavender" : "slider-lime"}
+    <fieldset
+      disabled={disabled}
+      className="w-full"
+      style={{
+        minWidth: 0,
+        padding: 0,
+        margin: 0,
+        border: 0,
+      }}
+    >
+      <legend
         style={{
-          width: "100%",
-          height: "6px",
-          borderRadius: "999px",
-          appearance: "none",
-          background: `linear-gradient(to right, ${color} ${pct}%, ${T.surfaceAlt} ${pct}%)`,
-          outline: "none",
+          ...fontBody,
+          color: T.textMuted,
+          fontSize: "0.85rem",
+          marginBottom: "0.5rem",
+        }}
+      >
+        {label}
+      </legend>
+
+      <div
+        className="flex items-center justify-end gap-1.5"
+        style={{
+          minWidth: 0,
+          marginBottom: "0.65rem",
+        }}
+      >
+        <label
+          htmlFor={inputId}
+          className="sr-only"
+        >
+          {label} (valor numérico)
+        </label>
+
+        <input
+          id={inputId}
+          name={inputId}
+          type="text"
+          inputMode="decimal"
+          value={inputText}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
+          aria-invalid={Boolean(error)}
+          aria-describedby={
+            error
+              ? `${errorId} ${hintId}`
+              : hintId
+          }
+          style={{
+            ...fontDisplay,
+            width: "6.5rem",
+            minWidth: 0,
+            background: T.surfaceAlt,
+            border: `1px solid ${
+              error ? T.coral : T.border
+            }`,
+            borderRadius: "0.5rem",
+            padding: "0.3rem 0.55rem",
+            color,
+            fontSize: "1rem",
+            fontWeight: 600,
+            textAlign: "right",
+            outline: "none",
+          }}
+        />
+
+        {unit && (
+          <span
+            aria-hidden="true"
+            style={{
+              ...fontBody,
+              color: T.textMuted,
+              fontSize: "0.85rem",
+            }}
+          >
+            {unit}
+          </span>
+        )}
+      </div>
+
+      <input
+        id={sliderId}
+        type="range"
+        min={safeMin}
+        max={safeMax}
+        step={safeStep}
+        value={sliderValue}
+        onChange={handleSliderChange}
+        aria-label={`${label} mediante control deslizante`}
+        aria-valuemin={safeMin}
+        aria-valuemax={safeMax}
+        aria-valuenow={sliderValue}
+        aria-valuetext={formattedValue}
+        className={className}
+        style={{
+          "--slider-position": `${clampedSliderPosition}%`,
         }}
       />
-    </div>
+
+      <p
+        id={hintId}
+        style={{
+          ...fontBody,
+          marginTop: "0.4rem",
+          color: T.textSubtle,
+          fontSize: "0.7rem",
+          lineHeight: 1.4,
+        }}
+      >
+        {hintText}
+      </p>
+
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          style={{
+            ...fontBody,
+            marginTop: "0.35rem",
+            color: T.coral,
+            fontSize: "0.75rem",
+            lineHeight: 1.4,
+          }}
+        >
+          {error}
+        </p>
+      )}
+    </fieldset>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* ProgressBar                                                                */
+/* -------------------------------------------------------------------------- */
 
 function ProgressBar({ pct, gradientEnd }) {
+  const safePercentage = Number.isFinite(Number(pct))
+    ? Math.max(0, Math.min(100, Number(pct)))
+    : 0;
+
   return (
-    <div style={{ width: "100%", height: "10px", borderRadius: "999px", background: T.surfaceAlt, overflow: "hidden" }}>
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={safePercentage}
+      style={{
+        width: "100%",
+        height: "10px",
+        borderRadius: "999px",
+        background: T.surfaceAlt,
+        overflow: "hidden",
+      }}
+    >
       <div
         style={{
-          width: `${Math.min(pct, 100)}%`,
+          width: `${safePercentage}%`,
           height: "100%",
           borderRadius: "999px",
           background: gradientEnd
-            ? `linear-gradient(to right, ${T.lime}, ${gradientEnd})`
+            ? `linear-gradient(
+                to right,
+                ${T.lime},
+                ${gradientEnd}
+              )`
             : T.lime,
-          transition: "width 0.5s cubic-bezier(0.22,1,0.36,1)",
+          transition:
+            "width 0.5s cubic-bezier(0.22,1,0.36,1)",
         }}
       />
     </div>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* Chip                                                                       */
+/* -------------------------------------------------------------------------- */
 
-function Chip({ label, icon: Icon, active, onClick }) {
+function Chip({
+  label,
+  icon: Icon,
+  active = false,
+  onClick,
+  disabled = false,
+}) {
   return (
     <button
-      onClick={onClick}
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-pressed={active}
       style={{
         ...fontBody,
         display: "flex",
@@ -302,42 +683,124 @@ function Chip({ label, icon: Icon, active, onClick }) {
         borderRadius: "999px",
         fontSize: "0.85rem",
         fontWeight: 500,
-        border: `1px solid ${active ? T.lime : T.border}`,
-        background: active ? T.limeSoft : "transparent",
+        border: `1px solid ${
+          active ? T.lime : T.border
+        }`,
+        background: active
+          ? T.limeSoft
+          : "transparent",
         color: active ? T.lime : T.textMuted,
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
         transition: "all 0.18s ease",
       }}
     >
-      {Icon && <Icon size={14} />}
+      {Icon && <Icon size={14} aria-hidden="true" />}
       {label}
     </button>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* IconTile                                                                   */
+/* -------------------------------------------------------------------------- */
 
 function IconTile({ icon: Icon, tone = "lime" }) {
-  const bg = tone === "lavender" ? T.lavenderSoft : T.limeSoft;
-  const fg = tone === "lavender" ? T.lavender : T.lime;
+  const bg =
+    tone === "lavender"
+      ? T.lavenderSoft
+      : T.limeSoft;
+
+  const fg =
+    tone === "lavender"
+      ? T.lavender
+      : T.lime;
+
   return (
-    <div style={{ background: bg, borderRadius: "0.7rem", padding: "0.6rem", display: "flex" }}>
+    <div
+      aria-hidden="true"
+      style={{
+        background: bg,
+        borderRadius: "0.7rem",
+        padding: "0.6rem",
+        display: "flex",
+      }}
+    >
       <Icon size={20} color={fg} />
     </div>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* AdviceBlock                                                                */
+/* -------------------------------------------------------------------------- */
 
-function AdviceBlock({ text, children, icon: Icon, tone = "lime" }) {
-  const bg = tone === "lavender" ? T.lavenderSoft : T.limeSoft;
-  const fg = tone === "lavender" ? T.lavender : T.lime;
+function AdviceBlock({
+  text,
+  children,
+  icon: Icon,
+  tone = "lime",
+}) {
+  const bg =
+    tone === "lavender"
+      ? T.lavenderSoft
+      : T.limeSoft;
+
+  const fg =
+    tone === "lavender"
+      ? T.lavender
+      : T.lime;
+
   const content = text ?? children;
-  if (!content) return null;
+
+  if (!content) {
+    return null;
+  }
+
   return (
-    <div style={{ background: bg, borderRadius: "0.9rem", padding: "1rem", display: "flex", gap: "0.75rem", alignItems: "flex-start", marginTop: "1rem" }}>
-      {Icon && <Icon size={20} color={fg} style={{ marginTop: "0.1rem", flexShrink: 0 }} />}
-      <div style={{ ...fontBody, fontSize: "0.9rem", color: T.text, lineHeight: 1.4 }}>{content}</div>
+    <div
+      style={{
+        background: bg,
+        borderRadius: "0.9rem",
+        padding: "1rem",
+        display: "flex",
+        gap: "0.75rem",
+        alignItems: "flex-start",
+        marginTop: "1rem",
+      }}
+    >
+      {Icon && (
+        <Icon
+          size={20}
+          color={fg}
+          aria-hidden="true"
+          style={{
+            marginTop: "0.1rem",
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      <div
+        style={{
+          ...fontBody,
+          fontSize: "0.9rem",
+          color: T.text,
+          lineHeight: 1.4,
+        }}
+      >
+        {content}
+      </div>
     </div>
   );
 }
 
-export { Button, Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock };
+export {
+  Button,
+  Card,
+  SliderControl,
+  ProgressBar,
+  Chip,
+  IconTile,
+  AdviceBlock,
+};
