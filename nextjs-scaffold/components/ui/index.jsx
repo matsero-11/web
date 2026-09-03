@@ -40,7 +40,7 @@ function getSafeMax(max, min, step) {
     return parsed;
   }
 
-  return Math.max(5000000, min + step);
+  return Math.max(10000000, min + step);
 }
 
 function getSafeValue(value, min) {
@@ -320,7 +320,7 @@ function SliderControl({
   label,
   value,
   min = 0,
-  max = 5000000,
+  max = 10000000,
   step = 1,
   unit,
   onChange,
@@ -833,4 +833,4 @@ export {
   IconTile,
   AdviceBlock,
 };
-          
+    
