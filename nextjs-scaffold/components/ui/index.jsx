@@ -3,7 +3,6 @@
 import React, {
   useEffect,
   useId,
-  useMemo,
   useState,
 } from "react";
 
@@ -16,6 +15,7 @@ import { fmtEUR } from "@/lib/hooks";
 
 function toFiniteNumber(value, fallback = 0) {
   const parsed = Number(value);
+
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
@@ -60,13 +60,13 @@ function getSafeValue(value, min) {
 }
 
 function countDecimals(value) {
-  const stringValue = String(value);
+  const text = String(value);
 
-  if (!stringValue.includes(".")) {
+  if (!text.includes(".")) {
     return 0;
   }
 
-  return stringValue.split(".")[1].length;
+  return text.split(".")[1].length;
 }
 
 function roundToStep(value, min, step) {
@@ -188,11 +188,15 @@ function Button({
       style={styles[variant] || styles.primary}
       onMouseDown={(event) => {
         if (disabled) return;
-        event.currentTarget.style.transform = "scale(0.96)";
+
+        event.currentTarget.style.transform =
+          "scale(0.96)";
       }}
       onMouseUp={(event) => {
         if (disabled) return;
-        event.currentTarget.style.transform = "scale(1)";
+
+        event.currentTarget.style.transform =
+          "scale(1)";
       }}
       onMouseEnter={(event) => {
         if (disabled || variant !== "primary") return;
@@ -331,8 +335,8 @@ function SliderControl({
 }) {
   const inputId = useId();
   const sliderId = `${inputId}-slider`;
-  const errorId = `${inputId}-error`;
   const hintId = `${inputId}-hint`;
+  const errorId = `${inputId}-error`;
 
   const safeMin = getSafeMin(min);
   const safeStep = getSafeStep(step);
@@ -348,6 +352,7 @@ function SliderControl({
   const [inputText, setInputText] = useState(
     String(safeValue),
   );
+
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
 
@@ -370,10 +375,19 @@ function SliderControl({
         100
       : 0;
 
-  const clampedSliderPosition = Math.max(
+  const percentage = Math.max(
     0,
     Math.min(100, sliderPosition),
   );
+
+  const emitChange = (nextValue) => {
+    if (
+      typeof onChange === "function" &&
+      Number.isFinite(nextValue)
+    ) {
+      onChange(nextValue);
+    }
+  };
 
   const handleInputChange = (event) => {
     setInputText(event.currentTarget.value);
@@ -409,13 +423,7 @@ function SliderControl({
       safeStep,
     );
 
-    if (
-      typeof onChange === "function" &&
-      Number.isFinite(nextValue)
-    ) {
-      onChange(nextValue);
-    }
-
+    emitChange(nextValue);
     setInputText(String(nextValue));
     setError("");
 
@@ -459,10 +467,7 @@ function SliderControl({
       return;
     }
 
-    if (typeof onChange === "function") {
-      onChange(nextValue);
-    }
-
+    emitChange(nextValue);
     setInputText(String(nextValue));
     setError("");
   };
@@ -476,91 +481,97 @@ function SliderControl({
 
   const hintText =
     safeValue > safeMax
-      ? `El slider muestra hasta ${safeMax}; el valor real es ${formattedValue}.`
-      : `Rango visual del slider: ${safeMin} a ${safeMax}.`;
+      ? `El deslizador muestra hasta ${safeMax}; el valor real es ${formattedValue}.`
+      : `Rango del deslizador: ${safeMin}–${safeMax}.`;
 
   return (
-    <fieldset
-      disabled={disabled}
+    <div
       className="w-full"
       style={{
         minWidth: 0,
-        padding: 0,
-        margin: 0,
-        border: 0,
       }}
     >
-      <legend
-        style={{
-          ...fontBody,
-          color: T.textMuted,
-          fontSize: "0.85rem",
-          marginBottom: "0.5rem",
-        }}
-      >
-        {label}
-      </legend>
-
       <div
-        className="flex items-center justify-end gap-1.5"
+        className="mb-2 flex items-baseline justify-between"
         style={{
-          minWidth: 0,
-          marginBottom: "0.65rem",
+          gap: "0.75rem",
         }}
       >
         <label
           htmlFor={inputId}
-          className="sr-only"
+          style={{
+            ...fontBody,
+            color: T.textMuted,
+            fontSize: "0.85rem",
+          }}
         >
-          {label} (valor numérico)
+          {label}
         </label>
 
-        <input
-          id={inputId}
-          name={inputId}
-          type="text"
-          inputMode="decimal"
-          value={inputText}
-          onChange={handleInputChange}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          onKeyDown={handleInputKeyDown}
-          aria-invalid={Boolean(error)}
-          aria-describedby={
-            error
-              ? `${errorId} ${hintId}`
-              : hintId
-          }
+        <div
+          className="flex items-center gap-1.5"
           style={{
-            ...fontDisplay,
-            width: "6.5rem",
+            flexShrink: 0,
             minWidth: 0,
-            background: T.surfaceAlt,
-            border: `1px solid ${
-              error ? T.coral : T.border
-            }`,
-            borderRadius: "0.5rem",
-            padding: "0.3rem 0.55rem",
-            color,
-            fontSize: "1rem",
-            fontWeight: 600,
-            textAlign: "right",
-            outline: "none",
           }}
-        />
-
-        {unit && (
-          <span
-            aria-hidden="true"
+        >
+          <input
+            id={inputId}
+            name={inputId}
+            type="text"
+            inputMode="decimal"
+            value={inputText}
+            disabled={disabled}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onKeyDown={handleInputKeyDown}
+            aria-label={
+              label
+                ? `${label} (valor numérico)`
+                : "Valor numérico"
+            }
+            aria-invalid={Boolean(error)}
+            aria-describedby={
+              error
+                ? `${errorId} ${hintId}`
+                : hintId
+            }
             style={{
-              ...fontBody,
-              color: T.textMuted,
-              fontSize: "0.85rem",
+              ...fontDisplay,
+              width: "6.5rem",
+              minWidth: 0,
+              background: T.surfaceAlt,
+              border: `1px solid ${
+                error ? T.coral : T.border
+              }`,
+              borderRadius: "0.5rem",
+              padding: "0.3rem 0.55rem",
+              color,
+              fontSize: "1rem",
+              fontWeight: 600,
+              textAlign: "right",
+              outline: "none",
+              opacity: disabled ? 0.55 : 1,
+              cursor: disabled
+                ? "not-allowed"
+                : "text",
             }}
-          >
-            {unit}
-          </span>
-        )}
+          />
+
+          {unit && (
+            <span
+              aria-hidden="true"
+              style={{
+                ...fontBody,
+                color: T.textMuted,
+                fontSize: "0.85rem",
+              }}
+            >
+              {unit}
+            </span>
+          )}
+        </div>
       </div>
 
       <input
@@ -570,15 +581,20 @@ function SliderControl({
         max={safeMax}
         step={safeStep}
         value={sliderValue}
+        disabled={disabled}
         onChange={handleSliderChange}
-        aria-label={`${label} mediante control deslizante`}
+        aria-label={
+          label
+            ? `${label} mediante deslizador`
+            : "Control deslizante"
+        }
         aria-valuemin={safeMin}
         aria-valuemax={safeMax}
         aria-valuenow={sliderValue}
         aria-valuetext={formattedValue}
         className={className}
         style={{
-          "--slider-position": `${clampedSliderPosition}%`,
+          "--slider-position": `${percentage}%`,
         }}
       />
 
@@ -610,7 +626,7 @@ function SliderControl({
           {error}
         </p>
       )}
-    </fieldset>
+    </div>
   );
 }
 
@@ -690,7 +706,9 @@ function Chip({
           ? T.limeSoft
           : "transparent",
         color: active ? T.lime : T.textMuted,
-        cursor: disabled ? "not-allowed" : "pointer",
+        cursor: disabled
+          ? "not-allowed"
+          : "pointer",
         opacity: disabled ? 0.5 : 1,
         transition: "all 0.18s ease",
       }}
@@ -706,12 +724,12 @@ function Chip({
 /* -------------------------------------------------------------------------- */
 
 function IconTile({ icon: Icon, tone = "lime" }) {
-  const bg =
+  const background =
     tone === "lavender"
       ? T.lavenderSoft
       : T.limeSoft;
 
-  const fg =
+  const color =
     tone === "lavender"
       ? T.lavender
       : T.lime;
@@ -720,13 +738,13 @@ function IconTile({ icon: Icon, tone = "lime" }) {
     <div
       aria-hidden="true"
       style={{
-        background: bg,
+        background,
         borderRadius: "0.7rem",
         padding: "0.6rem",
         display: "flex",
       }}
     >
-      <Icon size={20} color={fg} />
+      <Icon size={20} color={color} />
     </div>
   );
 }
@@ -741,12 +759,12 @@ function AdviceBlock({
   icon: Icon,
   tone = "lime",
 }) {
-  const bg =
+  const background =
     tone === "lavender"
       ? T.lavenderSoft
       : T.limeSoft;
 
-  const fg =
+  const color =
     tone === "lavender"
       ? T.lavender
       : T.lime;
@@ -760,7 +778,7 @@ function AdviceBlock({
   return (
     <div
       style={{
-        background: bg,
+        background,
         borderRadius: "0.9rem",
         padding: "1rem",
         display: "flex",
@@ -772,7 +790,7 @@ function AdviceBlock({
       {Icon && (
         <Icon
           size={20}
-          color={fg}
+          color={color}
           aria-hidden="true"
           style={{
             marginTop: "0.1rem",
