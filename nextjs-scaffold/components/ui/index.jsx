@@ -13,12 +13,6 @@ import { fmtEUR } from "@/lib/hooks";
 /* Utilidades                                                                 */
 /* -------------------------------------------------------------------------- */
 
-function toFiniteNumber(value, fallback = 0) {
-  const parsed = Number(value);
-
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
 function getSafeMin(min) {
   const parsed = Number(min);
 
@@ -390,8 +384,26 @@ function SliderControl({
   };
 
   const handleInputChange = (event) => {
-    setInputText(event.currentTarget.value);
+    const nextText = event.currentTarget.value;
+
+    setInputText(nextText);
     setError("");
+
+    /*
+     * Actualiza el estado compartido en cuanto el texto
+     * representa un número válido. Así se actualizan:
+     * casilla, slider, resultados y gráficas.
+     */
+    const parsed = parseInputText(nextText);
+
+    if (parsed.valid) {
+      const nextValue = Math.max(
+        safeMin,
+        parsed.value,
+      );
+
+      emitChange(nextValue);
+    }
   };
 
   const handleInputFocus = () => {
@@ -481,8 +493,8 @@ function SliderControl({
 
   const hintText =
     safeValue > safeMax
-      ? `El deslizador muestra hasta ${safeMax}; el valor real es ${formattedValue}.`
-      : `Rango del deslizador: ${safeMin}–${safeMax}.`;
+      ? `El slider muestra hasta ${safeMax}; el valor real es ${formattedValue}.`
+      : `Rango del slider: ${safeMin}–${safeMax}.`;
 
   return (
     <div
@@ -812,6 +824,10 @@ function AdviceBlock({
     </div>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Exportaciones                                                              */
+/* -------------------------------------------------------------------------- */
 
 export {
   Button,
