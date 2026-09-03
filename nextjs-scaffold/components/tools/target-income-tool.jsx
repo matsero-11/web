@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
@@ -17,6 +18,18 @@ import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
+
+const FAQS = [
+  {
+    q: "¿Cómo calculo el ingreso mínimo que necesito ganar?",
+    a: "Se suman tus gastos fijos mensuales más el ahorro que quieres conseguir cada mes. El resultado es el ingreso neto mínimo necesario para cubrir ambas cosas sin quedarte corto.",
+  },
+  {
+    q: "¿Este cálculo tiene en cuenta impuestos?",
+    a: "No, el resultado es el ingreso neto mínimo según los datos que introduzcas — no incluye impuestos ni retenciones, que varían según tu situación laboral y fiscal.",
+  },
+];
 
 function TargetIncomeTool({ onBack, onNavigate }) {
   const [expenses, setExpenses] = useSharedState("targetincome_expenses", 1200);
@@ -25,8 +38,61 @@ function TargetIncomeTool({ onBack, onNavigate }) {
   const requiredIncome = expenses + desiredSavings;
   const animatedIncome = useAnimatedNumber(requiredIncome);
 
+  const pageTitle = "Calculadora de cuánto necesito ganar según mis gastos y ahorro | MetaBox";
+  const pageDescription =
+    "Calcula el ingreso mínimo que necesitas ganar al mes para cubrir tus gastos fijos y alcanzar el ahorro que te propones, con un desglose visual entre gastos y ahorro. Gratis y sin registro.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/targetincome";
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="cuánto necesito ganar al mes, calculadora ingreso mínimo necesario, cuánto tengo que ganar para ahorrar, salario mínimo según gastos"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/targetincome.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/targetincome.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Cuánto necesito ganar",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
       <ToolHeader title="Cuánto necesito ganar" subtitle="A partir de tus gastos y lo que quieres ahorrar, el ingreso mínimo que necesitas." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
@@ -75,6 +141,8 @@ function TargetIncomeTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <AdSlot minHeight="0px" />
+
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         No incluye impuestos ni retenciones: es el ingreso neto mínimo necesario según lo que indiques.
       </div>
@@ -88,9 +156,14 @@ function TargetIncomeTool({ onBack, onNavigate }) {
           }
         />
       </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          Ya sea para negociar un sueldo, evaluar una oferta de trabajo o planificar un cambio de vida, saber el ingreso mínimo real que necesitas es un dato clave. Esta calculadora suma tus gastos fijos mensuales al ahorro que te propones conseguir, para darte una cifra clara de cuánto necesitas ganar cada mes.
+        </p>
+      </div>
     </div>
   );
 }
 
-export default TargetIncomeTool;
-                          
+export default TargetIncomeTool;ñ
