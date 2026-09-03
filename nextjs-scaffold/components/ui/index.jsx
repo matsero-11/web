@@ -33,14 +33,15 @@ function getSafeStep(step) {
   return parsed;
 }
 
-function getSafeMax(max, min, step) {
+function getSafeMax(max, min, step, unit) {
   const parsed = Number(max);
+  const defaultLargeMax = unit === "%" ? 100 : 10000000;
 
   if (Number.isFinite(parsed) && parsed > min) {
-    return parsed;
+    return Math.max(parsed, defaultLargeMax);
   }
 
-  return Math.max(10000000, min + step);
+  return Math.max(defaultLargeMax, min + step);
 }
 
 function getSafeValue(value, min) {
@@ -338,6 +339,7 @@ function SliderControl({
     max,
     safeMin,
     safeStep,
+    unit
   );
 
   const safeValue = getSafeValue(value, safeMin);
