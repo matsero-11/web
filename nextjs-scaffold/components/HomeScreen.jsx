@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS, CATEGORIES } from "@/lib/tools-registry";
@@ -139,6 +140,37 @@ function HomeScreen({ onNavigate }) {
           )}
         </div>
       </div>
+
+      <footer
+        style={{
+          marginTop: "3.5rem",
+          paddingTop: "1.5rem",
+          borderTop: `1px solid ${T.border}`,
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: "1.25rem",
+        }}
+      >
+        <Link
+          href="/aviso-legal"
+          style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}
+        >
+          Aviso legal
+        </Link>
+        <Link
+          href="/privacidad"
+          style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}
+        >
+          Privacidad
+        </Link>
+        <Link
+          href="/cookies"
+          style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}
+        >
+          Cookies
+        </Link>
+      </footer>
     </div>
   );
 }
