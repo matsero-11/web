@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://metabox-web.vercel.app/sitemap.xml
