@@ -166,4 +166,4 @@ function TargetIncomeTool({ onBack, onNavigate }) {
   );
 }
 
-export default TargetIncomeTool;ñ
+export default TargetIncomeTool;
