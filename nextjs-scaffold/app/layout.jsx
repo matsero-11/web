@@ -3,7 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import ClientProviders from "@/components/ClientProviders";
 
-const BASE_URL = "https://metabox-web.vercel.app";
+const BASE_URL = "https://metabox-web.vercel.app"; // Recuerda cambiar esto cuando tengas tu dominio propio (.com o .es)
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -32,8 +32,26 @@ export const metadata = {
 
   applicationName: "MetaBox",
 
+  // Directivas de rastreo e indexación avanzada para Google
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  // Espacio para la verificación de Google Search Console
+  verification: {
+    google: "PEGA_AQUI_TU_CODIGO_DE_SEARCH_CONSOLE",
+  },
+
   alternates: {
-    canonical: "/",
+    canonical: BASE_URL,
   },
 
   openGraph: {
