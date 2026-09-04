@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS, CATEGORIES } from "@/lib/tools-registry";
 
-function HomeScreen() {
-  const router = useRouter();
+export default function HomeScreen() {
+  const [activeToolId, setActiveToolId] = useState(null);
   const [query, setQuery] = useState("");
 
   const filtered = ALL_TOOLS.filter(
@@ -21,11 +20,35 @@ function HomeScreen() {
     setQuery("");
   };
 
-  const handleNavigate = (destination) => {
-    if (!destination) return;
-    const path = destination.startsWith("/") ? destination : `/${destination}`;
-    router.push(path);
-  };
+  // Buscamos si hay una herramienta activa seleccionada
+  const selectedTool = ALL_TOOLS.find((t) => t.id === activeToolId);
+
+  // Si el usuario seleccionó una herramienta, renderizamos su componente correspondiente
+  if (selectedTool && selectedTool.component) {
+    const ToolComponent = selectedTool.component;
+    return (
+      <div className="pt-8 pb-28 w-full">
+        <button
+          onClick={() => setActiveToolId(null)}
+          style={{
+            ...fontBody,
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            color: T.text,
+            padding: "0.5rem 1rem",
+            borderRadius: "0.5rem",
+            cursor: "pointer",
+            marginBottom: "1.5rem",
+            fontWeight: 500,
+            fontSize: "0.85rem",
+          }}
+        >
+          ← Volver al inicio
+        </button>
+        <ToolComponent />
+      </div>
+    );
+  }
 
   return (
     <div className="pt-8 pb-28 w-full">
@@ -46,7 +69,7 @@ function HomeScreen() {
         {CATEGORIES.map((c, i) => (
           <Card
             key={i}
-            onClick={c.view ? () => handleNavigate(c.view) : undefined}
+            onClick={c.view ? () => setActiveToolId(c.view) : undefined}
             disabled={!c.view}
             style={{ animation: `fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: `${i * 0.05}s` }}
           >
@@ -134,7 +157,7 @@ function HomeScreen() {
           {filtered.map((t, i) => (
             <Card
               key={t.id}
-              onClick={() => handleNavigate(t.id)}
+              onClick={() => setActiveToolId(t.id)}
               style={{ padding: "1.2rem", animation: `fadeInUp 0.4s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: `${i * 0.03}s` }}
             >
               <IconTile icon={t.icon} tone={t.tone} />
@@ -182,7 +205,5 @@ function HomeScreen() {
       </footer>
     </div>
   );
-}
+        }
 
-export default HomeScreen;
-                
