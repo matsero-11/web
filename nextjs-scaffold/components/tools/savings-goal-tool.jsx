@@ -11,7 +11,6 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
 } from "recharts";
-import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
@@ -20,6 +19,19 @@ import { CopySummaryButton } from "@/components/ExportActions";
 import GoalProjection from "@/components/engines/GoalProjection";
 import { usePersistentState } from "@/lib/persistence";
 import AdSlot from "@/components/AdSlot";
+
+// Estilos locales seguros para evitar conflictos de inicialización
+const C = {
+  text: "#f4f4f5",
+  textMuted: "#a1a1aa",
+  border: "#27272a",
+  surface: "#18181b",
+  surfaceAlt: "#27272a",
+  lime: "#84cc16",
+  coral: "#f43f5e",
+};
+
+const fontBody = { fontFamily: "system-ui, -apple-system, sans-serif" };
 
 const FAQS = [
   {
@@ -150,7 +162,7 @@ function SavingsGoalTool({ onBack, onNavigate }) {
                 aria-label={`Eliminar ${goalObj.name}`}
                 style={{
                   position: "absolute", top: "-6px", right: "-6px",
-                  background: T.coral, borderRadius: "50%", width: "16px", height: "16px",
+                  background: C.coral, borderRadius: "50%", width: "16px", height: "16px",
                   display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer",
                 }}
               >
@@ -165,7 +177,7 @@ function SavingsGoalTool({ onBack, onNavigate }) {
             style={{
               ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem",
               padding: "0.55rem 0.9rem", borderRadius: "999px", fontSize: "0.85rem", fontWeight: 500,
-              border: `1px dashed ${T.border}`, background: "transparent", color: T.textMuted, cursor: "pointer",
+              border: `1px dashed ${C.border}`, background: "transparent", color: C.textMuted, cursor: "pointer",
             }}
           >
             <Plus size={14} /> Nuevo objetivo
@@ -179,11 +191,11 @@ function SavingsGoalTool({ onBack, onNavigate }) {
               placeholder="Nombre (ej. Viaje a Japón)..."
               autoFocus
               style={{
-                ...fontBody, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "999px",
-                padding: "0.5rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", width: "11rem",
+                ...fontBody, background: C.surfaceAlt, border: `1px solid ${C.border}`, borderRadius: "999px",
+                padding: "0.5rem 0.9rem", color: C.text, fontSize: "0.85rem", outline: "none", width: "11rem",
               }}
             />
-            <button onClick={addGoal} aria-label="Confirmar" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <button onClick={addGoal} aria-label="Confirmar" style={{ background: C.lime, border: "none", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <Plus size={16} color="#12200A" />
             </button>
           </div>
@@ -203,7 +215,7 @@ function SavingsGoalTool({ onBack, onNavigate }) {
       </Card>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+        <div style={{ ...fontBody, color: C.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           ¿Y si ahorras un poco más al mes?
         </div>
         <div className="flex flex-col gap-6">
@@ -223,7 +235,7 @@ function SavingsGoalTool({ onBack, onNavigate }) {
         />
       </div>
 
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+      <div style={{ ...fontBody, color: C.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${C.border}`, paddingTop: "1.2rem" }}>
         <p>
           Ya sea para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar varios objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
         </p>
@@ -233,4 +245,4 @@ function SavingsGoalTool({ onBack, onNavigate }) {
 }
 
 export default SavingsGoalTool;
-                     
+
