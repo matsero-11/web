@@ -10,6 +10,28 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
+// 1. IMPORTA AQUÍ TUS COMPONENTES (ajusta las rutas según dónde los tengas guardados)
+import SavingsTool from "@/components/tools/SavingsTool"; // O como se llame tu archivo para 'savings'
+import BudgetTool from "@/components/tools/BudgetTool";
+import EmergencyTool from "@/components/tools/EmergencyTool";
+import InterestTool from "@/components/tools/InterestTool";
+import ChallengeTool from "@/components/tools/ChallengeTool";
+import TripTool from "@/components/tools/TripTool";
+import DailyTool from "@/components/tools/DailyTool";
+import ComparatorTool from "@/components/tools/ComparatorTool";
+import Rule502030Tool from "@/components/tools/Rule502030Tool";
+import PercentTool from "@/components/tools/PercentTool";
+import BigPurchaseTool from "@/components/tools/BigPurchaseTool";
+import RoundupTool from "@/components/tools/RoundupTool";
+import AnnualTool from "@/components/tools/AnnualTool";
+import LoanTool from "@/components/tools/LoanTool";
+import GroupSplitTool from "@/components/tools/GroupSplitTool";
+import TripDailyTool from "@/components/tools/TripDailyTool";
+import HolidayTool from "@/components/tools/HolidayTool";
+import CurrencyTool from "@/components/tools/CurrencyTool";
+import TipTool from "@/components/tools/TipTool";
+import TargetIncomeTool from "@/components/tools/TargetIncomeTool";
+
 const ALL_TOOLS = [
   {
     id: "savings",
@@ -18,6 +40,7 @@ const ALL_TOOLS = [
     icon: Target,
     tone: "lime",
     tags: ["ahorro", "meta", "objetivo", "tiempo"],
+    component: SavingsTool, // <--- ¡Añadido aquí!
   },
   {
     id: "budget",
@@ -26,6 +49,7 @@ const ALL_TOOLS = [
     icon: PiggyBank,
     tone: "lavender",
     tags: ["presupuesto", "gastos", "mensual", "categorías"],
+    component: BudgetTool,
   },
   {
     id: "emergency",
@@ -34,6 +58,7 @@ const ALL_TOOLS = [
     icon: ShieldCheck,
     tone: "lime",
     tags: ["emergencia", "seguridad", "ahorro", "imprevistos"],
+    component: EmergencyTool,
   },
   {
     id: "interest",
@@ -42,6 +67,7 @@ const ALL_TOOLS = [
     icon: TrendingUp,
     tone: "lavender",
     tags: ["interés", "crecimiento", "inversión", "largo plazo"],
+    component: InterestTool,
   },
   {
     id: "challenge",
@@ -50,6 +76,7 @@ const ALL_TOOLS = [
     icon: CalendarCheck,
     tone: "lime",
     tags: ["reto", "semanal", "progresivo", "disciplina"],
+    component: ChallengeTool,
   },
   {
     id: "trip",
@@ -58,6 +85,7 @@ const ALL_TOOLS = [
     icon: Plane,
     tone: "lavender",
     tags: ["viaje", "vacaciones", "ahorro", "fecha"],
+    component: TripTool,
   },
   {
     id: "daily",
@@ -66,6 +94,7 @@ const ALL_TOOLS = [
     icon: MoreHorizontal,
     tone: "lime",
     tags: ["diario", "gastos", "mensual", "anual"],
+    component: DailyTool,
   },
   {
     id: "comparator",
@@ -74,6 +103,7 @@ const ALL_TOOLS = [
     icon: HomeIcon,
     tone: "lavender",
     tags: ["comparar", "escenarios", "simulación", "decisiones"],
+    component: ComparatorTool,
   },
   {
     id: "rule502030",
@@ -82,6 +112,7 @@ const ALL_TOOLS = [
     icon: PiggyBank,
     tone: "lime",
     tags: ["50/30/20", "regla", "presupuesto", "reparto"],
+    component: Rule502030Tool,
   },
   {
     id: "percent",
@@ -90,6 +121,7 @@ const ALL_TOOLS = [
     icon: TrendingUp,
     tone: "lavender",
     tags: ["porcentaje", "ahorro", "ingreso", "proporción"],
+    component: PercentTool,
   },
   {
     id: "bigpurchase",
@@ -98,6 +130,7 @@ const ALL_TOOLS = [
     icon: ShoppingBag,
     tone: "lime",
     tags: ["compra", "grande", "coche", "vivienda", "meta"],
+    component: BigPurchaseTool,
   },
   {
     id: "roundup",
@@ -106,6 +139,7 @@ const ALL_TOOLS = [
     icon: PiggyBank,
     tone: "lavender",
     tags: ["redondeo", "compras", "microahorro", "automático"],
+    component: RoundupTool,
   },
   {
     id: "annual",
@@ -114,6 +148,7 @@ const ALL_TOOLS = [
     icon: CalendarCheck,
     tone: "lime",
     tags: ["anual", "12 meses", "planificación", "ajustes"],
+    component: AnnualTool,
   },
   {
     id: "loan",
@@ -122,6 +157,7 @@ const ALL_TOOLS = [
     icon: TrendingUp,
     tone: "lavender",
     tags: ["préstamo", "cuota", "intereses", "crédito"],
+    component: LoanTool,
   },
   {
     id: "groupsplit",
@@ -130,6 +166,7 @@ const ALL_TOOLS = [
     icon: PiggyBank,
     tone: "lime",
     tags: ["grupo", "reparto", "gastos", "deudas"],
+    component: GroupSplitTool,
   },
   {
     id: "tripdaily",
@@ -138,6 +175,7 @@ const ALL_TOOLS = [
     icon: Plane,
     tone: "lavender",
     tags: ["viaje", "diario", "presupuesto", "gasto"],
+    component: TripDailyTool,
   },
   {
     id: "holiday",
@@ -146,6 +184,7 @@ const ALL_TOOLS = [
     icon: CalendarCheck,
     tone: "lime",
     tags: ["navidad", "fiestas", "ahorro", "meses"],
+    component: HolidayTool,
   },
   {
     id: "currency",
@@ -154,6 +193,7 @@ const ALL_TOOLS = [
     icon: Plane,
     tone: "lavender",
     tags: ["moneda", "conversor", "cambio", "divisas"],
+    component: CurrencyTool,
   },
   {
     id: "tip",
@@ -162,6 +202,7 @@ const ALL_TOOLS = [
     icon: PiggyBank,
     tone: "lime",
     tags: ["propina", "cuenta", "reparto", "restaurante"],
+    component: TipTool,
   },
   {
     id: "targetincome",
@@ -170,6 +211,7 @@ const ALL_TOOLS = [
     icon: TrendingUp,
     tone: "lavender",
     tags: ["ingreso", "salario", "gastos", "ahorro", "mínimo"],
+    component: TargetIncomeTool,
   },
 ];
 
