@@ -157,16 +157,26 @@ export default function ToolClient({ slug }) {
   const router = useRouter();
   const Tool = TOOL_COMPONENTS[slug];
 
-  // Interceptor global de clics para atrapar cualquier enlace de herramienta
+  const handleNavigate = (val) => {
+    let targetId = val;
+    if (typeof val === "object" && val !== null) {
+      targetId = val.id || val.slug || val.key;
+    }
+    if (typeof targetId === "string" && targetId.trim() !== "") {
+      router.push(`/herramientas/${targetId.trim()}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const handleContainerClick = (e) => {
-    const link = e.target.closest("a, [data-tool-id]");
-    if (link) {
-      const href = link.getAttribute("href") || link.getAttribute("data-tool-id");
-      if (href && href.includes("/herramientas/")) {
+    const clickable = e.target.closest("a, button, [data-tool-id], [data-href]");
+    if (clickable) {
+      const href = clickable.getAttribute("href") || clickable.getAttribute("data-tool-id") || clickable.getAttribute("data-href");
+      if (href) {
         e.preventDefault();
-        const targetId = href.split("/herramientas/")[1]?.split("/")[0];
+        const targetId = href.includes("/herramientas/") ? href.split("/herramientas/")[1]?.split("/")[0] : href;
         if (targetId) {
-          router.push(`/herramientas/${targetId}`);
+          router.push(`/herramientas/${targetId.trim()}`);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       }
@@ -182,14 +192,13 @@ export default function ToolClient({ slug }) {
       <Tool
         key={slug}
         onBack={() => router.back()}
-        onNavigate={(val) => {
-          const targetId = typeof val === "object" && val !== null ? (val.id || val.slug) : val;
-          if (targetId) {
-            router.push(`/herramientas/${targetId}`);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }
-        }}
+        onNavigate={handleNavigate}
+        onSelect={handleNavigate}
+        onToolClick={handleNavigate}
+        onSelectTool={handleNavigate}
+        onToolSelect={handleNavigate}
       />
     </div>
   );
-     }
+  }
+
