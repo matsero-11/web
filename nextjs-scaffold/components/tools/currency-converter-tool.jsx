@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, AdviceBlock, Chip } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -22,6 +22,10 @@ const FAQS = [
     q: "¿Por qué el tipo de cambio de mi banco es distinto al que veo aquí?",
     a: "Los bancos y tarjetas suelen aplicar un margen sobre el tipo de cambio de mercado. Cuanto mayor sea el importe que cambies, más se nota esa diferencia — compara varias opciones antes de viajar.",
   },
+  {
+    q: "¿Para qué sirven los pares guardados?",
+    a: "Cada vez que conviertes con una combinación de monedas nueva, se guarda automáticamente como acceso rápido, para que la próxima vez no tengas que volver a escribir el tipo de cambio desde cero.",
+  },
 ];
 
 function CurrencyConverterTool({ onBack, onNavigate }) {
@@ -30,6 +34,7 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
   const [fromLabel, setFromLabel] = usePersistentState("currency_fromLabel", "EUR");
   const [toLabel, setToLabel] = usePersistentState("currency_toLabel", "USD");
   const [isRotated, setIsRotated] = useState(false);
+  const [savedPairs, setSavedPairs] = usePersistentState("currency_savedPairs", []);
 
   const converted = amount * rate;
   const animatedConverted = useAnimatedNumber(converted);
@@ -43,9 +48,25 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
     setIsRotated((prev) => !prev);
   };
 
+  const savePair = () => {
+    const key = `${fromLabel}_${toLabel}`;
+    const existing = savedPairs.find((p) => p.key === key);
+    const newPair = { key, from: fromLabel, to: toLabel, rate };
+    const next = existing
+      ? savedPairs.map((p) => (p.key === key ? newPair : p))
+      : [newPair, ...savedPairs].slice(0, 5);
+    setSavedPairs(next);
+  };
+
+  const loadPair = (pair) => {
+    setFromLabel(pair.from);
+    setToLabel(pair.to);
+    setRate(pair.rate);
+  };
+
   const pageTitle = "Conversor de moneda para viajes con tipo de cambio manual | MetaBox";
   const pageDescription =
-    "Convierte entre divisas al instante introduciendo el tipo de cambio del día, ideal para calcular presupuestos de viaje antes de salir. Gratis y sin registro.";
+    "Convierte entre divisas al instante introduciendo el tipo de cambio del día y guarda tus pares de monedas favoritos para acceder rápido la próxima vez. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/currency";
 
   return (
@@ -107,6 +128,19 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {savedPairs.length > 0 && (
+        <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.7rem" }}>
+            Tus pares guardados
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {savedPairs.map((p) => (
+              <Chip key={p.key} label={`${p.from} → ${p.to} (${p.rate})`} active={fromLabel === p.from && toLabel === p.to} onClick={() => loadPair(p)} />
+            ))}
+          </div>
+        </Card>
+      )}
+
       <AdviceBlock
         text={
           amount > 1000
@@ -165,6 +199,16 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
 
           <SliderControl label={`Importe en ${fromLabel || "origen"}`} value={amount} min={0} max={5000} step={5} unit="" onChange={setAmount} />
           <SliderControl label="Tipo de cambio" value={rate} min={0.01} max={5} step={0.01} unit="" onChange={setRate} accent="lavender" />
+
+          <button
+            onClick={savePair}
+            style={{
+              ...fontBody, background: "transparent", border: `1px dashed ${T.border}`, borderRadius: "0.7rem",
+              padding: "0.6rem", color: T.textMuted, fontSize: "0.82rem", cursor: "pointer", textAlign: "center",
+            }}
+          >
+            Guardar {fromLabel} → {toLabel} como acceso rápido
+          </button>
         </div>
       </Card>
 
@@ -184,7 +228,7 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Antes de viajar al extranjero conviene saber a cuánto equivale tu presupuesto en la moneda local. Este conversor te permite introducir el tipo de cambio del día que hayas consultado y ver al instante cuánto es tu dinero en la divisa de destino, además de invertir la conversión con un solo toque.
+          Antes de viajar al extranjero conviene saber a cuánto equivale tu presupuesto en la moneda local. Este conversor te permite introducir el tipo de cambio del día que hayas consultado, ver al instante cuánto es tu dinero en la divisa de destino, y guardar tus combinaciones de monedas más usadas para no tener que volver a escribirlas cada vez.
         </p>
       </div>
     </div>
