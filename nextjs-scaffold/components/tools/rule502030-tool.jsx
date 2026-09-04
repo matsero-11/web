@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -13,9 +13,9 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
+import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -33,25 +33,35 @@ const FAQS = [
     q: "¿Qué hago si no puedo llegar al 20% de ahorro?",
     a: "No pasa nada si empiezas con un porcentaje menor: lo importante es tener un hábito de ahorro constante y subirlo progresivamente cuando tu situación lo permita.",
   },
+  {
+    q: "¿Puedo usar otros porcentajes distintos a 50/30/20?",
+    a: "Sí: si vives en una ciudad cara, tus necesidades pueden pesar más del 50%; si tienes pocos gastos fijos, puedes destinar más al ahorro. Ajusta los porcentajes de referencia a tu situación real.",
+  },
 ];
 
 function Rule502030Tool({ onBack, onNavigate }) {
   const [income, setIncome] = useSharedState("rule502030_income", 1800);
-  const recNeeds = income * 0.5;
-  const recWants = income * 0.3;
-  const recSavings = income * 0.2;
+  const [needsPct, setNeedsPct] = usePersistentState("rule502030_needsPct", 50);
+  const [wantsPct, setWantsPct] = usePersistentState("rule502030_wantsPct", 30);
+  const savingsPct = Math.max(100 - needsPct - wantsPct, 0);
 
-  const [needs, setNeeds] = useState(recNeeds);
-  const [wants, setWants] = useState(recWants);
-  const [savings, setSavings] = useState(recSavings);
-  const [donutView, setDonutView] = useState("actual");
+  const recNeeds = income * (needsPct / 100);
+  const recWants = income * (wantsPct / 100);
+  const recSavings = income * (savingsPct / 100);
+
+  const [needs, setNeeds] = useSharedState("rule502030_needs", recNeeds);
+  const [wants, setWants] = useSharedState("rule502030_wants", recWants);
+  const [savings, setSavings] = useSharedState("rule502030_savings", recSavings);
+  const [donutView, setDonutView] = usePersistentState("rule502030_donutView", "actual");
 
   const prevIncome = useRef(income);
   useEffect(() => {
     const ratio = prevIncome.current > 0 ? income / prevIncome.current : 1;
-    setNeeds((n) => n * ratio);
-    setWants((w) => w * ratio);
-    setSavings((s) => s * ratio);
+    if (ratio !== 1) {
+      setNeeds((n) => n * ratio);
+      setWants((w) => w * ratio);
+      setSavings((s) => s * ratio);
+    }
     prevIncome.current = income;
   }, [income]);
 
@@ -84,7 +94,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
 
   const pageTitle = "Regla 50/30/20: reparte tu ingreso entre necesidades, deseos y ahorro | MetaBox";
   const pageDescription =
-    "Aplica la regla 50/30/20 a tu ingreso mensual: 50% necesidades, 30% deseos, 20% ahorro. Ajusta cada partida y compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
+    "Aplica la regla 50/30/20 a tu ingreso mensual, o personaliza los porcentajes a tu situación. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/rule502030";
 
   return (
@@ -94,7 +104,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="regla 50/30/20, qué es la regla 50 30 20, cómo repartir el sueldo, calculadora regla 50 30 20"
+          content="regla 50/30/20, qué es la regla 50 30 20, cómo repartir el sueldo, calculadora regla 50 30 20 personalizada"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -185,16 +195,29 @@ function Rule502030Tool({ onBack, onNavigate }) {
           diff < 0
             ? "Te pasas del ingreso disponible. Revisa primero 'Deseos': suele ser la partida más fácil de ajustar sin tocar lo esencial."
             : savings < recSavings * 0.5
-            ? "Estás ahorrando bastante menos del 20% recomendado. No hace falta llegar de golpe: sube el slider poco a poco y compáralo con el donut."
-            : "Tu reparto está cerca de la referencia 50/30/20. Prueba a mover los sliders y compara tu reparto con el recomendado."
+            ? "Estás ahorrando bastante menos del recomendado. No hace falta llegar de golpe: sube el slider poco a poco y compáralo con el donut."
+            : "Tu reparto está cerca de la referencia. Prueba a mover los sliders y compara tu reparto con el recomendado."
         }
       />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+          Personaliza los porcentajes de referencia
+        </div>
         <div className="flex flex-col gap-6">
-          <Row label="Necesidades (50%)" value={needs} setValue={setNeeds} rec={recNeeds} accent="lime" />
-          <Row label="Deseos (30%)" value={wants} setValue={setWants} rec={recWants} accent="lavender" />
-          <Row label="Ahorro (20%)" value={savings} setValue={setSavings} rec={recSavings} accent="lime" />
+          <SliderControl label="Necesidades" value={needsPct} min={20} max={80} step={5} unit="%" onChange={(v) => setNeedsPct(Math.min(v, 100 - wantsPct))} />
+          <SliderControl label="Deseos" value={wantsPct} min={0} max={60} step={5} unit="%" onChange={(v) => setWantsPct(Math.min(v, 100 - needsPct))} accent="lavender" />
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
+            Ahorro (resto): <span style={{ color: T.lime, fontWeight: 600 }}>{savingsPct}%</span>
+          </div>
+        </div>
+      </Card>
+
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <Row label={`Necesidades (${needsPct}%)`} value={needs} setValue={setNeeds} rec={recNeeds} accent="lime" />
+          <Row label={`Deseos (${wantsPct}%)`} value={wants} setValue={setWants} rec={recWants} accent="lavender" />
+          <Row label={`Ahorro (${savingsPct}%)`} value={savings} setValue={setSavings} rec={recSavings} accent="lime" />
         </div>
       </Card>
 
@@ -209,7 +232,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Regla 50/30/20 con ingreso ${fmtEUR(income)}: necesidades ${fmtEUR(needs)}, deseos ${fmtEUR(wants)}, ahorro ${fmtEUR(savings)}.`
+            `Regla ${needsPct}/${wantsPct}/${savingsPct} con ingreso ${fmtEUR(income)}: necesidades ${fmtEUR(needs)}, deseos ${fmtEUR(wants)}, ahorro ${fmtEUR(savings)}.`
           }
         />
         <ExportCSVButton
@@ -224,7 +247,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          La regla 50/30/20 es una de las guías de presupuesto más conocidas para organizar el sueldo: la mitad a lo esencial, casi un tercio a lo que te apetece y una quinta parte al ahorro. Introduce tu ingreso mensual, ajusta cada partida con los sliders y compara tu reparto real con el recomendado en el gráfico.
+          La regla 50/30/20 es una de las guías de presupuesto más conocidas para organizar el sueldo, pero no encaja igual de bien a todo el mundo. Ajusta los porcentajes de referencia a tu situación real, introduce tu ingreso mensual, y compara tu reparto real con el recomendado en el gráfico.
         </p>
       </div>
     </div>
