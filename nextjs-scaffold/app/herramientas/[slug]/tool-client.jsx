@@ -157,30 +157,39 @@ export default function ToolClient({ slug }) {
   const router = useRouter();
   const Tool = TOOL_COMPONENTS[slug];
 
+  // Interceptor global de clics para atrapar cualquier enlace de herramienta
+  const handleContainerClick = (e) => {
+    const link = e.target.closest("a, [data-tool-id]");
+    if (link) {
+      const href = link.getAttribute("href") || link.getAttribute("data-tool-id");
+      if (href && href.includes("/herramientas/")) {
+        e.preventDefault();
+        const targetId = href.split("/herramientas/")[1]?.split("/")[0];
+        if (targetId) {
+          router.push(`/herramientas/${targetId}`);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+    }
+  };
+
   if (!Tool) {
     return <ToolNotFound onBack={() => router.push("/")} />;
   }
 
   return (
-    <Tool
-      key={slug}
-      onBack={() => router.back()}
-      onNavigate={(val) => {
-        console.log("onNavigate recibido:", val);
-        
-        let targetId = val;
-        if (typeof val === "object" && val !== null) {
-          targetId = val.id || val.slug || val.key;
-        }
-
-        if (typeof targetId === "string" && targetId.trim() !== "") {
-          router.push(`/herramientas/${targetId}`);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        } else {
-          console.error("No se pudo determinar el ID de la herramienta:", val);
-        }
-      }}
-    />
+    <div onClick={handleContainerClick}>
+      <Tool
+        key={slug}
+        onBack={() => router.back()}
+        onNavigate={(val) => {
+          const targetId = typeof val === "object" && val !== null ? (val.id || val.slug) : val;
+          if (targetId) {
+            router.push(`/herramientas/${targetId}`);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+      />
+    </div>
   );
-}
-
+     }
