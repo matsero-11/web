@@ -61,19 +61,12 @@ function ToolRecommendationCard({
     }
   };
 
-  return (
+  const cardContent = (
     <Card
-      onClick={isNavigable ? handleClick : undefined}
-      aria-label={
-        isNavigable
-          ? `Abrir ${tool.label}. ${tool.desc}`
-          : undefined
-      }
       style={{
         padding: "1rem",
         border: `1px solid ${style.border}`,
         background: type === "next" ? style.background : T.surface,
-        cursor: isNavigable ? "pointer" : "default",
         transition: "transform 0.18s ease, border-color 0.18s ease, background 0.18s ease",
       }}
     >
@@ -132,6 +125,31 @@ function ToolRecommendationCard({
       </div>
     </Card>
   );
+
+  if (isNavigable) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        aria-label={`Abrir ${tool.label}. ${tool.desc}`}
+        style={{
+          cursor: "pointer",
+          display: "block",
+        }}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return cardContent;
 }
 
 function EditorialRecommendationCard({ recommendation }) {
@@ -299,7 +317,7 @@ function RelatedTools({
       }))
       .sort((a, b) => {
         if (a.type === "next") return -1;
-        if (b.type === "next") return 1;
+        if (a.type === "next") return 1;
         return 0;
       });
   }, [ids, maxTools, primaryId]);
@@ -432,3 +450,4 @@ function RelatedTools({
 }
 
 export default RelatedTools;
+        
