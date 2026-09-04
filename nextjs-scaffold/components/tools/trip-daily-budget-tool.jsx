@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -36,6 +36,7 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
   const [totalDays, setTotalDays] = useSharedState("tripdaily_totalDays", 6);
   const [spent, setSpent] = useSharedState("tripdaily_spent", 300);
   const [daysElapsed, setDaysElapsed] = useSharedState("tripdaily_daysElapsed", 2);
+  const [todaySpend, setTodaySpend] = useState("");
 
   useEffect(() => {
     if (spent > totalBudget) setSpent(totalBudget);
@@ -52,9 +53,17 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
   const animatedAllowance = useAnimatedNumber(dailyAllowanceLeft);
   const onTrack = dailyAllowanceLeft >= originalDailyPlan * 0.9;
 
+  const logToday = () => {
+    const amount = Number(String(todaySpend).replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    setSpent((s) => Math.min(s + amount, totalBudget));
+    setDaysElapsed((d) => Math.min(d + (amount > 0 ? 0 : 0), totalDays)); // el día se avanza manualmente con el slider
+    setTodaySpend("");
+  };
+
   const pageTitle = "Presupuesto diario de viaje: cuánto puedes gastar hoy | MetaBox";
   const pageDescription =
-    "Controla tu presupuesto de viaje día a día: introduce lo gastado y los días que llevas, y descubre al instante cuánto puedes gastar cada día que te queda. Gratis y sin registro.";
+    "Controla tu presupuesto de viaje día a día: registra lo gastado hoy y descubre al instante cuánto puedes gastar cada día que te queda. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/tripdaily";
 
   return (
@@ -64,7 +73,7 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="presupuesto diario de viaje, cuánto puedo gastar al día en un viaje, calculadora presupuesto viaje, controlar gasto de viaje"
+          content="presupuesto diario de viaje, cuánto puedo gastar al día en un viaje, calculadora presupuesto viaje, registrar gasto diario viaje"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -107,7 +116,7 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
         </script>
       </Helmet>
 
-      <ToolHeader title="Presupuesto diario de viaje" subtitle="Ajusta lo que llevas gastado y verás cuánto te queda por día." onBack={onBack} />
+      <ToolHeader title="Presupuesto diario de viaje" subtitle="Registra lo gastado hoy y verás cuánto te queda por día." onBack={onBack} />
 
       <Card glow={onTrack} result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Puedes gastar al día</div>
@@ -116,6 +125,20 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
         </div>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
           Plan original: {fmtEUR(originalDailyPlan)} al día · {remainingDays} {remainingDays === 1 ? "día restante" : "días restantes"}
+        </div>
+        <div className="flex items-center gap-1.5" style={{ marginTop: "1rem" }}>
+          <input
+            value={todaySpend}
+            onChange={(e) => setTodaySpend(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && logToday()}
+            placeholder="¿Cuánto gastaste hoy?"
+            inputMode="decimal"
+            style={{
+              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", textAlign: "center",
+            }}
+          />
+          <Button onClick={logToday} style={{ width: "auto", padding: "0.6rem 1rem" }}>Añadir</Button>
         </div>
       </Card>
 
@@ -152,7 +175,7 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Es fácil perder de vista el presupuesto de un viaje a mitad de las vacaciones. Esta herramienta recalcula al instante cuánto puedes gastar cada día que te queda, teniendo en cuenta lo que ya llevas gastado y los días transcurridos, para que no te lleves sorpresas al final.
+          Es fácil perder de vista el presupuesto de un viaje a mitad de las vacaciones. Registra lo que gastas cada día directamente desde el resultado, y esta herramienta recalcula al instante cuánto puedes gastar en los días que te quedan, sin sorpresas al final.
         </p>
       </div>
     </div>
