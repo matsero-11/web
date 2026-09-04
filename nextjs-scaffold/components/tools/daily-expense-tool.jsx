@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
+  MoreHorizontal, CalendarCheck, Plus, X,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -15,7 +15,7 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
+import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -29,23 +29,22 @@ const FAQS = [
     q: "¿Merece la pena recortar 1 o 2 euros al día?",
     a: "Sí: al multiplicarse por 365 días, incluso un pequeño recorte diario puede generar un ahorro anual significativo sin que el cambio en el día a día se note apenas.",
   },
+  {
+    q: "¿Por qué desglosar varios gastos en vez de uno solo?",
+    a: "La mayoría de personas no tienen un único gasto diario, sino varios pequeños (café, transporte, tabaco...). Verlos por separado ayuda a identificar cuál merece más la pena recortar primero.",
+  },
 ];
 
+const DEFAULT_ITEMS = [{ id: "1", name: "Café", amount: 1.5 }];
+
 function DailyExpenseTool({ onBack, onNavigate }) {
-  const [daily, setDaily] = useSharedState("daily_daily", 6);
-  const [reduction, setReduction] = useSharedState("daily_reduction", 0);
+  const [items, setItems] = usePersistentState("daily_items", DEFAULT_ITEMS);
+  const [newName, setNewName] = useState("");
 
-  useEffect(() => {
-    if (reduction > daily) setReduction(daily);
-  }, [daily, reduction]);
-
-  const effectiveDaily = Math.max(daily - reduction, 0);
-  const weekly = effectiveDaily * 7;
-  const monthly = effectiveDaily * 30;
-  const annual = effectiveDaily * 365;
-  const annualSavingsFromReduction = reduction * 365;
-
-  const animatedReductionSavings = useAnimatedNumber(annualSavingsFromReduction);
+  const daily = items.reduce((sum, it) => sum + (it.amount || 0), 0);
+  const weekly = daily * 7;
+  const monthly = daily * 30;
+  const annual = daily * 365;
 
   const barData = [
     { periodo: "Semana", valor: weekly },
@@ -53,9 +52,26 @@ function DailyExpenseTool({ onBack, onNavigate }) {
     { periodo: "Año", valor: annual },
   ];
 
+  const updateAmount = (id, amount) => {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, amount } : it)));
+  };
+
+  const addItem = () => {
+    const name = newName.trim();
+    if (!name) return;
+    setItems((prev) => [...prev, { id: `${Date.now()}`, name, amount: 1 }]);
+    setNewName("");
+  };
+
+  const removeItem = (id) => {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  const biggestItem = [...items].sort((a, b) => b.amount - a.amount)[0];
+
   const pageTitle = "De gasto diario a gasto anual: calculadora de pequeños gastos | MetaBox";
   const pageDescription =
-    "Descubre cuánto supone realmente un gasto diario pequeño al mes y al año, y cuánto ahorrarías reduciéndolo unos céntimos. Café, tabaco, snacks... Gratis y sin registro.";
+    "Desglosa tus gastos diarios pequeños (café, transporte, tabaco...) y descubre cuánto suman realmente al mes y al año. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/daily";
 
   return (
@@ -108,10 +124,55 @@ function DailyExpenseTool({ onBack, onNavigate }) {
         </script>
       </Helmet>
 
-      <ToolHeader title="Gastos diarios" subtitle="Un gasto pequeño cada día también se acumula. Míralo en conjunto." onBack={onBack} />
+      <ToolHeader title="Gastos diarios" subtitle="Desglosa tus pequeños gastos y mira cuánto suman en conjunto." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <SliderControl label="Gasto diario" value={daily} min={0} max={60} step={0.5} unit="€" onChange={setDaily} />
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+          Tus gastos diarios
+        </div>
+        <div className="flex flex-col gap-6">
+          {items.map((it) => (
+            <div key={it.id} style={{ position: "relative" }}>
+              <SliderControl
+                label={it.name}
+                value={it.amount}
+                min={0}
+                max={30}
+                step={0.5}
+                unit="€"
+                onChange={(v) => updateAmount(it.id, v)}
+              />
+              {items.length > 1 && (
+                <button
+                  onClick={() => removeItem(it.id)}
+                  aria-label={`Eliminar ${it.name}`}
+                  style={{
+                    position: "absolute", top: "-4px", right: "-4px",
+                    background: T.coral, borderRadius: "50%", width: "18px", height: "18px",
+                    display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer",
+                  }}
+                >
+                  <X size={11} color="#fff" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5" style={{ marginTop: "1.2rem" }}>
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addItem()}
+            placeholder="Añadir otro gasto (ej. tabaco)..."
+            style={{
+              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none",
+            }}
+          />
+          <button onClick={addItem} aria-label="Añadir gasto" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+            <Plus size={18} color="#12200A" />
+          </button>
+        </div>
       </Card>
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
@@ -137,26 +198,12 @@ function DailyExpenseTool({ onBack, onNavigate }) {
       <AdviceBlock
         text={
           annual > 3000
-            ? "Este gasto diario supera los 3.000€ al año. Un pequeño recorte aquí se nota mucho más que en gastos ocasionales."
-            : reduction === 0
-            ? "Mueve el control de abajo aunque sea 1€: en un gasto diario, hasta un ajuste pequeño se multiplica por 365 al año."
-            : "Buen ajuste. Compara ese ahorro anual con lo que necesitarías en 'Fondo de emergencia' o en un objetivo concreto."
+            ? "Este total diario supera los 3.000€ al año. Un pequeño recorte aquí se nota mucho más que en gastos ocasionales."
+            : biggestItem
+            ? `"${biggestItem.name}" es tu gasto más alto (${fmtEUR(biggestItem.amount)}/día). Empezar por ahí suele notarse más rápido.`
+            : "Añade tus gastos diarios habituales para ver cuánto suman en conjunto."
         }
       />
-
-      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
-          ¿Y si lo reduces un poco?
-        </div>
-        <div className="flex flex-col gap-6">
-          <SliderControl label="Reducir gasto diario en" value={reduction} min={0} max={daily} step={0.5} unit="€" onChange={setReduction} accent="lavender" />
-        </div>
-        {reduction > 0 && (
-          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.88rem", marginTop: "1rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-            <TrendingUp size={14} /> Ahorrarías {fmtEUR(animatedReductionSavings)} al año
-          </div>
-        )}
-      </Card>
 
       <AdSlot minHeight="0px" />
 
@@ -164,14 +211,14 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
-          getText={() => `Gasto diario: ${fmtEUR(daily)}/día → ${fmtEUR(monthly)}/mes, ${fmtEUR(annual)}/año.`}
+          getText={() => `Gastos diarios (${items.map((i) => i.name).join(", ")}): ${fmtEUR(daily)}/día → ${fmtEUR(monthly)}/mes, ${fmtEUR(annual)}/año.`}
         />
-        <ExportCSVButton filename="gastos-diarios" getRows={() => barData.map((r) => ({ periodo: r.periodo, importe: r.valor.toFixed(2) }))} />
+        <ExportCSVButton filename="gastos-diarios" getRows={() => items.map((it) => ({ gasto: it.name, importe_diario: it.amount.toFixed(2), importe_anual: (it.amount * 365).toFixed(2) }))} />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Los gastos pequeños y repetidos —un café, el tabaco, el pincho del mediodía— son fáciles de ignorar porque cada uno por separado parece insignificante. Esta calculadora convierte tu gasto diario en su equivalente semanal, mensual y anual, para que veas el impacto real y decidas con datos si merece la pena recortarlo.
+          Los gastos pequeños y repetidos —un café, el transporte, el tabaco— son fáciles de ignorar por separado porque cada uno parece insignificante. Esta calculadora te deja desglosar todos tus gastos diarios habituales y ver el total combinado en su equivalente semanal, mensual y anual, para decidir con datos cuál merece la pena recortar primero.
         </p>
       </div>
     </div>
