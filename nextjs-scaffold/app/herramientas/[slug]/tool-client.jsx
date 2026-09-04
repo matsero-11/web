@@ -165,9 +165,20 @@ export default function ToolClient({ slug }) {
     <Tool
       key={slug}
       onBack={() => router.back()}
-      onNavigate={(id) => {
-        router.push(`/herramientas/${id}`);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      onNavigate={(val) => {
+        console.log("onNavigate recibido:", val);
+        
+        let targetId = val;
+        if (typeof val === "object" && val !== null) {
+          targetId = val.id || val.slug || val.key;
+        }
+
+        if (typeof targetId === "string" && targetId.trim() !== "") {
+          router.push(`/herramientas/${targetId}`);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          console.error("No se pudo determinar el ID de la herramienta:", val);
+        }
       }}
     />
   );
