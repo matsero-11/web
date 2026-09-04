@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -29,12 +29,17 @@ const FAQS = [
     q: "¿Por qué es útil ver el ahorro en porcentaje y no solo en euros?",
     a: "El porcentaje te permite comparar tu capacidad de ahorro de forma constante aunque tus ingresos cambien, y es más fácil marcarte objetivos realistas ('ahorrar el 15%') que una cifra fija que puede no ajustarse a tu situación.",
   },
+  {
+    q: "¿Para qué sirve guardar el histórico?",
+    a: "Guardando tu porcentaje cada mes puedes ver si tu tasa de ahorro mejora, empeora o se mantiene estable a lo largo del tiempo, en vez de mirar solo el mes actual de forma aislada.",
+  },
 ];
 
 function SavingsPercentTool({ onBack, onNavigate }) {
   const [income, setIncome] = useSharedState("percent_income", 1800);
   const [savings, setSavings] = useSharedState("percent_savings", 250);
   const [period, setPeriod] = usePersistentState("percent_period", "mes");
+  const [history, setHistory] = usePersistentState("percent_history", []);
 
   useEffect(() => {
     if (savings > income) setSavings(income);
@@ -50,9 +55,14 @@ function SavingsPercentTool({ onBack, onNavigate }) {
   const gaugeData = [{ name: "ahorro", value: Math.min(pct, 100), fill: band.color }];
   const displayAmount = period === "mes" ? savings : savings * 12;
 
+  const saveSnapshot = () => {
+    const snapshot = { label: new Date().toLocaleDateString("es-ES", { month: "short", year: "2-digit" }), pct: Number(pct.toFixed(1)) };
+    setHistory((prev) => [...prev.slice(-11), snapshot]);
+  };
+
   const pageTitle = "Calculadora de porcentaje de ahorro sobre tu sueldo | MetaBox";
   const pageDescription =
-    "Calcula qué porcentaje de tu sueldo estás ahorrando cada mes, compáralo con las referencias habituales (10%, 20%) y visualízalo en un medidor interactivo. Gratis y sin registro.";
+    "Calcula qué porcentaje de tu sueldo estás ahorrando cada mes, guarda tu histórico y comprueba si tu tasa de ahorro mejora con el tiempo. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/percent";
 
   return (
@@ -62,7 +72,7 @@ function SavingsPercentTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="porcentaje de ahorro sobre el sueldo, cuánto debería ahorrar de mi sueldo, calculadora porcentaje de ahorro, qué porcentaje ahorrar al mes"
+          content="porcentaje de ahorro sobre el sueldo, cuánto debería ahorrar de mi sueldo, calculadora porcentaje de ahorro, evolución tasa de ahorro"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -166,6 +176,36 @@ function SavingsPercentTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: history.length > 0 ? "1rem" : 0 }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
+            Evolución de tu tasa de ahorro
+          </div>
+          <Button variant="ghost" onClick={saveSnapshot} style={{ width: "auto", padding: "0.5rem 0.9rem", fontSize: "0.8rem" }}>
+            Guardar este mes
+          </Button>
+        </div>
+        {history.length > 0 ? (
+          <div style={{ width: "100%", height: "150px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={history} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <XAxis dataKey="label" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                  formatter={(v) => [`${v}%`, "Tasa de ahorro"]}
+                />
+                <Line type="monotone" dataKey="pct" stroke={T.lime} strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
+            Guarda tu primer mes para empezar a ver la evolución de tu tasa de ahorro.
+          </div>
+        )}
+      </Card>
+
       <AdSlot minHeight="0px" />
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
@@ -182,7 +222,7 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambian. Introduce tu ingreso y tu ahorro mensual para ver en qué banda te sitúas y cuánto es en euros al mes o al año.
+          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambian. Guarda tu porcentaje cada mes para ver si tu tasa de ahorro mejora con el tiempo.
         </p>
       </div>
     </div>
