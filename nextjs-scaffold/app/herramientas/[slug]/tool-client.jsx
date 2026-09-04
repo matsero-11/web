@@ -163,8 +163,13 @@ export default function ToolClient({ slug }) {
 
   return (
     <Tool
+      key={slug}
       onBack={() => router.back()}
-      onNavigate={(id) => router.push(`/herramientas/${id}`)}
+      onNavigate={(id) => {
+        router.push(`/herramientas/${id}`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
     />
   );
 }
+
