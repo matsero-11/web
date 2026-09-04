@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS, CATEGORIES } from "@/lib/tools-registry";
 
-function HomeScreen({ onNavigate }) {
+function HomeScreen() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
+
   const filtered = ALL_TOOLS.filter(
     (t) =>
       t.label.toLowerCase().includes(query.toLowerCase()) ||
@@ -16,6 +19,12 @@ function HomeScreen({ onNavigate }) {
 
   const handleClear = () => {
     setQuery("");
+  };
+
+  const handleNavigate = (destination) => {
+    if (!destination) return;
+    const path = destination.startsWith("/") ? destination : `/${destination}`;
+    router.push(path);
   };
 
   return (
@@ -37,7 +46,7 @@ function HomeScreen({ onNavigate }) {
         {CATEGORIES.map((c, i) => (
           <Card
             key={i}
-            onClick={c.view ? () => onNavigate(c.view) : undefined}
+            onClick={c.view ? () => handleNavigate(c.view) : undefined}
             disabled={!c.view}
             style={{ animation: `fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: `${i * 0.05}s` }}
           >
@@ -125,7 +134,7 @@ function HomeScreen({ onNavigate }) {
           {filtered.map((t, i) => (
             <Card
               key={t.id}
-              onClick={() => onNavigate(t.id)}
+              onClick={() => handleNavigate(t.id)}
               style={{ padding: "1.2rem", animation: `fadeInUp 0.4s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: `${i * 0.03}s` }}
             >
               <IconTile icon={t.icon} tone={t.tone} />
@@ -176,3 +185,4 @@ function HomeScreen({ onNavigate }) {
 }
 
 export default HomeScreen;
+                
