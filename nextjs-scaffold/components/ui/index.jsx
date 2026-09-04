@@ -17,7 +17,7 @@ function getSafeMin(min) {
   const parsed = Number(min);
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    return 0;
+    return 1;
   }
 
   return parsed;
@@ -320,7 +320,7 @@ function Card({
 function SliderControl({
   label,
   value,
-  min = 0,
+  min = 1,
   max = 200000,
   step = 1,
   unit,
