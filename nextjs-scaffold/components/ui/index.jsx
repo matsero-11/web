@@ -357,7 +357,7 @@ function SliderControl({
       setInputText(String(safeValue));
       setError("");
     }
-  }, [safeValue, isEditing]);
+  }, [safeValue]);
 
   const sliderValue = Math.min(
     Math.max(safeValue, safeMin),
