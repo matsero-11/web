@@ -10,27 +10,26 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
-// 1. IMPORTA AQUÍ TUS COMPONENTES (ajusta las rutas según dónde los tengas guardados)
-import SavingsTool from "@/components/tools/SavingsTool"; // O como se llame tu archivo para 'savings'
-import BudgetTool from "@/components/tools/BudgetTool";
-import EmergencyTool from "@/components/tools/EmergencyTool";
-import InterestTool from "@/components/tools/InterestTool";
-import ChallengeTool from "@/components/tools/ChallengeTool";
-import TripTool from "@/components/tools/TripTool";
-import DailyTool from "@/components/tools/DailyTool";
-import ComparatorTool from "@/components/tools/ComparatorTool";
-import Rule502030Tool from "@/components/tools/Rule502030Tool";
-import PercentTool from "@/components/tools/PercentTool";
-import BigPurchaseTool from "@/components/tools/BigPurchaseTool";
-import RoundupTool from "@/components/tools/RoundupTool";
-import AnnualTool from "@/components/tools/AnnualTool";
-import LoanTool from "@/components/tools/LoanTool";
-import GroupSplitTool from "@/components/tools/GroupSplitTool";
-import TripDailyTool from "@/components/tools/TripDailyTool";
-import HolidayTool from "@/components/tools/HolidayTool";
-import CurrencyTool from "@/components/tools/CurrencyTool";
-import TipTool from "@/components/tools/TipTool";
-import TargetIncomeTool from "@/components/tools/TargetIncomeTool";
+import SavingsTool from "@/components/tools/savings-goal-tool";
+import BudgetTool from "@/components/tools/budget-tool";
+import EmergencyTool from "@/components/tools/emergency-fund-tool";
+import InterestTool from "@/components/tools/compound-interest-tool";
+import ChallengeTool from "@/components/tools/challenge-tool";
+import TripTool from "@/components/tools/trip-savings-tool";
+import DailyTool from "@/components/tools/daily-expense-tool";
+import ComparatorTool from "@/components/tools/scenario-comparator-tool";
+import Rule502030Tool from "@/components/tools/rule502030-tool";
+import PercentTool from "@/components/tools/savings-percent-tool";
+import BigPurchaseTool from "@/components/tools/big-purchase-tool";
+import RoundupTool from "@/components/tools/round-up-tool";
+import AnnualTool from "@/components/tools/annual-planner-tool";
+import LoanTool from "@/components/tools/loan-payment-tool";
+import GroupSplitTool from "@/components/tools/group-split-tool";
+import TripDailyTool from "@/components/tools/trip-daily-budget-tool";
+import HolidayTool from "@/components/tools/holiday-savings-tool";
+import CurrencyTool from "@/components/tools/currency-converter-tool";
+import TipTool from "@/components/tools/tip-calculator-tool";
+import TargetIncomeTool from "@/components/tools/target-income-tool";
 
 const ALL_TOOLS = [
   {
@@ -40,7 +39,7 @@ const ALL_TOOLS = [
     icon: Target,
     tone: "lime",
     tags: ["ahorro", "meta", "objetivo", "tiempo"],
-    component: SavingsTool, // <--- ¡Añadido aquí!
+    component: SavingsTool,
   },
   {
     id: "budget",
