@@ -44,10 +44,10 @@ function SavingsGoalTool({ onBack, onNavigate }) {
   const [newGoalName, setNewGoalName] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
-  const active = goals.find((g) => g.id === activeId) || goals[0];
+  const active = goals.find((goalObj) => goalObj.id === activeId) || goals[0];
 
   const updateActive = (patch) => {
-    setGoals((prev) => prev.map((g) => (g.id === active.id ? { ...g, ...patch } : g)));
+    setGoals((prev) => prev.map((goalObj) => (goalObj.id === active.id ? { ...goalObj, ...patch } : goalObj)));
   };
 
   useEffect(() => {
@@ -64,11 +64,11 @@ function SavingsGoalTool({ onBack, onNavigate }) {
     setShowAdd(false);
   };
 
-  const removeGoal = (id) => {
+  const removeGoal = (idToRemove) => {
     if (goals.length <= 1) return;
-    const next = goals.filter((g) => g.id !== id);
+    const next = goals.filter((goalObj) => goalObj.id !== idToRemove);
     setGoals(next);
-    if (activeId === id) setActiveId(next[0].id);
+    if (activeId === idToRemove) setActiveId(next[0].id);
   };
 
   if (!active) return null;
@@ -129,10 +129,10 @@ function SavingsGoalTool({ onBack, onNavigate }) {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
+            mainEntity: FAQS.map((faqItem) => ({
               "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
+              name: faqItem.q,
+              acceptedAnswer: { "@type": "Answer", text: faqItem.a },
             })),
           })}
         </script>
@@ -141,13 +141,13 @@ function SavingsGoalTool({ onBack, onNavigate }) {
       <ToolHeader title="Objetivo de ahorro" subtitle="Gestiona una o varias metas y verás el resultado al instante." onBack={onBack} />
 
       <div className="flex flex-wrap gap-2">
-        {goals.map((g) => (
-          <div key={g.id} style={{ position: "relative" }}>
-            <Chip label={g.name} active={activeId === g.id} onClick={() => setActiveId(g.id)} />
-            {goals.length > 1 && activeId === g.id && (
+        {goals.map((goalObj) => (
+          <div key={goalObj.id} style={{ position: "relative" }}>
+            <Chip label={goalObj.name} active={activeId === goalObj.id} onClick={() => setActiveId(goalObj.id)} />
+            {goals.length > 1 && activeId === goalObj.id && (
               <button
-                onClick={() => removeGoal(g.id)}
-                aria-label={`Eliminar ${g.name}`}
+                onClick={() => removeGoal(goalObj.id)}
+                aria-label={`Eliminar ${goalObj.name}`}
                 style={{
                   position: "absolute", top: "-6px", right: "-6px",
                   background: T.coral, borderRadius: "50%", width: "16px", height: "16px",
@@ -233,3 +233,4 @@ function SavingsGoalTool({ onBack, onNavigate }) {
 }
 
 export default SavingsGoalTool;
+                     
