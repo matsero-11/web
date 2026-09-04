@@ -1,10 +1,10 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
+  MoreHorizontal, CalendarCheck, Plus, X,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -13,9 +13,9 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
+import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: "¿Cómo se reparte la cuenta con propina entre varias personas?",
-    a: "Se suma la propina al importe de la cuenta y el total se divide entre el número de personas a partes iguales, que es lo que calcula automáticamente esta herramienta.",
+    a: "Por defecto se divide a partes iguales, pero también puedes repartirla según lo que consumió cada persona, para que quien pidió más caro pague proporcionalmente más.",
   },
 ];
 
@@ -35,6 +35,11 @@ function TipCalculatorTool({ onBack, onNavigate }) {
   const [bill, setBill] = useSharedState("tip_bill", 45);
   const [tipPct, setTipPct] = useSharedState("tip_tipPct", 10);
   const [people, setPeople] = useSharedState("tip_people", 2);
+  const [byConsumption, setByConsumption] = useState(false);
+  const [consumers, setConsumers] = usePersistentState("tip_consumers", [
+    { id: "1", name: "Persona 1", amount: 22.5 },
+    { id: "2", name: "Persona 2", amount: 22.5 },
+  ]);
 
   const tipAmount = bill * (tipPct / 100);
   const total = bill + tipAmount;
@@ -42,9 +47,31 @@ function TipCalculatorTool({ onBack, onNavigate }) {
   const animatedTotal = useAnimatedNumber(total);
   const animatedPerPerson = useAnimatedNumber(perPerson);
 
+  const consumersTotal = consumers.reduce((sum, c) => sum + (c.amount || 0), 0);
+
+  const updateConsumer = (id, amount) => {
+    setConsumers((prev) => prev.map((c) => (c.id === id ? { ...c, amount } : c)));
+  };
+  const updateConsumerName = (id, name) => {
+    setConsumers((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)));
+  };
+  const addConsumer = () => {
+    setConsumers((prev) => [...prev, { id: `${Date.now()}`, name: `Persona ${prev.length + 1}`, amount: 0 }]);
+  };
+  const removeConsumer = (id) => {
+    if (consumers.length <= 2) return;
+    setConsumers((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const consumerShare = (amount) => {
+    if (consumersTotal === 0) return 0;
+    const proportion = amount / consumersTotal;
+    return bill * proportion + tipAmount * proportion;
+  };
+
   const pageTitle = "Calculadora de propina y reparto de cuenta entre amigos | MetaBox";
   const pageDescription =
-    "Calcula la propina de un restaurante y reparte el total entre varias personas al instante, con distintos porcentajes de propina a elegir. Ideal para cenas en grupo. Gratis y sin registro.";
+    "Calcula la propina de un restaurante y reparte el total entre varias personas a partes iguales o según lo que consumió cada una. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/tip";
 
   return (
@@ -54,7 +81,7 @@ function TipCalculatorTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="calculadora de propina, cuánto dejar de propina, calculadora propina restaurante, dividir cuenta con propina entre amigos"
+          content="calculadora de propina, cuánto dejar de propina, dividir cuenta con propina entre amigos, reparto propina por consumo"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -105,8 +132,10 @@ function TipCalculatorTool({ onBack, onNavigate }) {
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedTotal)}</div>
         </Card>
         <Card style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Por persona</div>
-          <div style={{ ...fontDisplay, color: T.lavender, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedPerPerson)}</div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{byConsumption ? "Personas" : "Por persona"}</div>
+          <div style={{ ...fontDisplay, color: T.lavender, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>
+            {byConsumption ? consumers.length : fmtEUR(animatedPerPerson)}
+          </div>
         </Card>
       </div>
 
@@ -122,10 +151,61 @@ function TipCalculatorTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      <div className="flex gap-2 justify-center">
+        <Chip label="Partes iguales" active={!byConsumption} onClick={() => setByConsumption(false)} />
+        <Chip label="Según lo que pidió cada uno" active={byConsumption} onClick={() => setByConsumption(true)} />
+      </div>
+
+      {byConsumption && (
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+            Lo que pidió cada uno
+          </div>
+          <div className="flex flex-col gap-4">
+            {consumers.map((c) => (
+              <div key={c.id} className="flex items-center gap-2">
+                <input
+                  value={c.name}
+                  onChange={(e) => updateConsumerName(c.id, e.target.value)}
+                  style={{
+                    ...fontBody, width: "6rem", background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                    borderRadius: "0.6rem", padding: "0.5rem 0.7rem", color: T.text, fontSize: "0.82rem", outline: "none", flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <SliderControl label="" value={c.amount} min={0} max={200} step={0.5} unit="€" onChange={(v) => updateConsumer(c.id, v)} />
+                </div>
+                <div style={{ ...fontBody, color: T.lime, fontSize: "0.8rem", fontWeight: 600, width: "4rem", textAlign: "right", flexShrink: 0 }}>
+                  {fmtEUR(consumerShare(c.amount))}
+                </div>
+                {consumers.length > 2 && (
+                  <button onClick={() => removeConsumer(c.id)} aria-label={`Eliminar ${c.name}`} style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", flexShrink: 0 }}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={addConsumer}
+            style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: "transparent", border: `1px dashed ${T.border}`, borderRadius: "0.7rem", padding: "0.55rem", color: T.textMuted, fontSize: "0.82rem", cursor: "pointer", marginTop: "0.8rem", justifyContent: "center" }}
+          >
+            <Plus size={14} /> Añadir persona
+          </button>
+          {Math.abs(consumersTotal - bill) > 0.5 && (
+            <div style={{ ...fontBody, color: T.coral, fontSize: "0.75rem", marginTop: "0.6rem", textAlign: "center" }}>
+              Lo pedido suma {fmtEUR(consumersTotal)}, pero la cuenta es {fmtEUR(bill)} — ajusta para que cuadre.
+            </div>
+          )}
+        </Card>
+      )}
+
       <AdviceBlock
         text={
-          people > 1
-            ? "El reparto es a partes iguales. Si alguien pidió mucho más caro, puede ser más justo dividir por lo consumido en vez de a partes iguales."
+          byConsumption
+            ? "Este reparto es proporcional a lo que cada persona pidió, así que quien consumió más paga más — sin cálculos manuales."
+            : people > 1
+            ? "El reparto es a partes iguales. Si alguien pidió mucho más caro, cambia a 'Según lo que pidió cada uno' arriba."
             : "Sube o baja el porcentaje según el servicio — no hay un porcentaje único correcto en todos los sitios."
         }
       />
@@ -139,7 +219,9 @@ function TipCalculatorTool({ onBack, onNavigate }) {
           </div>
           <SliderControl label="Importe de la cuenta" value={bill} min={0} max={500} step={1} unit="€" onChange={setBill} />
           <SliderControl label="Propina" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
-          <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
+          {!byConsumption && (
+            <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
+          )}
         </div>
       </Card>
 
@@ -150,14 +232,16 @@ function TipCalculatorTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)} total, ${fmtEUR(perPerson)}/persona entre ${people}.`
+            byConsumption
+              ? `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)}. Reparto por consumo: ` + consumers.map((c) => `${c.name} ${fmtEUR(consumerShare(c.amount))}`).join(", ")
+              : `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)} total, ${fmtEUR(perPerson)}/persona entre ${people}.`
           }
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Calcular la propina y repartir la cuenta a mano al final de una cena en grupo suele acabar en discusiones y errores. Esta calculadora suma el porcentaje de propina que elijas al importe de la cuenta y divide el total entre todos los comensales al instante.
+          Calcular la propina y repartir la cuenta a mano al final de una cena en grupo suele acabar en discusiones. Esta calculadora reparte a partes iguales o, si lo prefieres, de forma proporcional a lo que pidió cada persona, para que nadie pague de más ni de menos.
         </p>
       </div>
     </div>
