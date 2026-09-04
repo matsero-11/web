@@ -1,24 +1,21 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Helmet } from "react-helmet-async";
-import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+
+const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
+const PieChart = dynamic(() => import("recharts").then((mod) => mod.PieChart), { ssr: false });
+const Pie = dynamic(() => import("recharts").then((mod) => mod.Pie), { ssr: false });
+const Cell = dynamic(() => import("recharts").then((mod) => mod.Cell), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
 
 const FAQS = [
   {
@@ -69,18 +66,20 @@ function Rule502030Tool({ onBack, onNavigate }) {
   const diff = income - total;
   const animatedDiff = useAnimatedNumber(diff);
 
-  const donutData =
-    donutView === "actual"
-      ? [
-          { name: "Necesidades", value: Math.max(needs, 0), color: T.lime },
-          { name: "Deseos", value: Math.max(wants, 0), color: T.lavender },
-          { name: "Ahorro", value: Math.max(savings, 0), color: "#7FA8C9" },
-        ]
-      : [
-          { name: "Necesidades", value: recNeeds, color: T.lime },
-          { name: "Deseos", value: recWants, color: T.lavender },
-          { name: "Ahorro", value: recSavings, color: "#7FA8C9" },
-        ];
+  const donutData = useMemo(() => {
+    if (donutView === "actual") {
+      return [
+        { name: "Necesidades", value: Math.max(needs, 0), color: T.lime },
+        { name: "Deseos", value: Math.max(wants, 0), color: T.lavender },
+        { name: "Ahorro", value: Math.max(savings, 0), color: "#7FA8C9" },
+      ];
+    }
+    return [
+      { name: "Necesidades", value: Math.max(recNeeds, 0), color: T.lime },
+      { name: "Deseos", value: Math.max(recWants, 0), color: T.lavender },
+      { name: "Ahorro", value: Math.max(recSavings, 0), color: "#7FA8C9" },
+    ];
+  }, [donutView, needs, wants, savings, recNeeds, recWants, recSavings]);
 
   const Row = ({ label, value, setValue, rec, accent }) => (
     <div>
@@ -177,7 +176,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
               />
             </PieChart>
           </ResponsiveContainer>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
             <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
               {fmtEUR(Math.abs(animatedDiff))}
             </div>
@@ -227,7 +226,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
         50/30/20 es una guía orientativa, no una recomendación financiera personalizada.
       </div>
 
-      <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} primaryId="budget" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -255,3 +254,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
+                                          
