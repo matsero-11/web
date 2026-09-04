@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -27,20 +27,28 @@ const FAQS = [
   },
   {
     q: "¿Este cálculo tiene en cuenta impuestos?",
-    a: "No, el resultado es el ingreso neto mínimo según los datos que introduzcas — no incluye impuestos ni retenciones, que varían según tu situación laboral y fiscal.",
+    a: "El resultado principal es el ingreso neto (lo que necesitas recibir en la cuenta). Puedes activar la estimación de bruto anual para tener una referencia orientativa de cuánto negociar en una oferta de trabajo.",
+  },
+  {
+    q: "¿Es exacta la conversión de neto a bruto?",
+    a: "No, es una aproximación simplificada con un porcentaje medio de retención en España. La retención real depende de tu situación personal, comunidad autónoma y tipo de contrato — consúltalo con una gestoría para cifras exactas.",
   },
 ];
 
 function TargetIncomeTool({ onBack, onNavigate }) {
   const [expenses, setExpenses] = useSharedState("targetincome_expenses", 1200);
   const [desiredSavings, setDesiredSavings] = useSharedState("targetincome_desiredSavings", 300);
+  const [showGross, setShowGross] = useState(false);
+  const [retentionPct, setRetentionPct] = useSharedState("targetincome_retentionPct", 20);
 
   const requiredIncome = expenses + desiredSavings;
   const animatedIncome = useAnimatedNumber(requiredIncome);
+  const annualNet = requiredIncome * 12;
+  const annualGross = retentionPct < 100 ? annualNet / (1 - retentionPct / 100) : annualNet;
 
   const pageTitle = "Calculadora de cuánto necesito ganar según mis gastos y ahorro | MetaBox";
   const pageDescription =
-    "Calcula el ingreso mínimo que necesitas ganar al mes para cubrir tus gastos fijos y alcanzar el ahorro que te propones, con un desglose visual entre gastos y ahorro. Gratis y sin registro.";
+    "Calcula el ingreso neto mínimo que necesitas ganar al mes según tus gastos y ahorro deseado, y una estimación orientativa del salario bruto anual equivalente. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/targetincome";
 
   return (
@@ -50,7 +58,7 @@ function TargetIncomeTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="cuánto necesito ganar al mes, calculadora ingreso mínimo necesario, cuánto tengo que ganar para ahorrar, salario mínimo según gastos"
+          content="cuánto necesito ganar al mes, calculadora ingreso mínimo necesario, salario bruto necesario, calculadora neto a bruto"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -96,7 +104,7 @@ function TargetIncomeTool({ onBack, onNavigate }) {
       <ToolHeader title="Cuánto necesito ganar" subtitle="A partir de tus gastos y lo que quieres ahorrar, el ingreso mínimo que necesitas." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Necesitas ingresar al mes</div>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Necesitas ingresar al mes (neto)</div>
         <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {fmtEUR(animatedIncome)}
         </div>
@@ -126,6 +134,26 @@ function TargetIncomeTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {!showGross ? (
+        <Button variant="ghost" onClick={() => setShowGross(true)}>
+          Ver estimación en salario bruto anual
+        </Button>
+      ) : (
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+            Estimación de bruto anual
+          </div>
+          <SliderControl label="Retención estimada (IRPF + SS)" value={retentionPct} min={5} max={45} step={1} unit="%" onChange={setRetentionPct} accent="lavender" />
+          <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", marginTop: "1.1rem" }}>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Bruto anual aproximado necesario</div>
+            <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.6rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(annualGross)}</div>
+          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center", marginTop: "0.7rem" }}>
+            Estimación orientativa, no un cálculo fiscal exacto.
+          </div>
+        </Card>
+      )}
+
       <AdviceBlock
         text={
           requiredIncome > 0 && desiredSavings / requiredIncome > 0.25
@@ -144,7 +172,7 @@ function TargetIncomeTool({ onBack, onNavigate }) {
       <AdSlot minHeight="0px" />
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
-        No incluye impuestos ni retenciones: es el ingreso neto mínimo necesario según lo que indiques.
+        No incluye impuestos ni retenciones exactas: el neto es el mínimo necesario según lo que indiques.
       </div>
 
       <RelatedTools ids={["percent", "budget"]} onNavigate={onNavigate} />
@@ -152,14 +180,15 @@ function TargetIncomeTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Gastos ${fmtEUR(expenses)} + ahorro deseado ${fmtEUR(desiredSavings)} = necesitas ganar ${fmtEUR(requiredIncome)}/mes.`
+            `Gastos ${fmtEUR(expenses)} + ahorro deseado ${fmtEUR(desiredSavings)} = necesitas ganar ${fmtEUR(requiredIncome)}/mes neto.` +
+            (showGross ? ` Bruto anual aproximado: ${fmtEUR(annualGross)}.` : "")
           }
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Ya sea para negociar un sueldo, evaluar una oferta de trabajo o planificar un cambio de vida, saber el ingreso mínimo real que necesitas es un dato clave. Esta calculadora suma tus gastos fijos mensuales al ahorro que te propones conseguir, para darte una cifra clara de cuánto necesitas ganar cada mes.
+          Ya sea para negociar un sueldo, evaluar una oferta de trabajo o planificar un cambio de vida, saber el ingreso mínimo real que necesitas es un dato clave. Esta calculadora suma tus gastos y ahorro deseado, y opcionalmente estima el salario bruto anual equivalente para que tengas una referencia al negociar.
         </p>
       </div>
     </div>
