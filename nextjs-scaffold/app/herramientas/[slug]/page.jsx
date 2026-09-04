@@ -36,10 +36,35 @@ export async function generateMetadata({ params }) {
 export default async function ToolPage({ params }) {
   const { slug } = await params;
   const tool = ALL_TOOLS.find((item) => item.id === slug);
+  const meta = SEO_METADATA[slug];
 
-  if (!tool) {
+  if (!tool || !meta) {
     notFound();
   }
 
-  return <ToolClient slug={slug} />;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: tool.name || meta.title,
+    operatingSystem: "All",
+    applicationCategory: "FinanceApplication",
+    browser: "Requires JavaScript. Requires HTML5.",
+    description: meta.description,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "EUR",
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ToolClient slug={slug} />
+    </>
+  );
 }
+
