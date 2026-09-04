@@ -1,9 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Helmet } from "react-helmet-async";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, Tooltip
-} from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR, useAnimatedNumber } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock, ProgressBar } from "@/components/ui";
@@ -12,6 +10,12 @@ import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+
+const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
+const BarChart = dynamic(() => import("recharts").then((mod) => mod.BarChart), { ssr: false });
+const Bar = dynamic(() => import("recharts").then((mod) => mod.Bar), { ssr: false });
+const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -37,7 +41,7 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
   const [currentSaved, setCurrentSaved] = useSharedState("annual_currentSaved", 0);
 
   const lowMonths = useMemo(() => new Set(lowMonthsArray), [lowMonthsArray]);
-  const realMonth = new Date().getMonth(); // 0-11, índice directo en MONTHS
+  const realMonth = new Date().getMonth();
 
   const evenShare = goal / 12;
   const lowShare = evenShare * (1 - reductionPct / 100);
@@ -60,7 +64,6 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
     importe: Math.round(lowMonths.has(i) ? lowShare : normalShare),
   }));
 
-  // Cuánto deberías llevar acumulado según el plan hasta el mes actual (incluido)
   const expectedByNow = useMemo(() => {
     let sum = 0;
     for (let i = 0; i <= realMonth; i++) {
@@ -74,35 +77,11 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
   const onTrack = diffVsPlan >= -0.5;
   const yearPct = goal > 0 ? Math.min((currentSaved / goal) * 100, 100) : 0;
 
-  const pageTitle = "Planificador de ahorro anual: reparte tu objetivo en 12 meses | MetaBox";
-  const pageDescription =
-    "Reparte tu objetivo de ahorro anual entre los 12 meses del año, marca los meses más difíciles (vacaciones, Navidad) y haz seguimiento real de si vas adelantado o atrasado respecto a tu plan. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/annual";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="planificador de ahorro anual, cómo repartir el ahorro anual, plan de ahorro 12 meses, calculadora de ahorro anual, seguimiento de ahorro anual"
-        />
-        <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/annual.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/annual.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -113,7 +92,7 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
             operatingSystem: "Any",
             inLanguage: "es",
             offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-            description: pageDescription,
+            description: "Reparte tu objetivo de ahorro anual entre los 12 meses del año...",
           })}
         </script>
         <script type="application/ld+json">
@@ -182,6 +161,8 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
               <button
                 key={m}
                 onClick={() => toggleMonth(i)}
+                aria-pressed={low}
+                aria-label={`Mes de ${m}, estado: ${low ? "flojo" : "normal"}`}
                 style={{
                   borderRadius: "0.8rem",
                   padding: "0.75rem 0.4rem",
