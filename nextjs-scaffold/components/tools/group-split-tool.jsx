@@ -1,10 +1,10 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
   ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
+  MoreHorizontal, CalendarCheck, Plus, X, ArrowRight,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -15,41 +15,78 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
+import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
 const FAQS = [
   {
-    q: "¿Cómo se calcula cuánto debe pagar cada persona?",
-    a: "Se divide el gasto total entre el número de personas a partes iguales. Si alguien pagó más de lo que le correspondía, la herramienta calcula cuánto le deben el resto del grupo.",
+    q: "¿Cómo se calcula quién debe pagar a quién?",
+    a: "Cada persona tiene un balance (lo que pagó menos lo que le tocaba pagar). La herramienta calcula las transferencias mínimas necesarias para saldar todas las deudas del grupo, en vez de que cada uno le deba algo a todos los demás.",
   },
   {
-    q: "¿Qué pasa si una persona pagó más que otras?",
-    a: "La calculadora compara lo que esa persona pagó con lo que le correspondía pagar (el reparto a partes iguales) y muestra la diferencia que le deben o que debe al grupo.",
+    q: "¿Qué pasa si nadie pagó una parte igual?",
+    a: "No pasa nada: puedes introducir exactamente lo que pagó cada persona, y el reparto a partes iguales se calcula igualmente sobre el total del grupo, mostrando quién debe compensar a quién.",
   },
 ];
 
 function GroupSplitTool({ onBack, onNavigate }) {
-  const [total, setTotal] = useSharedState("groupsplit_total", 120);
-  const [people, setPeople] = useSharedState("groupsplit_people", 4);
-  const [paidByMe, setPaidByMe] = useSharedState("groupsplit_paidByMe", 120);
+  const [people, setPeople] = usePersistentState("groupsplit_peopleList", [
+    { id: "1", name: "Yo", paid: 120 },
+    { id: "2", name: "Persona 2", paid: 0 },
+  ]);
+  const [newName, setNewName] = useState("");
 
-  useEffect(() => {
-    if (paidByMe > total) setPaidByMe(total);
-  }, [total, paidByMe]);
+  const total = people.reduce((sum, p) => sum + (p.paid || 0), 0);
+  const share = people.length > 0 ? total / people.length : 0;
 
-  const share = people > 0 ? total / people : 0;
-  const owedToMe = paidByMe - share;
-  const perOtherPerson = people > 1 && owedToMe > 0 ? owedToMe / (people - 1) : 0;
+  const updatePaid = (id, paid) => {
+    setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, paid } : p)));
+  };
 
-  const animatedShare = useAnimatedNumber(share);
-  const animatedOwed = useAnimatedNumber(Math.abs(owedToMe));
+  const updateName = (id, name) => {
+    setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+  };
+
+  const addPerson = () => {
+    const name = newName.trim() || `Persona ${people.length + 1}`;
+    setPeople((prev) => [...prev, { id: `${Date.now()}`, name, paid: 0 }]);
+    setNewName("");
+  };
+
+  const removePerson = (id) => {
+    if (people.length <= 2) return;
+    setPeople((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  // Algoritmo de liquidación mínima: empareja quien más debe con quien más le deben
+  const settlements = useMemo(() => {
+    const balances = people.map((p) => ({ name: p.name, balance: (p.paid || 0) - share }));
+    const debtors = balances.filter((b) => b.balance < -0.01).map((b) => ({ ...b, balance: -b.balance })).sort((a, b) => b.balance - a.balance);
+    const creditors = balances.filter((b) => b.balance > 0.01).sort((a, b) => b.balance - a.balance);
+
+    const result = [];
+    let di = 0, ci = 0;
+    const d = debtors.map((x) => ({ ...x }));
+    const c = creditors.map((x) => ({ ...x }));
+
+    while (di < d.length && ci < c.length) {
+      const amount = Math.min(d[di].balance, c[ci].balance);
+      if (amount > 0.01) {
+        result.push({ from: d[di].name, to: c[ci].name, amount });
+      }
+      d[di].balance -= amount;
+      c[ci].balance -= amount;
+      if (d[di].balance < 0.01) di++;
+      if (c[ci].balance < 0.01) ci++;
+    }
+    return result;
+  }, [people, share]);
 
   const pageTitle = "Calculadora para dividir gastos entre amigos o grupo | MetaBox";
   const pageDescription =
-    "Divide un gasto compartido entre varias personas a partes iguales y calcula al instante cuánto debe pagar cada una y cuánto te deben si pagaste tú. Ideal para viajes, cenas o alquileres compartidos. Gratis.";
+    "Divide un gasto compartido entre varias personas, introduce lo que pagó cada una, y calcula al instante las transferencias mínimas necesarias para saldar todas las deudas del grupo. Gratis.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/groupsplit";
 
   return (
@@ -59,7 +96,7 @@ function GroupSplitTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="dividir gastos entre amigos, calculadora reparto de gastos, cómo repartir una cuenta entre varios, dividir gasto de viaje entre amigos"
+          content="dividir gastos entre amigos, calculadora reparto de gastos, cómo repartir una cuenta entre varios, quién debe pagar a quién grupo"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -102,77 +139,96 @@ function GroupSplitTool({ onBack, onNavigate }) {
         </script>
       </Helmet>
 
-      <ToolHeader title="Reparto de gastos en grupo" subtitle="Divide un gasto entre varias personas y ve quién debe qué." onBack={onBack} />
+      <ToolHeader title="Reparto de gastos en grupo" subtitle="Introduce lo que pagó cada persona y ve quién debe a quién." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Cada persona paga</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
-          {fmtEUR(animatedShare)}
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Gasto total del grupo</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700, margin: "0.3rem 0" }}>
+          {fmtEUR(total)}
         </div>
-        {owedToMe > 0.5 && (
-          <div style={{ ...fontBody, color: T.lavender, fontSize: "0.88rem" }}>
-            Te deben {fmtEUR(animatedOwed)} en total{people > 2 ? ` (${fmtEUR(perOtherPerson)} cada uno)` : ""}
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
+          {fmtEUR(share)} por persona entre {people.length}
+        </div>
+      </Card>
+
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+          ¿Quién pagó qué?
+        </div>
+        <div className="flex flex-col gap-4">
+          {people.map((p) => (
+            <div key={p.id} className="flex items-center gap-2">
+              <input
+                value={p.name}
+                onChange={(e) => updateName(p.id, e.target.value)}
+                style={{
+                  ...fontBody, width: "6.5rem", background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                  borderRadius: "0.6rem", padding: "0.5rem 0.7rem", color: T.text, fontSize: "0.85rem", outline: "none", flexShrink: 0,
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <SliderControl label="" value={p.paid} min={0} max={2000} step={5} unit="€" onChange={(v) => updatePaid(p.id, v)} />
+              </div>
+              {people.length > 2 && (
+                <button
+                  onClick={() => removePerson(p.id)}
+                  aria-label={`Eliminar ${p.name}`}
+                  style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.3rem", flexShrink: 0 }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5" style={{ marginTop: "1rem" }}>
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addPerson()}
+            placeholder="Nombre de la nueva persona..."
+            style={{
+              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none",
+            }}
+          />
+          <button onClick={addPerson} aria-label="Añadir persona" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+            <Plus size={18} color="#12200A" />
+          </button>
+        </div>
+      </Card>
+
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+          Quién debe pagar a quién
+        </div>
+        {settlements.length === 0 ? (
+          <div style={{ ...fontBody, color: T.lime, fontSize: "0.9rem", textAlign: "center" }}>
+            Todo cuadra — nadie debe nada a nadie.
           </div>
-        )}
-        {owedToMe < -0.5 && (
-          <div style={{ ...fontBody, color: T.coral, fontSize: "0.88rem" }}>
-            Tú debes {fmtEUR(animatedOwed)} al grupo
+        ) : (
+          <div className="flex flex-col gap-3">
+            {settlements.map((s, i) => (
+              <div key={i} className="flex items-center justify-between" style={{ background: T.surfaceAlt, borderRadius: "0.7rem", padding: "0.7rem 0.9rem" }}>
+                <div className="flex items-center gap-2" style={{ ...fontBody, fontSize: "0.88rem" }}>
+                  <span style={{ color: T.coral, fontWeight: 600 }}>{s.from}</span>
+                  <ArrowRight size={14} color={T.textMuted} />
+                  <span style={{ color: T.lime, fontWeight: 600 }}>{s.to}</span>
+                </div>
+                <span style={{ ...fontDisplay, color: T.text, fontWeight: 700, fontSize: "0.95rem" }}>{fmtEUR(s.amount)}</span>
+              </div>
+            ))}
           </div>
         )}
       </Card>
-
-      {people > 1 ? (
-        <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
-            Tú frente al resto del grupo
-          </div>
-          <div style={{ width: "100%", height: "160px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                layout="vertical"
-                data={[
-                  { persona: "Tú", balance: owedToMe },
-                  { persona: people > 2 ? "Cada otra persona" : "La otra persona", balance: -share },
-                ]}
-                margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
-              >
-                <XAxis type="number" hide domain={["auto", "auto"]} />
-                <YAxis type="category" dataKey="persona" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} width={95} />
-                <Tooltip
-                  contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                  formatter={(v) => [fmtEUR(v), v >= 0 ? "Le deben" : "Debe"]}
-                />
-                <Bar dataKey="balance" radius={[0, 6, 6, 0]} maxBarSize={24} animationDuration={400}>
-                  <Cell fill={owedToMe >= 0 ? T.lime : T.coral} />
-                  <Cell fill={T.coral} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      ) : (
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", textAlign: "center" }}>
-          Con 1 sola persona, todo el gasto es tuyo — sube el número de personas para repartirlo.
-        </div>
-      )}
 
       <AdviceBlock
         text={
-          owedToMe > 0.5
-            ? "Para evitar líos, pide el importe exacto por persona en vez de una cifra redonda: así nadie paga de más ni de menos."
-            : owedToMe < -0.5
-            ? "Tú eres quien debe dinero al grupo esta vez. Sáldalo cuanto antes para que el reparto no se acumule en la siguiente ronda."
-            : "El reparto está equilibrado: nadie debe nada a nadie con estos números."
+          settlements.length > 2
+            ? "Con varias transferencias, es más fácil que una sola persona (la que más debe) pague directamente a las demás, aunque el reparto matemático diga otra cosa."
+            : "Estas son las transferencias mínimas necesarias para que todo el mundo quede en paz — nadie tiene que pagar de más ni de menos."
         }
       />
-
-      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div className="flex flex-col gap-6">
-          <SliderControl label="Gasto total" value={total} min={0} max={2000} step={5} unit="€" onChange={setTotal} />
-          <SliderControl label="Número de personas" value={people} min={1} max={20} step={1} unit="personas" onChange={setPeople} accent="lavender" />
-          <SliderControl label="Lo que pagaste tú" value={paidByMe} min={0} max={total} step={5} unit="€" onChange={setPaidByMe} />
-        </div>
-      </Card>
 
       <AdSlot minHeight="0px" />
 
@@ -181,14 +237,15 @@ function GroupSplitTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Reparto de gastos: ${fmtEUR(total)} entre ${people} personas = ${fmtEUR(share)} cada una. Pagaste ${fmtEUR(paidByMe)}.`
+            `Reparto de gastos: ${fmtEUR(total)} entre ${people.length} personas (${fmtEUR(share)} c/u). ` +
+            (settlements.length === 0 ? "Nadie debe nada." : settlements.map((s) => `${s.from} debe ${fmtEUR(s.amount)} a ${s.to}`).join("; "))
           }
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Repartir gastos en grupo —una cena, un viaje, un alquiler compartido— es más fácil cuando alguien hizo la cuenta primero. Esta calculadora divide el gasto total entre todas las personas y, si tú adelantaste el pago, te dice exactamente cuánto te debe cada uno del grupo.
+          Repartir gastos en grupo —una cena, un viaje, un alquiler compartido— se complica cuando varias personas pagan partes distintas. Esta calculadora no solo divide el total a partes iguales: calcula las transferencias mínimas exactas para que todo el grupo quede saldado, sin que nadie tenga que hacer varias transferencias pequeñas innecesarias.
         </p>
       </div>
     </div>
