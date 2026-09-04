@@ -7,8 +7,8 @@ function AdSlot({
   children,
   slot,
   label = "Publicidad",
-  minHeight = "0px",
-  reserveSpace = false,
+  minHeight = "90px",      // Altura estándar por defecto para banners de anuncios
+  reserveSpace = true,     // Deja el espacio reservado por defecto para evitar saltos (CLS)
   className = "",
   style = {},
   position = "inline",
@@ -39,7 +39,7 @@ function AdSlot({
         justifyContent: "center",
         overflow: "hidden",
         boxSizing: "border-box",
-        margin: hasContent || reserveSpace ? "0.25rem 0" : 0,
+        margin: "1rem 0",
         ...style,
       }}
     >
@@ -75,12 +75,18 @@ function AdSlot({
           {children}
         </div>
       ) : (
-        <span
+        <div
           aria-hidden="true"
           style={{
-            display: "block",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             width: "100%",
             minHeight: safeMinHeight,
+            // NOTA: Si en algún momento de desarrollo quieres ver visualmente 
+            // dónde está el espacio del anuncio, puedes descomentar la línea de abajo:
+            // border: `1px dashed ${T.border}`,
+            // borderRadius: "0.5rem",
           }}
         />
       )}
@@ -89,3 +95,4 @@ function AdSlot({
 }
 
 export default AdSlot;
+
