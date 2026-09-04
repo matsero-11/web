@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUpRight, BookOpen, Sparkles } from "lucide-react";
 import { T, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
@@ -51,13 +52,19 @@ function ToolRecommendationCard({
   onNavigate,
   context,
 }) {
+  const router = useRouter();
   const style = getRecommendationStyle(type);
   const Icon = style.icon;
-  const isNavigable = typeof onNavigate === "function";
 
   const handleClick = () => {
-    if (isNavigable) {
-      onNavigate(tool.id);
+    const targetId = typeof tool.id === "object" && tool.id !== null ? (tool.id.id || tool.id.slug) : tool.id;
+    if (!targetId) return;
+
+    if (typeof onNavigate === "function") {
+      onNavigate(targetId);
+    } else {
+      router.push(`/herramientas/${targetId}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -126,30 +133,26 @@ function ToolRecommendationCard({
     </Card>
   );
 
-  if (isNavigable) {
-    return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
-        aria-label={`Abrir ${tool.label}. ${tool.desc}`}
-        style={{
-          cursor: "pointer",
-          display: "block",
-        }}
-      >
-        {cardContent}
-      </div>
-    );
-  }
-
-  return cardContent;
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      aria-label={`Abrir ${tool.label}. ${tool.desc}`}
+      style={{
+        cursor: "pointer",
+        display: "block",
+      }}
+    >
+      {cardContent}
+    </div>
+  );
 }
 
 function EditorialRecommendationCard({ recommendation }) {
@@ -450,4 +453,4 @@ function RelatedTools({
 }
 
 export default RelatedTools;
-        
+      
