@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -13,10 +13,11 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import RelatedTools from "@/components/RelatedTools";
+import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
+import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
 const FAQS = [
@@ -32,13 +33,19 @@ const FAQS = [
     q: "¿Alargar el plazo del préstamo es mejor o peor?",
     a: "Alargar el plazo reduce la cuota mensual, pero aumenta el total de intereses pagados durante toda la vida del préstamo. Compara ambos modos de la gráfica para decidir con datos.",
   },
+  {
+    q: "¿Merece la pena pagar una cuota extra cada mes?",
+    a: "Sí: amortizar una cantidad adicional cada mes reduce directamente el capital pendiente, lo que acorta el plazo real y reduce el interés total pagado, a veces de forma muy notable.",
+  },
 ];
 
 function LoanPaymentTool({ onBack, onNavigate }) {
-  const [principal, setPrincipal] = useState(10000);
-  const [rate, setRate] = useState(6);
-  const [months, setMonths] = useState(48);
+  const [principal, setPrincipal] = useSharedState("loan_principal", 10000);
+  const [rate, setRate] = useSharedState("loan_rate", 6);
+  const [months, setMonths] = useSharedState("loan_months", 48);
   const [chartMode, setChartMode] = useState("saldo");
+  const [showExtra, setShowExtra] = useState(false);
+  const [extraPayment, setExtraPayment] = useSharedState("loan_extraPayment", 50);
 
   const monthlyRate = rate / 100 / 12;
   const payment = useMemo(() => {
@@ -66,9 +73,50 @@ function LoanPaymentTool({ onBack, onNavigate }) {
     return points;
   }, [principal, monthlyRate, payment, months]);
 
+  // Simulación con amortización extra mensual
+  const withExtra = useMemo(() => {
+    let balance = principal;
+    let totalPaidExtra = 0;
+    let m = 0;
+    while (balance > 0.01 && m < 600) {
+      m++;
+      const interest = balance * monthlyRate;
+      const principalPortion = payment - interest;
+      balance = Math.max(balance - principalPortion - extraPayment, 0);
+      totalPaidExtra += payment + (balance > 0 ? extraPayment : Math.max(0, extraPayment - (balance === 0 ? 0 : 0)));
+    }
+    const totalCostExtra = m * payment + Math.min(m, months) * 0; // aproximación simple: recalculamos abajo con más precisión
+    return { months: m };
+  }, [principal, monthlyRate, payment, extraPayment, months]);
+
+  // Cálculo más preciso del coste total con amortización extra
+  const extraSimulation = useMemo(() => {
+    let balance = principal;
+    let totalCost = 0;
+    let m = 0;
+    while (balance > 0.01 && m < 600) {
+      m++;
+      const interest = balance * monthlyRate;
+      let principalPortion = payment - interest;
+      let thisMonthPayment = payment;
+      if (principalPortion + extraPayment >= balance) {
+        thisMonthPayment = balance + interest;
+        balance = 0;
+      } else {
+        balance -= (principalPortion + extraPayment);
+        thisMonthPayment = payment + extraPayment;
+      }
+      totalCost += thisMonthPayment;
+    }
+    return { months: m, totalCost, totalInterest: Math.max(totalCost - principal, 0) };
+  }, [principal, monthlyRate, payment, extraPayment]);
+
+  const monthsSaved = months - extraSimulation.months;
+  const interestSaved = totalInterest - extraSimulation.totalInterest;
+
   const pageTitle = "Calculadora de cuota de préstamo e intereses totales | MetaBox";
   const pageDescription =
-    "Calcula la cuota mensual de un préstamo personal o hipoteca según el importe, la TAE y el plazo, y visualiza cuánto pagarás en intereses con una gráfica de amortización. Gratis y sin registro.";
+    "Calcula la cuota mensual de un préstamo, visualiza la amortización y descubre cuánto ahorrarías en intereses y tiempo si pagas una cuota extra cada mes. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/loan";
 
   return (
@@ -78,7 +126,7 @@ function LoanPaymentTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="calculadora cuota préstamo, cuánto pagaré de intereses préstamo, calculadora amortización préstamo, cuota mensual préstamo personal"
+          content="calculadora cuota préstamo, cuánto pagaré de intereses préstamo, calculadora amortización préstamo, amortización anticipada préstamo"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -161,6 +209,33 @@ function LoanPaymentTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {!showExtra ? (
+        <Button variant="ghost" onClick={() => setShowExtra(true)}>
+          ¿Y si pago una cuota extra cada mes?
+        </Button>
+      ) : (
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+            Amortización anticipada
+          </div>
+          <SliderControl label="Extra al mes" value={extraPayment} min={0} max={Math.max(500, payment)} step={10} unit="€" onChange={setExtraPayment} accent="lavender" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Terminas antes</div>
+              <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
+                {monthsSaved > 0 ? `${monthsSaved} meses` : "—"}
+              </div>
+            </div>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Ahorras en intereses</div>
+              <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
+                {fmtEUR(Math.max(interestSaved, 0))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <AdviceBlock
         text={
           totalInterest > principal * 0.5
@@ -190,7 +265,8 @@ function LoanPaymentTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Préstamo: ${fmtEUR(principal)} al ${rate}% TAE a ${months} meses → cuota mensual ${fmtEUR(payment)}, intereses totales ${fmtEUR(totalInterest)}.`
+            `Préstamo: ${fmtEUR(principal)} al ${rate}% TAE a ${months} meses → cuota mensual ${fmtEUR(payment)}, intereses totales ${fmtEUR(totalInterest)}.` +
+            (showExtra ? ` Con ${fmtEUR(extraPayment)}/mes extra: terminas ${monthsSaved} meses antes y ahorras ${fmtEUR(interestSaved)} en intereses.` : "")
           }
         />
         <ExportCSVButton
@@ -207,7 +283,7 @@ function LoanPaymentTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Antes de firmar un préstamo, conviene saber exactamente cuánto vas a pagar cada mes y cuánto acabará costándote en intereses a lo largo de toda su duración. Esta calculadora usa el sistema de cuota fija, el más habitual en préstamos personales e hipotecas, y te muestra visualmente cómo evoluciona el saldo pendiente frente a los intereses acumulados.
+          Antes de firmar un préstamo, conviene saber exactamente cuánto vas a pagar cada mes y cuánto acabará costándote en intereses. Esta calculadora usa el sistema de cuota fija, y además te permite simular cuánto ahorrarías en tiempo e intereses si decides amortizar una cantidad extra cada mes — algo que las entidades no siempre destacan.
         </p>
       </div>
     </div>
