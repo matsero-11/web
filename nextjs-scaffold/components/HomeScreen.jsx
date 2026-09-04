@@ -23,9 +23,8 @@ export default function HomeScreen() {
   // Buscamos si hay una herramienta activa seleccionada
   const selectedTool = ALL_TOOLS.find((t) => t.id === activeToolId);
 
-  // Si el usuario seleccionó una herramienta, renderizamos su componente correspondiente
-  if (selectedTool && selectedTool.component) {
-    const ToolComponent = selectedTool.component;
+  // Si el usuario seleccionó una herramienta, renderizamos su componente o un mensaje de error claro
+  if (activeToolId) {
     return (
       <div className="pt-8 pb-28 w-full">
         <button
@@ -45,7 +44,17 @@ export default function HomeScreen() {
         >
           ← Volver al inicio
         </button>
-        <ToolComponent />
+
+        {selectedTool && selectedTool.component ? (
+          (() => {
+            const ToolComponent = selectedTool.component;
+            return <ToolComponent />;
+          })()
+        ) : (
+          <div style={{ ...fontBody, color: T.coral, padding: "2rem 0", textAlign: "center" }}>
+            Falta asignar el componente para la herramienta ID: "{activeToolId}" en `tools-registry.js`.
+          </div>
+        )}
       </div>
     );
   }
@@ -205,5 +214,5 @@ export default function HomeScreen() {
       </footer>
     </div>
   );
-        }
+}
 
