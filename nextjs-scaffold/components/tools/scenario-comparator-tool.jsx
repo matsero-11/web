@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -29,11 +29,17 @@ const FAQS = [
     q: "¿Por qué la diferencia parece pequeña al mes pero grande a 10 años?",
     a: "Porque se acumula: una diferencia de 20€ al mes son solo 240€ al año, pero a 10 años son 2.400€ — el efecto se magnifica con el tiempo, aunque cada mes por separado parezca poco relevante.",
   },
+  {
+    q: "¿Para qué sirve el tercer escenario?",
+    a: "Muchas decisiones reales son entre tres opciones, no dos: por ejemplo, mantener el ritmo actual, un ajuste moderado o uno ambicioso. Compararlas juntas ayuda a decidir con más contexto.",
+  },
 ];
 
 function ScenarioComparatorTool({ onBack, onNavigate }) {
   const [current, setCurrent] = useSharedState("comparator_current", 150);
   const [alternative, setAlternative] = useSharedState("comparator_alternative", 220);
+  const [showThird, setShowThird] = useState(false);
+  const [thirdScenario, setThirdScenario] = useSharedState("comparator_third", 300);
 
   const monthlyDiff = alternative - current;
   const annualDiff = monthlyDiff * 12;
@@ -44,11 +50,12 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
     years: `${years} año${years > 1 ? "s" : ""}`,
     actual: current * 12 * years,
     nuevo: alternative * 12 * years,
+    ...(showThird ? { tercero: thirdScenario * 12 * years } : {}),
   }));
 
-  const pageTitle = "Comparador de escenarios de ahorro: compara dos ritmos a la vez | MetaBox";
+  const pageTitle = "Comparador de escenarios de ahorro: compara hasta 3 ritmos a la vez | MetaBox";
   const pageDescription =
-    "Compara tu ahorro mensual actual con un nuevo escenario y descubre la diferencia real a 1, 5 y 10 años en una gráfica interactiva. Ideal para decidir si merece la pena subir tu aportación. Gratis.";
+    "Compara tu ahorro mensual actual con hasta dos escenarios alternativos y descubre la diferencia real a 1, 5 y 10 años en una gráfica interactiva. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/comparator";
 
   return (
@@ -58,7 +65,7 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="comparador de ahorro, comparar dos escenarios de ahorro, cuánto ahorraría si subo mi ahorro mensual, simulador de ahorro a largo plazo"
+          content="comparador de ahorro, comparar escenarios de ahorro, cuánto ahorraría si subo mi ahorro mensual, simulador de ahorro a largo plazo"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -101,9 +108,9 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
         </script>
       </Helmet>
 
-      <ToolHeader title="Comparador de escenarios" subtitle="Compara dos formas de ahorrar y ve la diferencia real." onBack={onBack} />
+      <ToolHeader title="Comparador de escenarios" subtitle="Compara varias formas de ahorrar y ve la diferencia real." onBack={onBack} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={`grid grid-cols-1 ${showThird ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
         <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Situación actual</div>
           <SliderControl label="Ahorro mensual" value={current} min={0} max={2000} step={10} unit="€" onChange={setCurrent} />
@@ -112,11 +119,23 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
           <div style={{ ...fontBody, color: T.lavender, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Nuevo escenario</div>
           <SliderControl label="Ahorro mensual" value={alternative} min={0} max={2000} step={10} unit="€" onChange={setAlternative} accent="lavender" />
         </Card>
+        {showThird && (
+          <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+            <div style={{ ...fontBody, color: T.coral, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Tercer escenario</div>
+            <SliderControl label="Ahorro mensual" value={thirdScenario} min={0} max={2000} step={10} unit="€" onChange={setThirdScenario} />
+          </Card>
+        )}
       </div>
+
+      {!showThird && (
+        <Button variant="ghost" onClick={() => setShowThird(true)}>
+          Añadir un tercer escenario
+        </Button>
+      )}
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
-          {positive ? "Ahorrarías de más al año" : "Ahorrarías de menos al año"}
+          {positive ? "Ahorrarías de más al año" : "Ahorrarías de menos al año"} (actual vs. nuevo)
         </div>
         <div style={{ ...fontDisplay, color: positive ? T.lime : T.coral, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {positive ? "+" : "−"}{fmtEUR(animatedAnnualDiff)}
@@ -132,9 +151,7 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
             ? "El nuevo escenario ahorra menos que el actual. Puede tener sentido si libera gasto en otra parte, pero no lo pierdas de vista."
             : Math.abs(monthlyDiff) < 20
             ? "La diferencia mensual es pequeña, pero fíjate en el acumulado a 10 años del gráfico: ahí se nota de verdad."
-            : monthlyDiff >= current * 0.3
-            ? "El salto entre escenarios es grande. Antes de fijarlo, comprueba en 'Presupuesto mensual' si tus gastos dejan ese margen real."
-            : "Buena diferencia acumulada. Prueba a subir un poco más el nuevo escenario y compara el efecto en 10 años."
+            : "Buena diferencia acumulada. Compara con el tercer escenario si quieres ver un salto todavía mayor."
         }
       />
 
@@ -149,10 +166,11 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
               <YAxis hide />
               <Tooltip
                 contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                formatter={(v, n) => [fmtEUR(v), n === "actual" ? "Actual" : "Nuevo"]}
+                formatter={(v, n) => [fmtEUR(v), n === "actual" ? "Actual" : n === "nuevo" ? "Nuevo" : "Tercero"]}
               />
-              <Bar dataKey="actual" fill={T.textMuted} radius={[6, 6, 0, 0]} maxBarSize={24} isAnimationActive={true} animationDuration={400} />
-              <Bar dataKey="nuevo" fill={T.lavender} radius={[6, 6, 0, 0]} maxBarSize={24} isAnimationActive={true} animationDuration={400} />
+              <Bar dataKey="actual" fill={T.textMuted} radius={[6, 6, 0, 0]} maxBarSize={20} isAnimationActive={true} animationDuration={400} />
+              <Bar dataKey="nuevo" fill={T.lavender} radius={[6, 6, 0, 0]} maxBarSize={20} isAnimationActive={true} animationDuration={400} />
+              {showThird && <Bar dataKey="tercero" fill={T.coral} radius={[6, 6, 0, 0]} maxBarSize={20} isAnimationActive={true} animationDuration={400} />}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -165,18 +183,20 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Comparador: actual ${fmtEUR(current)}/mes vs. nuevo ${fmtEUR(alternative)}/mes → ${fmtEUR(Math.abs(monthlyDiff))}/mes de diferencia.`
+            `Comparador: actual ${fmtEUR(current)}/mes vs. nuevo ${fmtEUR(alternative)}/mes` +
+            (showThird ? ` vs. tercero ${fmtEUR(thirdScenario)}/mes` : "") +
+            ` → ${fmtEUR(Math.abs(monthlyDiff))}/mes de diferencia entre actual y nuevo.`
           }
         />
         <ExportCSVButton
           filename="comparador-de-escenarios"
-          getRows={() => barData.map((r) => ({ periodo: r.years, actual: r.actual.toFixed(2), nuevo: r.nuevo.toFixed(2) }))}
+          getRows={() => barData.map((r) => ({ periodo: r.years, actual: r.actual.toFixed(2), nuevo: r.nuevo.toFixed(2), ...(showThird ? { tercero: r.tercero.toFixed(2) } : {}) }))}
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          A veces cuesta ver el impacto real de ahorrar un poco más cada mes. Este comparador pone lado a lado tu ritmo de ahorro actual y un nuevo escenario, y proyecta la diferencia acumulada a 1, 5 y 10 años para que decidas con datos si merece la pena el esfuerzo extra.
+          A veces cuesta ver el impacto real de ahorrar un poco más cada mes. Este comparador pone lado a lado tu ritmo actual, un nuevo escenario y, si lo necesitas, un tercero, proyectando la diferencia acumulada a 1, 5 y 10 años para que decidas con datos.
         </p>
       </div>
     </div>
