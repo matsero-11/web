@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -13,9 +13,9 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
+import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import GoalProjection from "@/components/engines/GoalProjection";
@@ -32,16 +32,33 @@ const FAQS = [
   },
   {
     q: "¿Qué gastos cuentan como 'esenciales' para calcular el fondo?",
-    a: "Generalmente vivienda, suministros, alimentación, seguros y transporte básico — no incluye ocio, suscripciones ni compras no imprescindibles.",
+    a: "Generalmente vivienda, suministros, alimentación, seguros y transporte básico — no incluye ocio, suscripciones ni compras no imprescindibles. Puedes desglosarlos por separado en esta herramienta para un cálculo más preciso.",
   },
 ];
 
+const ESSENTIAL_CATEGORIES = [
+  { id: "vivienda", label: "Vivienda", icon: HomeIcon, default: 650 },
+  { id: "suministros", label: "Suministros", icon: Tv, default: 100 },
+  { id: "comida", label: "Comida", icon: Utensils, default: 250 },
+  { id: "transporte", label: "Transporte", icon: Car, default: 100 },
+];
+
 function EmergencyFundTool({ onBack, onNavigate }) {
-  const [expenses, setExpenses] = useSharedState("emergency_expenses", 1100);
   const [monthsTarget, setMonthsTarget] = useSharedState("emergency_monthsTarget", 6);
   const [current, setCurrent] = useSharedState("emergency_current", 800);
   const [monthly, setMonthly] = useSharedState("emergency_monthly", 120);
+  const [useBreakdown, setUseBreakdown] = usePersistentState("emergency_useBreakdown", false);
+  const [simpleExpenses, setSimpleExpenses] = useSharedState("emergency_expenses", 1100);
+  const [breakdown, setBreakdown] = usePersistentState(
+    "emergency_breakdown",
+    Object.fromEntries(ESSENTIAL_CATEGORIES.map((c) => [c.id, c.default]))
+  );
 
+  const breakdownTotal = useMemo(
+    () => ESSENTIAL_CATEGORIES.reduce((sum, c) => sum + (breakdown[c.id] || 0), 0),
+    [breakdown]
+  );
+  const expenses = useBreakdown ? breakdownTotal : simpleExpenses;
   const goal = expenses * monthsTarget;
 
   useEffect(() => {
@@ -50,7 +67,7 @@ function EmergencyFundTool({ onBack, onNavigate }) {
 
   const pageTitle = "Calculadora de fondo de emergencia: cuánto ahorrar y en cuántos meses | MetaBox";
   const pageDescription =
-    "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos mensuales (3, 6 o 12 meses de cobertura), cuánto llevas ahorrado y en cuántos meses lo conseguirás con tu aportación mensual. Gratis y sin registro.";
+    "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos esenciales desglosados por categoría, cuánto llevas ahorrado y en cuántos meses lo conseguirás. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/emergency";
 
   return (
@@ -60,7 +77,7 @@ function EmergencyFundTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="fondo de emergencia, cuánto ahorrar fondo de emergencia, calculadora fondo de emergencia, meses de gastos ahorrados, ahorro de seguridad"
+          content="fondo de emergencia, cuánto ahorrar fondo de emergencia, calculadora fondo de emergencia, meses de gastos ahorrados, desglose gastos esenciales"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -107,7 +124,35 @@ function EmergencyFundTool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Gasto esencial mensual" value={expenses} min={300} max={4000} step={50} unit="€" onChange={setExpenses} />
+          {!useBreakdown ? (
+            <SliderControl label="Gasto esencial mensual" value={simpleExpenses} min={300} max={4000} step={50} unit="€" onChange={setSimpleExpenses} />
+          ) : (
+            <div>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>
+                Gasto esencial mensual: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(breakdownTotal)}</span>
+              </div>
+              <div className="flex flex-col gap-5">
+                {ESSENTIAL_CATEGORIES.map((c) => (
+                  <SliderControl
+                    key={c.id}
+                    label={c.label}
+                    value={breakdown[c.id] || 0}
+                    min={0}
+                    max={2000}
+                    step={10}
+                    unit="€"
+                    onChange={(v) => setBreakdown((b) => ({ ...b, [c.id]: v }))}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          <button
+            onClick={() => setUseBreakdown((v) => !v)}
+            style={{ ...fontBody, background: "transparent", border: "none", color: T.lavender, fontSize: "0.8rem", cursor: "pointer", textAlign: "left", padding: 0 }}
+          >
+            {useBreakdown ? "Volver a un solo número" : "Desglosar por categorías (más preciso)"}
+          </button>
           <div>
             <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.5rem" }}>Meses de cobertura</div>
             <div className="flex gap-2">
@@ -149,14 +194,14 @@ function EmergencyFundTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Fondo de emergencia: gasto esencial ${fmtEUR(expenses)}/mes × ${monthsTarget} meses = objetivo ${fmtEUR(expenses * monthsTarget)}. Ya ahorrado ${fmtEUR(current)}, aportando ${fmtEUR(monthly)}/mes.`
+            `Fondo de emergencia: gasto esencial ${fmtEUR(expenses)}/mes × ${monthsTarget} meses = objetivo ${fmtEUR(goal)}. Ya ahorrado ${fmtEUR(current)}, aportando ${fmtEUR(monthly)}/mes.`
           }
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Un fondo de emergencia es el dinero que reservas aparte para cubrir imprevistos —una avería, una baja médica, un despido— sin tener que endeudarte ni vender inversiones a mal precio. Esta calculadora de fondo de emergencia te ayuda a fijar un objetivo realista según tus gastos esenciales mensuales y a ver, con tu aportación actual, en cuántos meses lo alcanzarás.
+          Un fondo de emergencia es el dinero que reservas aparte para cubrir imprevistos —una avería, una baja médica, un despido— sin tener que endeudarte ni vender inversiones a mal precio. Puedes calcular el gasto esencial con un número global o desglosarlo por categorías (vivienda, suministros, comida, transporte) para un objetivo más preciso, y ver en cuántos meses lo alcanzarás con tu aportación actual.
         </p>
       </div>
     </div>
