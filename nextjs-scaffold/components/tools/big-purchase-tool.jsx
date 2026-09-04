@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -35,6 +35,10 @@ const FAQS = [
     q: "¿Es mejor ahorrar más al mes o alargar el plazo?",
     a: "Alargar el plazo reduce el esfuerzo mensual pero retrasa la compra; ahorrar más al mes acelera la fecha pero exige más disciplina. Prueba distintos plazos en el slider para ver qué cuota mensual te resulta cómoda.",
   },
+  {
+    q: "¿Me conviene ahorrar todo o financiar una parte?",
+    a: "Depende de tu situación: financiar reduce el esfuerzo de ahorro inicial pero añade intereses al coste total. Usa el comparador de esta herramienta para ver la diferencia exacta en euros entre ambas opciones.",
+  },
 ];
 
 function BigPurchaseTool({ onBack, onNavigate }) {
@@ -43,6 +47,11 @@ function BigPurchaseTool({ onBack, onNavigate }) {
   const [budget, setBudget] = useSharedState("bigpurchase_budget", typeInfo.defaultBudget);
   const [current, setCurrent] = useSharedState("bigpurchase_current", 1000);
   const [monthsLeft, setMonthsLeft] = useSharedState("bigpurchase_monthsLeft", 18);
+
+  const [showFinancing, setShowFinancing] = useState(false);
+  const [financePct, setFinancePct] = useSharedState("bigpurchase_financePct", 30);
+  const [financeRate, setFinanceRate] = useSharedState("bigpurchase_financeRate", 7);
+  const [financeMonths, setFinanceMonths] = useSharedState("bigpurchase_financeMonths", 48);
 
   const changeType = (id) => {
     setType(id);
@@ -63,9 +72,25 @@ function BigPurchaseTool({ onBack, onNavigate }) {
   const pct = budget > 0 ? (current / budget) * 100 : 0;
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
 
+  // Comparador: financiar una parte del importe restante vs ahorrar todo
+  const financedAmount = remaining * (financePct / 100);
+  const cashNeeded = remaining - financedAmount;
+  const cashMonthly = monthsLeft > 0 ? cashNeeded / monthsLeft : cashNeeded;
+
+  const loanPayment = useMemo(() => {
+    const monthlyRate = financeRate / 100 / 12;
+    if (financeMonths <= 0) return 0;
+    if (monthlyRate === 0) return financedAmount / financeMonths;
+    return (financedAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -financeMonths));
+  }, [financedAmount, financeRate, financeMonths]);
+
+  const totalFinanceCost = loanPayment * financeMonths;
+  const interestCost = Math.max(totalFinanceCost - financedAmount, 0);
+  const combinedMonthly = cashMonthly + loanPayment;
+
   const pageTitle = "Cuánto ahorrar al mes para un coche, vivienda o compra grande | MetaBox";
   const pageDescription =
-    "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, según tu presupuesto, lo ya ahorrado y el plazo que te marques. Gratis y sin registro.";
+    "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/bigpurchase";
 
   return (
@@ -75,7 +100,7 @@ function BigPurchaseTool({ onBack, onNavigate }) {
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="cuánto ahorrar para un coche, ahorro entrada vivienda, calculadora compra grande, cuánto ahorrar al mes para comprar coche"
+          content="cuánto ahorrar para un coche, ahorro entrada vivienda, calculadora compra grande, cuánto ahorrar al mes para comprar coche, financiar o ahorrar"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -167,7 +192,9 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 
       <AdviceBlock
         text={
-          requiredMonthly > 800
+          type === "vivienda"
+            ? "Recuerda: los bancos suelen exigir al menos un 20% de entrada sobre el precio de la vivienda, más gastos de compraventa (impuestos, notaría, gestoría) aparte de esa entrada."
+            : requiredMonthly > 800
             ? "La cuota mensual es alta. Alargar el plazo aunque sea un año puede bajarla de forma importante — pruébalo con el slider."
             : pct >= 50
             ? "Ya llevas más de la mitad. Mantén el ritmo actual o compara qué pasa si adelantas unos meses la fecha objetivo."
@@ -183,6 +210,46 @@ function BigPurchaseTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {!showFinancing ? (
+        <Button variant="ghost" onClick={() => setShowFinancing(true)}>
+          ¿Y si financio una parte? Comparar con ahorrar todo
+        </Button>
+      ) : (
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+            Ahorrar todo vs. financiar una parte
+          </div>
+          <div className="flex flex-col gap-6">
+            <SliderControl label="Porcentaje a financiar" value={financePct} min={0} max={90} step={5} unit="%" onChange={setFinancePct} accent="lavender" />
+            <SliderControl label="TAE estimada del préstamo" value={financeRate} min={0} max={20} step={0.1} unit="%" onChange={setFinanceRate} accent="lavender" />
+            <SliderControl label="Plazo del préstamo" value={financeMonths} min={6} max={96} step={1} unit="meses" onChange={setFinanceMonths} accent="lavender" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.4rem" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Solo ahorrando</div>
+              <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
+                {monthsLeft > 0 ? fmtEUR(requiredMonthly) : "—"}
+              </div>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>al mes · sin intereses</div>
+            </div>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Financiando {financePct}%</div>
+              <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
+                {fmtEUR(combinedMonthly)}
+              </div>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>
+                {fmtEUR(cashMonthly)} ahorro + {fmtEUR(loanPayment)} cuota
+              </div>
+            </div>
+          </div>
+
+          <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem", textAlign: "center", marginTop: "1rem" }}>
+            Financiar te cuesta {fmtEUR(interestCost)} extra en intereses a lo largo del préstamo
+          </div>
+        </Card>
+      )}
+
       <AdSlot minHeight="0px" />
 
       <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} />
@@ -190,14 +257,15 @@ function BigPurchaseTool({ onBack, onNavigate }) {
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Ahorro para ${typeInfo.label}: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses → necesitas ${fmtEUR(requiredMonthly)}/mes.`
+            `Ahorro para ${typeInfo.label}: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses → necesitas ${fmtEUR(requiredMonthly)}/mes.` +
+            (showFinancing ? ` Financiando ${financePct}%: ${fmtEUR(combinedMonthly)}/mes (${fmtEUR(interestCost)} en intereses).` : "")
           }
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Ya sea la entrada de un coche, la entrada de una vivienda o cualquier otra compra grande, planificar el ahorro con antelación evita tener que recurrir a financiación cara de última hora. Esta calculadora reparte el importe que te falta entre los meses que tienes por delante, para que sepas exactamente cuánto apartar cada mes.
+          Ya sea la entrada de un coche, la entrada de una vivienda o cualquier otra compra grande, planificar el ahorro con antelación evita tener que recurrir a financiación cara de última hora. Esta calculadora reparte el importe que te falta entre los meses que tienes por delante, y te permite comparar directamente el coste real de ahorrar todo frente a financiar una parte de la compra.
         </p>
       </div>
     </div>
