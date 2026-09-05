@@ -120,20 +120,10 @@ function Card({ children, onClick, disabled, style, glow, result }) {
 
 
 /**
- * SliderControl — input numérico + slider sincronizados.
- *
- * Reglas del campo de texto (importante, no tocar sin motivo):
- * - El usuario puede escribir CUALQUIER número exacto (19, 199, 452...)
- *   sin que se redondee al `step` del slider. El `step` solo afecta a
- *   cómo se mueve el slider al arrastrarlo, nunca a lo que se escribe.
- * - Único límite real al escribir: el mínimo (`min`) y un tope duro de
- *   200.000 (HARD_MAX), para evitar cifras absurdas, pero NUNCA se
- *   redondea al múltiplo de `step` más cercano.
- * - `inputText` es solo texto, controla el input; `value` (el número
- *   real) viene del padre. Mientras el usuario edita (`isEditing`),
- *   nada externo pisa lo que está escribiendo.
+ * SliderControl — input numérico decimal + slider sincronizados y ultra fluidos.
+ * Actualizado globalmente para admitir decimales precisos y evitar atascos táctiles.
  */
-function SliderControl({ label, value, min, max, step, unit, onChange, accent = "lime" }) {
+function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, accent = "lime" }) {
   const color = accent === "lavender" ? T.lavender : T.lime;
   const safeValue = Number.isFinite(value) ? value : 0;
 
@@ -144,14 +134,12 @@ function SliderControl({ label, value, min, max, step, unit, onChange, accent = 
     if (!isEditing) {
       setInputText(String(safeValue));
     }
-    // eslint-disable-next-line
   }, [safeValue, isEditing]);
 
   const effectiveMax = Math.min(HARD_MAX, max);
   const dynamicMax = Math.max(effectiveMax, Math.min(safeValue * 1.5, HARD_MAX));
   const pct = dynamicMax > min ? ((safeValue - min) / (dynamicMax - min)) * 100 : 0;
 
-  // Se ejecuta SOLO al confirmar (blur / Enter). Sin redondeo a step.
   const commitText = (rawText) => {
     const text = rawText.trim();
 
@@ -169,15 +157,12 @@ function SliderControl({ label, value, min, max, step, unit, onChange, accent = 
       return;
     }
 
-    // Único ajuste: respetar el mínimo y el tope duro de 200.000.
-    // NUNCA se redondea al múltiplo de step más cercano.
     const clamped = Math.min(Math.max(min, num), HARD_MAX);
     onChange(clamped);
     setInputText(String(clamped));
   };
 
   const handleTextChange = (e) => {
-    // Sin validar ni recortar mientras se escribe — cualquier tecla pasa.
     setInputText(e.target.value);
   };
 
@@ -197,8 +182,6 @@ function SliderControl({ label, value, min, max, step, unit, onChange, accent = 
   };
 
   const handleSliderChange = (e) => {
-    // El slider sí respeta `step` (es su comportamiento nativo al arrastrar),
-    // pero eso nunca limita lo que se puede escribir a mano arriba.
     const num = Number(e.target.value);
     onChange(num);
     if (!isEditing) setInputText(String(num));
@@ -260,6 +243,7 @@ function SliderControl({ label, value, min, max, step, unit, onChange, accent = 
           appearance: "none",
           background: `linear-gradient(to right, ${color} ${pct}%, ${T.surfaceAlt} ${pct}%)`,
           outline: "none",
+          touchAction: "manipulation",
         }}
       />
     </div>
@@ -338,3 +322,4 @@ function AdviceBlock({ text, children, icon: Icon, tone = "lime" }) {
 }
 
 export { Button, Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock };
+      
