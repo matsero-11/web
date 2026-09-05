@@ -1,358 +1,296 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
-import { fmtEUR } from "@/lib/hooks";
+import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
+import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
+import ToolHeader from "@/components/ToolHeader";
+import { useSharedState, usePersistentState } from "@/lib/persistence";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
+import RelatedTools from "@/components/RelatedTools";
+import AdSlot from "@/components/AdSlot";
 
-const HARD_MAX = 200000;
+const FAQS = [
+  {
+    q: "¿Qué es la regla 50/30/20?",
+    a: "Es una guía de presupuesto que propone destinar el 50% de tus ingresos a necesidades esenciales, el 30% a deseos y el 20% a ahorro, como punto de partida orientativo, no una norma rígida.",
+  },
+  {
+    q: "¿Qué cuenta como 'necesidad' y qué como 'deseo'?",
+    a: "Las necesidades son gastos imprescindibles como vivienda, suministros o alimentación básica; los deseos son gastos que mejoran tu calidad de vida pero no son esenciales, como ocio, restaurantes o suscripciones.",
+  },
+  {
+    q: "¿Qué hago si no puedo llegar al 20% de ahorro?",
+    a: "No pasa nada si empiezas con un porcentaje menor: lo importante es tener un hábito de ahorro constante y subirlo progresivamente cuando tu situación lo permita.",
+  },
+  {
+    q: "¿Puedo usar otros porcentajes distintos a 50/30/20?",
+    a: "Sí: si vives en una ciudad cara, tus necesidades pueden pesar más del 50%; si tienes pocos gastos fijos, puedes destinar más al ahorro. Ajusta los porcentajes de referencia a tu situación real.",
+  },
+];
 
-function Button({ children, variant = "primary", onClick, icon: Icon, disabled }) {
-  const base = {
-    padding: "0.85rem 1.4rem",
-    borderRadius: "0.9rem",
-    fontWeight: 600,
-    fontSize: "0.95rem",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "0.5rem",
-    transition: "transform 0.22s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease, background 0.2s ease, box-shadow 0.22s ease",
-    cursor: disabled ? "not-allowed" : "pointer",
-    border: "none",
-    opacity: disabled ? 0.4 : 1,
-    width: "100%",
-  };
-  const styles = {
-    primary: { ...base, background: T.lime, color: "#12200A" },
-    ghost: { ...base, background: "transparent", color: T.text, border: `1px solid ${T.border}` },
-  };
+function DonutChart({ data, size = 180, strokeWidth = 22 }) {
+  const radius = (size - strokeWidth) / 2;
+  const center = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  const total = data.reduce((acc, item) => acc + item.value, 0);
+
+  let accumulatedLength = 0;
+
   return (
-    <button
-      onClick={disabled ? undefined : onClick}
-      style={styles[variant]}
-      onMouseDown={(e) => {
-        if (disabled) return;
-        e.currentTarget.style.transform = "scale(0.96)";
-      }}
-      onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-      onMouseEnter={(e) => {
-        if (disabled || variant !== "primary") return;
-        e.currentTarget.style.boxShadow = `0 0 0 6px ${T.limeSoft}`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    >
-      {Icon && <Icon size={17} />}
-      {children}
-    </button>
-  );
-}
-
-
-function Card({ children, onClick, disabled, style, glow, result }) {
-  const clickable = !!onClick && !disabled;
-  return (
-    <div
-      onClick={disabled ? undefined : onClick}
-      role={clickable ? "button" : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      aria-disabled={disabled || undefined}
-      onKeyDown={
-        clickable
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClick();
-              }
-            }
-          : undefined
-      }
-      style={{
-        position: "relative",
-        background: result ? "transparent" : T.surface,
-        border: result ? "none" : `1px solid ${T.border}`,
-        borderBottom: result ? `1px solid ${T.border}` : undefined,
-        borderRadius: result ? 0 : "1.1rem",
-        padding: result ? "1.1rem 0.5rem 1.4rem" : "1.25rem",
-        cursor: clickable ? "pointer" : "default",
-        opacity: disabled ? 0.45 : 1,
-        transition: "border-color 0.25s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease",
-        overflow: "hidden",
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        if (!clickable) return;
-        e.currentTarget.style.borderColor = T.borderStrong;
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 10px 24px -12px rgba(0,0,0,0.5)";
-      }}
-      onMouseLeave={(e) => {
-        if (!clickable) return;
-        e.currentTarget.style.borderColor = T.border;
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-      onFocus={(e) => {
-        if (!clickable) return;
-        e.currentTarget.style.borderColor = T.lime;
-        e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`;
-      }}
-      onBlur={(e) => {
-        if (!clickable) return;
-        e.currentTarget.style.borderColor = T.border;
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    >
-      {glow && (
-        <div
-          aria-hidden
-          style={{
-            position: "absolute", inset: 0, pointerEvents: "none",
-            background: `radial-gradient(60% 70% at 50% 0%, ${T.limeSoft} 0%, transparent 70%)`,
-          }}
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={T.surfaceAlt}
+          strokeWidth={strokeWidth}
         />
-      )}
-      <div style={{ position: "relative" }}>{children}</div>
-    </div>
-  );
-}
+        {total > 0 ? (
+          data.map((item, index) => {
+            const value = Math.max(item.value, 0);
+            const percentage = value / total;
+            const strokeLength = percentage * circumference;
+            const dashArray = `${strokeLength} ${circumference - strokeLength}`;
+            const dashOffset = -accumulatedLength;
+            accumulatedLength += strokeLength;
 
+            if (value === 0) return null;
 
-/**
- * SliderControl — input numérico + slider sincronizados.
- *
- * IMPORTANTE (bug ya corregido, no reintroducir):
- * El `max` del slider NO se recalcula en cada tick mientras arrastras.
- * Antes se recalculaba con la fórmula `value * 1.5` en cada render, y como
- * el `value` cambia en cada micro-movimiento al arrastrar, el atributo
- * `max` del <input type="range"> se movía constantemente bajo el dedo del
- * usuario — eso es lo que causaba que el slider se "atascara" en móvil.
- * Ahora `dynamicMax` es un estado que SOLO crece cuando el valor confirmado
- * (por texto o por fuera) supera el máximo actual — nunca durante el
- * arrastre en sí, porque mientras arrastras el valor nunca puede superar
- * el `max` que el propio slider ya tiene.
- *
- * Decimales: el campo de texto nunca redondea ni fuerza al múltiplo de
- * `step` — admite cualquier número exacto (enteros o con decimales,
- * con punto o coma) hasta el mínimo y el tope duro de 200.000.
- */
-function SliderControl({ label, value, min, max, step, unit, onChange, accent = "lime" }) {
-  const color = accent === "lavender" ? T.lavender : T.lime;
-  const safeValue = Number.isFinite(value) ? value : 0;
-  const baseMax = Math.min(HARD_MAX, max);
-
-  const [inputText, setInputText] = useState(String(safeValue));
-  const [isEditing, setIsEditing] = useState(false);
-  const [dynamicMax, setDynamicMax] = useState(() =>
-    Math.min(Math.max(baseMax, safeValue), HARD_MAX)
-  );
-
-  // Sincroniza el texto visible con el valor externo, salvo mientras se edita.
-  useEffect(() => {
-    if (!isEditing) {
-      setInputText(String(safeValue));
-    }
-    // eslint-disable-next-line
-  }, [safeValue, isEditing]);
-
-  // Amplía el máximo del slider SOLO cuando el valor confirmado lo supera
-  // (p.ej. al escribir un número mayor a mano) — nunca durante el arrastre.
-  useEffect(() => {
-    if (safeValue > dynamicMax) {
-      setDynamicMax(Math.min(Math.max(safeValue, baseMax), HARD_MAX));
-    } else if (baseMax > dynamicMax) {
-      // Si el `max` original de la herramienta sube (p.ej. depende de otro
-      // campo), respétalo también.
-      setDynamicMax(baseMax);
-    }
-    // eslint-disable-next-line
-  }, [safeValue, baseMax]);
-
-  const pct = dynamicMax > min ? ((safeValue - min) / (dynamicMax - min)) * 100 : 0;
-
-  // Se ejecuta SOLO al confirmar (blur / Enter) — nunca mientras se escribe.
-  // Admite decimales con punto o coma; nunca redondea al múltiplo de step.
-  const commitText = (rawText) => {
-    const text = rawText.trim();
-
-    if (text === "") {
-      onChange(0);
-      setInputText("0");
-      return;
-    }
-
-    const normalized = text.replace(",", ".");
-    const num = Number(normalized);
-
-    if (!Number.isFinite(num)) {
-      setInputText(String(safeValue));
-      return;
-    }
-
-    const clamped = Math.min(Math.max(min, num), HARD_MAX);
-    onChange(clamped);
-    setInputText(String(clamped));
-  };
-
-  const handleTextChange = (e) => {
-    // Sin validar, sin redondear, sin tocar min/max — se guarda tal cual
-    // se escribe, letra a letra (admite "452", "199,5", "19.99"...).
-    setInputText(e.target.value);
-  };
-
-  const handleFocus = () => setIsEditing(true);
-
-  const handleBlur = (e) => {
-    setIsEditing(false);
-    commitText(e.target.value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitText(e.currentTarget.value);
-      e.currentTarget.blur();
-    }
-  };
-
-  const handleSliderChange = (e) => {
-    const num = Number(e.target.value);
-    onChange(num);
-    if (!isEditing) setInputText(String(num));
-  };
-
-  return (
-    <div className="w-full">
-      <div className="flex justify-between items-baseline mb-2" style={{ gap: "0.75rem" }}>
-        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{label}</span>
-        <div className="flex items-center gap-1.5" style={{ flexShrink: 0 }}>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={inputText}
-            onChange={handleTextChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            aria-label={label ? `${label} (valor numérico)` : "Valor numérico"}
-            style={{
-              ...fontDisplay,
-              width: "5.5rem",
-              background: T.surfaceAlt,
-              border: `1px solid ${T.border}`,
-              borderRadius: "0.5rem",
-              padding: "0.25rem 0.5rem",
-              color,
-              fontSize: "1rem",
-              fontWeight: 600,
-              textAlign: "right",
-              outline: "none",
-            }}
-            onFocusCapture={(e) => { e.currentTarget.style.borderColor = color; }}
-            onBlurCapture={(e) => { e.currentTarget.style.borderColor = T.border; }}
+            return (
+              <circle
+                key={index}
+                cx={center}
+                cy={center}
+                r={radius}
+                fill="none"
+                stroke={item.color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={dashArray}
+                strokeDashoffset={dashOffset}
+                strokeLinecap="round"
+                style={{
+                  transition: "stroke-dasharray 0.4s ease, stroke-dashoffset 0.4s ease",
+                  transform: "rotate(-90deg)",
+                  transformOrigin: "center",
+                }}
+              />
+            );
+          })
+        ) : (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={T.border}
+            strokeWidth={strokeWidth}
           />
-          {unit && (
-            <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{unit}</span>
-          )}
-        </div>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+function ToolRow({ label, value, setValue, rec, accent, income }) {
+  return (
+    <div>
+      <div className="flex justify-between items-baseline mb-1">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>recomendado: {fmtEUR(rec)}</span>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={dynamicMax}
-        step={step}
-        value={Math.min(safeValue, dynamicMax)}
-        aria-label={label || undefined}
-        aria-valuemin={min}
-        aria-valuemax={dynamicMax}
-        aria-valuenow={safeValue}
-        aria-valuetext={unit === "€" ? fmtEUR(safeValue) : unit ? `${safeValue} ${unit}` : `${safeValue}`}
-        role="slider"
-        onChange={handleSliderChange}
-        className={accent === "lavender" ? "slider-lavender" : "slider-lime"}
-        style={{
-          width: "100%",
-          height: "6px",
-          borderRadius: "999px",
-          appearance: "none",
-          background: `linear-gradient(to right, ${color} ${pct}%, ${T.surfaceAlt} ${pct}%)`,
-          outline: "none",
-        }}
+      <SliderControl label="" value={Math.round(value)} min={0} max={income} step={10} unit="€" onChange={setValue} accent={accent} />
+    </div>
+  );
+}
+
+function Rule502030Tool({ onBack, onNavigate }) {
+  const [income, setIncome] = useSharedState("rule502030_income", 1800);
+  const [needsPct, setNeedsPct] = usePersistentState("rule502030_needsPct", 50);
+  const [wantsPct, setWantsPct] = usePersistentState("rule502030_wantsPct", 30);
+  const savingsPct = Math.max(100 - needsPct - wantsPct, 0);
+
+  const recNeeds = income * (needsPct / 100);
+  const recWants = income * (wantsPct / 100);
+  const recSavings = income * (savingsPct / 100);
+
+  const [needs, setNeeds] = useSharedState("rule502030_needs", recNeeds);
+  const [wants, setWants] = useSharedState("rule502030_wants", recWants);
+  const [savings, setSavings] = useSharedState("rule502030_savings", recSavings);
+  const [donutView, setDonutView] = usePersistentState("rule502030_donutView", "actual");
+
+  const prevIncome = useRef(income);
+  useEffect(() => {
+    const ratio = prevIncome.current > 0 ? income / prevIncome.current : 1;
+    if (ratio !== 1) {
+      setNeeds((n) => n * ratio);
+      setWants((w) => w * ratio);
+      setSavings((s) => s * ratio);
+    }
+    prevIncome.current = income;
+  }, [income]);
+
+  const total = needs + wants + savings;
+  const diff = income - total;
+  const animatedDiff = useAnimatedNumber(diff);
+
+  const donutData = useMemo(() => {
+    if (donutView === "actual") {
+      return [
+        { name: "Necesidades", value: Math.max(needs, 0), color: T.lime },
+        { name: "Deseos", value: Math.max(wants, 0), color: T.lavender },
+        { name: "Ahorro", value: Math.max(savings, 0), color: "#7FA8C9" },
+      ];
+    }
+    return [
+      { name: "Necesidades", value: Math.max(recNeeds, 0), color: T.lime },
+      { name: "Deseos", value: Math.max(recWants, 0), color: T.lavender },
+      { name: "Ahorro", value: Math.max(recSavings, 0), color: "#7FA8C9" },
+    ];
+  }, [donutView, needs, wants, savings, recNeeds, recWants, recSavings]);
+
+  const pageTitle = "Regla 50/30/20: reparte tu ingreso entre necesidades, deseos y ahorro | MetaBox";
+  const pageDescription =
+    "Aplica la regla 50/30/20 a tu ingreso mensual, o personaliza los porcentajes a tu situación. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/rule502030";
+
+  return (
+    <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta
+          name="keywords"
+          content="regla 50/30/20, qué es la regla 50 30 20, cómo repartir el sueldo, calculadora regla 50 30 20 personalizada"
+        />
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content="https://metabox-web.vercel.app/og/rule502030.png" />
+        <meta property="og:site_name" content="MetaBox" />
+        <meta property="og:locale" content="es_ES" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/rule502030.png" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Regla 50/30/20",
+            url: pageUrl,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            inLanguage: "es",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            description: pageDescription,
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          })}
+        </script>
+      </Helmet>
+
+      <ToolHeader title="Regla 50/30/20" subtitle="Reparte tu ingreso entre necesidades, deseos y ahorro." onBack={onBack} />
+
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
+      </Card>
+
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div className="mb-4">
+          <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
+            {fmtEUR(Math.abs(animatedDiff))}
+          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
+        </div>
+
+        <DonutChart data={donutData} size={170} strokeWidth={22} />
+
+        <div className="flex gap-2 justify-center mt-4">
+          <Chip label="Tu reparto" active={donutView === "actual"} onClick={() => setDonutView("actual")} />
+          <Chip label="Recomendado" active={donutView === "recomendado"} onClick={() => setDonutView("recomendado")} />
+        </div>
+      </Card>
+
+      <AdviceBlock
+        text={
+          diff < 0
+            ? "Te pasas del ingreso disponible. Revisa primero 'Deseos': suele ser la partida más fácil de ajustar sin tocar lo esencial."
+            : savings < recSavings * 0.5
+            ? "Estás ahorrando bastante menos del recomendado. No hace falta llegar de golpe: sube el slider poco a poco y compáralo con el donut."
+            : "Tu reparto está cerca de la referencia. Prueba a mover los sliders y compara tu reparto con el recomendado."
+        }
       />
+
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+          Personaliza los porcentajes de referencia
+        </div>
+        <div className="flex flex-col gap-6">
+          <SliderControl label="Necesidades" value={needsPct} min={20} max={80} step={5} unit="%" onChange={(v) => setNeedsPct(Math.min(v, 100 - wantsPct))} />
+          <SliderControl label="Deseos" value={wantsPct} min={0} max={60} step={5} unit="%" onChange={(v) => setWantsPct(Math.min(v, 100 - needsPct))} accent="lavender" />
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
+            Ahorro (resto): <span style={{ color: T.lime, fontWeight: 600 }}>{savingsPct}%</span>
+          </div>
+        </div>
+      </Card>
+
+      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+        <div className="flex flex-col gap-6">
+          <ToolRow label={`Necesidades (${needsPct}%)`} value={needs} setValue={setNeeds} rec={recNeeds} accent="lime" income={income} />
+          <ToolRow label={`Deseos (${wantsPct}%)`} value={wants} setValue={setWants} rec={recWants} accent="lavender" income={income} />
+          <ToolRow label={`Ahorro (${savingsPct}%)`} value={savings} setValue={setSavings} rec={recSavings} accent="lime" income={income} />
+        </div>
+      </Card>
+
+      <AdSlot minHeight="0px" />
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
+        50/30/20 es una guía orientativa, no una recomendación financiera personalizada.
+      </div>
+
+      <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} primaryId="budget" />
+
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
+        <CopySummaryButton
+          getText={() =>
+            `Regla ${needsPct}/${wantsPct}/${savingsPct} con ingreso ${fmtEUR(income)}: necesidades ${fmtEUR(needs)}, deseos ${fmtEUR(wants)}, ahorro ${fmtEUR(savings)}.`
+          }
+        />
+        <ExportCSVButton
+          filename="regla-50-30-20"
+          getRows={() => [
+            { categoria: "Necesidades", recomendado: recNeeds.toFixed(2), actual: needs.toFixed(2) },
+            { categoria: "Deseos", recomendado: recWants.toFixed(2), actual: wants.toFixed(2) },
+            { categoria: "Ahorro", recomendado: recSavings.toFixed(2), actual: savings.toFixed(2) },
+          ]}
+        />
+      </div>
+
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
+        <p>
+          La regla 50/30/20 es una de las guías de presupuesto más conocidas para organizar el sueldo, pero no encaja igual de bien a todo el mundo. Ajusta los porcentajes de referencia a tu situación real, introduce tu ingreso mensual, y compara tu reparto real con el recomendado en el gráfico.
+        </p>
+      </div>
     </div>
   );
 }
 
-
-function ProgressBar({ pct, gradientEnd }) {
-  return (
-    <div style={{ width: "100%", height: "10px", borderRadius: "999px", background: T.surfaceAlt, overflow: "hidden" }}>
-      <div
-        style={{
-          width: `${Math.min(pct, 100)}%`,
-          height: "100%",
-          borderRadius: "999px",
-          background: gradientEnd
-            ? `linear-gradient(to right, ${T.lime}, ${gradientEnd})`
-            : T.lime,
-          transition: "width 0.5s cubic-bezier(0.22,1,0.36,1)",
-        }}
-      />
-    </div>
-  );
-}
-
-
-function Chip({ label, icon: Icon, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        ...fontBody,
-        display: "flex",
-        alignItems: "center",
-        gap: "0.4rem",
-        padding: "0.55rem 0.9rem",
-        borderRadius: "999px",
-        fontSize: "0.85rem",
-        fontWeight: 500,
-        border: `1px solid ${active ? T.lime : T.border}`,
-        background: active ? T.limeSoft : "transparent",
-        color: active ? T.lime : T.textMuted,
-        cursor: "pointer",
-        transition: "all 0.18s ease",
-      }}
-    >
-      {Icon && <Icon size={14} />}
-      {label}
-    </button>
-  );
-}
-
-
-function IconTile({ icon: Icon, tone = "lime" }) {
-  const bg = tone === "lavender" ? T.lavenderSoft : T.limeSoft;
-  const fg = tone === "lavender" ? T.lavender : T.lime;
-  return (
-    <div style={{ background: bg, borderRadius: "0.7rem", padding: "0.6rem", display: "flex" }}>
-      <Icon size={20} color={fg} />
-    </div>
-  );
-}
-
-
-function AdviceBlock({ text, children, icon: Icon, tone = "lime" }) {
-  const bg = tone === "lavender" ? T.lavenderSoft : T.limeSoft;
-  const fg = tone === "lavender" ? T.lavender : T.lime;
-  const content = text ?? children;
-  if (!content) return null;
-  return (
-    <div style={{ background: bg, borderRadius: "0.9rem", padding: "1rem", display: "flex", gap: "0.75rem", alignItems: "flex-start", marginTop: "1rem" }}>
-      {Icon && <Icon size={20} color={fg} style={{ marginTop: "0.1rem", flexShrink: 0 }} />}
-      <div style={{ ...fontBody, fontSize: "0.9rem", color: T.text, lineHeight: 1.4 }}>{content}</div>
-    </div>
-  );
-}
-
-export { Button, Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock };
+export default Rule502030Tool;
+      
