@@ -1,9 +1,19 @@
 "use client";
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
+import {
+  Target, PiggyBank, Plane, Home as HomeIcon,
+  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
+  MoreHorizontal, CalendarCheck,
+} from "lucide-react";
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+} from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -28,72 +38,6 @@ const FAQS = [
     a: "Sí: si vives en una ciudad cara, tus necesidades pueden pesar más del 50%; si tienes pocos gastos fijos, puedes destinar más al ahorro. Ajusta los porcentajes de referencia a tu situación real.",
   },
 ];
-
-// Componente SVG nativo ultra robusto para el gráfico Donut
-function DonutChart({ data, size = 180, strokeWidth = 24 }) {
-  const radius = (size - strokeWidth) / 2;
-  const center = size / 2;
-  const circumference = 2 * Math.PI * radius;
-  const total = data.reduce((acc, item) => acc + item.value, 0);
-
-  let accumulatedLength = 0;
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke={T.surfaceAlt}
-          strokeWidth={strokeWidth}
-        />
-        {total > 0 ? (
-          data.map((item, index) => {
-            const value = Math.max(item.value, 0);
-            const percentage = value / total;
-            const strokeLength = percentage * circumference;
-            const dashArray = `${strokeLength} ${circumference - strokeLength}`;
-            const dashOffset = -accumulatedLength;
-            accumulatedLength += strokeLength;
-
-            if (value === 0) return null;
-
-            return (
-              <circle
-                key={index}
-                cx={center}
-                cy={center}
-                r={radius}
-                fill="none"
-                stroke={item.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={dashArray}
-                strokeDashoffset={dashOffset}
-                strokeLinecap="round"
-                style={{
-                  transition: "stroke-dasharray 0.4s ease, stroke-dashoffset 0.4s ease",
-                  transform: "rotate(-90deg)",
-                  transformOrigin: "center",
-                }}
-              />
-            );
-          })
-        ) : (
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={T.border}
-            strokeWidth={strokeWidth}
-          />
-        )}
-      </svg>
-    </div>
-  );
-}
 
 function Rule502030Tool({ onBack, onNavigate }) {
   const [income, setIncome] = useSharedState("rule502030_income", 1800);
@@ -121,24 +65,43 @@ function Rule502030Tool({ onBack, onNavigate }) {
     prevIncome.current = income;
   }, [income]);
 
+  // Cuando cambian los porcentajes de referencia, el reparto "actual" se
+  // realinea con los nuevos recomendados — si no, el donut y los sliders
+  // se quedan congelados con valores del reparto de porcentajes anteriores.
+  const prevPcts = useRef({ needsPct, wantsPct });
+  useEffect(() => {
+    if (prevPcts.current.needsPct !== needsPct || prevPcts.current.wantsPct !== wantsPct) {
+      setNeeds(recNeeds);
+      setWants(recWants);
+      setSavings(recSavings);
+      prevPcts.current = { needsPct, wantsPct };
+    }
+    // eslint-disable-next-line
+  }, [needsPct, wantsPct]);
+
   const total = needs + wants + savings;
   const diff = income - total;
   const animatedDiff = useAnimatedNumber(diff);
 
-  const donutData = useMemo(() => {
-    if (donutView === "actual") {
-      return [
-        { name: "Necesidades", value: Math.max(needs, 0), color: T.lime },
-        { name: "Deseos", value: Math.max(wants, 0), color: T.lavender },
-        { name: "Ahorro", value: Math.max(savings, 0), color: "#7FA8C9" },
-      ];
-    }
-    return [
-      { name: "Necesidades", value: Math.max(recNeeds, 0), color: T.lime },
-      { name: "Deseos", value: Math.max(recWants, 0), color: T.lavender },
-      { name: "Ahorro", value: Math.max(recSavings, 0), color: "#7FA8C9" },
-    ];
-  }, [donutView, needs, wants, savings, recNeeds, recWants, recSavings]);
+  const donutData =
+    donutView === "actual"
+      ? [
+          { name: "Necesidades", value: Math.max(needs, 0), color: T.lime },
+          { name: "Deseos", value: Math.max(wants, 0), color: T.lavender },
+          { name: "Ahorro", value: Math.max(savings, 0), color: "#7FA8C9" },
+        ]
+      : [
+          { name: "Necesidades", value: recNeeds, color: T.lime },
+          { name: "Deseos", value: recWants, color: T.lavender },
+          { name: "Ahorro", value: recSavings, color: "#7FA8C9" },
+        ];
+
+  // Etiqueta visible directamente sobre cada sector, para no depender
+  // de que el usuario toque/mantenga pulsado el gráfico.
+  const renderLabel = ({ name, value, percent }) => {
+    if (percent < 0.06) return null; // evita etiquetas ilegibles en porciones muy pequeñas
+    return `${fmtEUR(value)}`;
+  };
 
   const Row = ({ label, value, setValue, rec, accent }) => (
     <div>
@@ -212,16 +175,39 @@ function Rule502030Tool({ onBack, onNavigate }) {
       </Card>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div className="mb-4">
-          <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
-            {fmtEUR(Math.abs(animatedDiff))}
+        <div style={{ height: "200px", position: "relative" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={donutData}
+                dataKey="value"
+                innerRadius="55%"
+                outerRadius="90%"
+                paddingAngle={3}
+                stroke="none"
+                isAnimationActive={true}
+                animationDuration={500}
+                label={renderLabel}
+                labelLine={false}
+              >
+                {donutData.map((d, i) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                formatter={(v, n) => [fmtEUR(v), n]}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.6rem", fontWeight: 700 }}>
+              {fmtEUR(Math.abs(animatedDiff))}
+            </div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.72rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
           </div>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
         </div>
-
-        <DonutChart data={donutData} size={170} strokeWidth={22} />
-
-        <div className="flex gap-2 justify-center mt-4">
+        <div className="flex gap-2 justify-center mt-3">
           <Chip label="Tu reparto" active={donutView === "actual"} onClick={() => setDonutView("actual")} />
           <Chip label="Recomendado" active={donutView === "recomendado"} onClick={() => setDonutView("recomendado")} />
         </div>
@@ -264,7 +250,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
         50/30/20 es una guía orientativa, no una recomendación financiera personalizada.
       </div>
 
-      <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} primaryId="budget" />
+      <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -292,4 +278,3 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-                          
