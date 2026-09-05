@@ -123,11 +123,15 @@ function Rule502030Tool({ onBack, onNavigate }) {
 
   const prevIncome = useRef(income);
   useEffect(() => {
-    const ratio = prevIncome.current > 0 ? income / prevIncome.current : 1;
-    if (ratio !== 1) {
+    if (prevIncome.current > 0 && income !== prevIncome.current) {
+      const ratio = income / prevIncome.current;
       setNeeds((n) => n * ratio);
       setWants((w) => w * ratio);
       setSavings((s) => s * ratio);
+    } else if (prevIncome.current === 0 && income > 0) {
+      setNeeds(recNeeds);
+      setWants(recWants);
+      setSavings(recSavings);
     }
     prevIncome.current = income;
   }, [income]);
@@ -293,4 +297,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-      
+        
