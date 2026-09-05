@@ -153,34 +153,36 @@ function Rule502030Tool({ onBack, onNavigate }) {
       </Card>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ height: "170px", position: "relative" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={donutData}
-                dataKey="value"
-                innerRadius="65%"
-                outerRadius="95%"
-                paddingAngle={3}
-                stroke="none"
-                isAnimationActive={true}
-                animationDuration={500}
-              >
-                {donutData.map((d, i) => (
-                  <Cell key={i} fill={d.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                formatter={(v, n) => [fmtEUR(v), n]}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+        <div style={{ width: "100%", height: "180px", position: "relative" }}>
+          <div style={{ position: "absolute", inset: 0, zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
             <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
               {fmtEUR(Math.abs(animatedDiff))}
             </div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de mais"}</div>
+          </div>
+          <div style={{ width: "100%", height: "100%" }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <PieChart>
+                <Pie
+                  data={donutData}
+                  dataKey="value"
+                  innerRadius="65%"
+                  outerRadius="95%"
+                  paddingAngle={3}
+                  stroke="none"
+                  isAnimationActive={true}
+                  animationDuration={500}
+                >
+                  {donutData.map((d, i) => (
+                    <Cell key={i} fill={d.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                  formatter={(v, n) => [fmtEUR(v), n]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
         <div className="flex gap-2 justify-center mt-3">
@@ -254,4 +256,3 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-      
