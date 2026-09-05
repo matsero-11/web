@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useMemo } from "react";
-import dynamic from "next/dynamic";
 import { Helmet } from "react-helmet-async";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -10,12 +9,6 @@ import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-
-const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
-const PieChart = dynamic(() => import("recharts").then((mod) => mod.PieChart), { ssr: false });
-const Pie = dynamic(() => import("recharts").then((mod) => mod.Pie), { ssr: false });
-const Cell = dynamic(() => import("recharts").then((mod) => mod.Cell), { ssr: false });
-const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
 
 const FAQS = [
   {
@@ -35,6 +28,72 @@ const FAQS = [
     a: "Sí: si vives en una ciudad cara, tus necesidades pueden pesar más del 50%; si tienes pocos gastos fijos, puedes destinar más al ahorro. Ajusta los porcentajes de referencia a tu situación real.",
   },
 ];
+
+// Componente SVG nativo ultra robusto para el gráfico Donut
+function DonutChart({ data, size = 180, strokeWidth = 24 }) {
+  const radius = (size - strokeWidth) / 2;
+  const center = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  const total = data.reduce((acc, item) => acc + item.value, 0);
+
+  let accumulatedLength = 0;
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={T.surfaceAlt}
+          strokeWidth={strokeWidth}
+        />
+        {total > 0 ? (
+          data.map((item, index) => {
+            const value = Math.max(item.value, 0);
+            const percentage = value / total;
+            const strokeLength = percentage * circumference;
+            const dashArray = `${strokeLength} ${circumference - strokeLength}`;
+            const dashOffset = -accumulatedLength;
+            accumulatedLength += strokeLength;
+
+            if (value === 0) return null;
+
+            return (
+              <circle
+                key={index}
+                cx={center}
+                cy={center}
+                r={radius}
+                fill="none"
+                stroke={item.color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={dashArray}
+                strokeDashoffset={dashOffset}
+                strokeLinecap="round"
+                style={{
+                  transition: "stroke-dasharray 0.4s ease, stroke-dashoffset 0.4s ease",
+                  transform: "rotate(-90deg)",
+                  transformOrigin: "center",
+                }}
+              />
+            );
+          })
+        ) : (
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={T.border}
+            strokeWidth={strokeWidth}
+          />
+        )}
+      </svg>
+    </div>
+  );
+}
 
 function Rule502030Tool({ onBack, onNavigate }) {
   const [income, setIncome] = useSharedState("rule502030_income", 1800);
@@ -153,39 +212,16 @@ function Rule502030Tool({ onBack, onNavigate }) {
       </Card>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ width: "100%", height: "180px", position: "relative" }}>
-          <div style={{ position: "absolute", inset: 0, zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
-              {fmtEUR(Math.abs(animatedDiff))}
-            </div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de mais"}</div>
+        <div className="mb-4">
+          <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
+            {fmtEUR(Math.abs(animatedDiff))}
           </div>
-          <div style={{ width: "100%", height: "100%" }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <PieChart>
-                <Pie
-                  data={donutData}
-                  dataKey="value"
-                  innerRadius="65%"
-                  outerRadius="95%"
-                  paddingAngle={3}
-                  stroke="none"
-                  isAnimationActive={true}
-                  animationDuration={500}
-                >
-                  {donutData.map((d, i) => (
-                    <Cell key={i} fill={d.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                  formatter={(v, n) => [fmtEUR(v), n]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
         </div>
-        <div className="flex gap-2 justify-center mt-3">
+
+        <DonutChart data={donutData} size={170} strokeWidth={22} />
+
+        <div className="flex gap-2 justify-center mt-4">
           <Chip label="Tu reparto" active={donutView === "actual"} onClick={() => setDonutView("actual")} />
           <Chip label="Recomendado" active={donutView === "recomendado"} onClick={() => setDonutView("recomendado")} />
         </div>
@@ -256,3 +292,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
+                          
