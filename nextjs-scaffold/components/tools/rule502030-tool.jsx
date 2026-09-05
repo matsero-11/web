@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
+import { Card, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -33,7 +33,7 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
   const radius = (size - strokeWidth) / 2;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
-  const total = data.reduce((acc, item) => acc + item.value, 0);
+  const total = data.reduce((acc, item) => acc + Math.max(item.value, 0), 0);
 
   let accumulatedLength = 0;
 
@@ -51,13 +51,12 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
         {total > 0 ? (
           data.map((item, index) => {
             const value = Math.max(item.value, 0);
+            if (value === 0) return null;
             const percentage = value / total;
             const strokeLength = percentage * circumference;
             const dashArray = `${strokeLength} ${circumference - strokeLength}`;
             const dashOffset = -accumulatedLength;
             accumulatedLength += strokeLength;
-
-            if (value === 0) return null;
 
             return (
               <circle
@@ -72,7 +71,7 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
                 strokeDashoffset={dashOffset}
                 strokeLinecap="round"
                 style={{
-                  transition: "stroke-dasharray 0.4s ease, stroke-dashoffset 0.4s ease",
+                  transition: "stroke-dasharray 0.3s ease, stroke-dashoffset 0.3s ease",
                   transform: "rotate(-90deg)",
                   transformOrigin: "center",
                 }}
@@ -94,14 +93,75 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
   );
 }
 
-function ToolRow({ label, value, setValue, rec, accent, income }) {
+function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) {
+      setValue(parsed);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
   return (
-    <div>
-      <div className="flex justify-between items-baseline mb-1">
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-baseline">
         <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>recomendado: {fmtEUR(rec)}</span>
+        <div className="flex items-center gap-1">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) {
+                setTextVal(String(value ?? 0));
+              } else {
+                setValue(parsed);
+                setTextVal(String(parsed));
+              }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{
+              ...fontBody,
+              color: accentColor,
+              fontSize: "0.95rem",
+              width: "100px",
+              borderBottom: `1px dashed ${T.border}`,
+              outline: "none",
+            }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{unit}</span>
+        </div>
       </div>
-      <SliderControl label="" value={Math.round(value)} min={0} max={income} step={10} unit="€" onChange={setValue} accent={accent} />
+      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
+      <input
+        type="range"
+        min={min}
+        max={Math.max(max, value || 0, 100)}
+        step={step}
+        value={isNaN(value) ? 0 : value}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer accent-current"
+        style={{ accentColor }}
+      />
     </div>
   );
 }
@@ -125,27 +185,27 @@ function Rule502030Tool({ onBack, onNavigate }) {
   useEffect(() => {
     if (prevIncome.current > 0 && income !== prevIncome.current) {
       const ratio = income / prevIncome.current;
-      setNeeds((n) => n * ratio);
-      setWants((w) => w * ratio);
-      setSavings((s) => s * ratio);
+      setNeeds((n) => Number((n * ratio).toFixed(2)));
+      setWants((w) => Number((w * ratio).toFixed(2)));
+      setSavings((s) => Number((s * ratio).toFixed(2)));
     } else if (prevIncome.current === 0 && income > 0) {
-      setNeeds(recNeeds);
-      setWants(recWants);
-      setSavings(recSavings);
+      setNeeds(Number(recNeeds.toFixed(2)));
+      setWants(Number(recWants.toFixed(2)));
+      setSavings(Number(recSavings.toFixed(2)));
     }
     prevIncome.current = income;
   }, [income]);
 
-  const total = needs + wants + savings;
-  const diff = income - total;
+  const total = Number(needs) + Number(wants) + Number(savings);
+  const diff = Number((income - total).toFixed(2));
   const animatedDiff = useAnimatedNumber(diff);
 
   const donutData = useMemo(() => {
     if (donutView === "actual") {
       return [
-        { name: "Necesidades", value: Math.max(needs, 0), color: T.lime },
-        { name: "Deseos", value: Math.max(wants, 0), color: T.lavender },
-        { name: "Ahorro", value: Math.max(savings, 0), color: "#7FA8C9" },
+        { name: "Necesidades", value: Math.max(Number(needs) || 0, 0), color: T.lime },
+        { name: "Deseos", value: Math.max(Number(wants) || 0, 0), color: T.lavender },
+        { name: "Ahorro", value: Math.max(Number(savings) || 0, 0), color: "#7FA8C9" },
       ];
     }
     return [
@@ -157,7 +217,7 @@ function Rule502030Tool({ onBack, onNavigate }) {
 
   const pageTitle = "Regla 50/30/20: reparte tu ingreso entre necesidades, deseos y ahorro | MetaBox";
   const pageDescription =
-    "Aplica la regla 50/30/20 a tu ingreso mensual, o personaliza los porcentajes a tu situación. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
+    "Aplica la regla 50/30/20 a tu ingreso mensual con soporte completo de decimales. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/rule502030";
 
   return (
@@ -213,7 +273,16 @@ function Rule502030Tool({ onBack, onNavigate }) {
       <ToolHeader title="Regla 50/30/20" subtitle="Reparte tu ingreso entre necesidades, deseos y ahorro." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
+        <DecimalSliderRow
+          label="Ingreso mensual"
+          value={income}
+          min={0}
+          max={10000}
+          step={1}
+          unit="€"
+          accent="lime"
+          setValue={setIncome}
+        />
       </Card>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
@@ -247,8 +316,26 @@ function Rule502030Tool({ onBack, onNavigate }) {
           Personaliza los porcentajes de referencia
         </div>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Necesidades" value={needsPct} min={20} max={80} step={5} unit="%" onChange={(v) => setNeedsPct(Math.min(v, 100 - wantsPct))} />
-          <SliderControl label="Deseos" value={wantsPct} min={0} max={60} step={5} unit="%" onChange={(v) => setWantsPct(Math.min(v, 100 - needsPct))} accent="lavender" />
+          <DecimalSliderRow
+            label="Necesidades (%)"
+            value={needsPct}
+            min={10}
+            max={90}
+            step={1}
+            unit="%"
+            accent="lime"
+            setValue={(v) => setNeedsPct(Math.min(v, 100 - wantsPct))}
+          />
+          <DecimalSliderRow
+            label="Deseos (%)"
+            value={wantsPct}
+            min={0}
+            max={80}
+            step={1}
+            unit="%"
+            accent="lavender"
+            setValue={(v) => setWantsPct(Math.min(v, 100 - needsPct))}
+          />
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
             Ahorro (resto): <span style={{ color: T.lime, fontWeight: 600 }}>{savingsPct}%</span>
           </div>
@@ -257,9 +344,39 @@ function Rule502030Tool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <ToolRow label={`Necesidades (${needsPct}%)`} value={needs} setValue={setNeeds} rec={recNeeds} accent="lime" income={income} />
-          <ToolRow label={`Deseos (${wantsPct}%)`} value={wants} setValue={setWants} rec={recWants} accent="lavender" income={income} />
-          <ToolRow label={`Ahorro (${savingsPct}%)`} value={savings} setValue={setSavings} rec={recSavings} accent="lime" income={income} />
+          <DecimalSliderRow
+            label={`Necesidades (${needsPct}%)`}
+            value={needs}
+            min={0}
+            max={income}
+            step={0.01}
+            unit="€"
+            accent="lime"
+            subtitle={`Recomendado: ${fmtEUR(recNeeds)}`}
+            setValue={setNeeds}
+          />
+          <DecimalSliderRow
+            label={`Deseos (${wantsPct}%)`}
+            value={wants}
+            min={0}
+            max={income}
+            step={0.01}
+            unit="€"
+            accent="lavender"
+            subtitle={`Recomendado: ${fmtEUR(recWants)}`}
+            setValue={setWants}
+          />
+          <DecimalSliderRow
+            label={`Ahorro (${savingsPct}%)`}
+            value={savings}
+            min={0}
+            max={income}
+            step={0.01}
+            unit="€"
+            accent="lime"
+            subtitle={`Recomendado: ${fmtEUR(recSavings)}`}
+            setValue={setSavings}
+          />
         </div>
       </Card>
 
@@ -280,9 +397,9 @@ function Rule502030Tool({ onBack, onNavigate }) {
         <ExportCSVButton
           filename="regla-50-30-20"
           getRows={() => [
-            { categoria: "Necesidades", recomendado: recNeeds.toFixed(2), actual: needs.toFixed(2) },
-            { categoria: "Deseos", recomendado: recWants.toFixed(2), actual: wants.toFixed(2) },
-            { categoria: "Ahorro", recomendado: recSavings.toFixed(2), actual: savings.toFixed(2) },
+            { categoria: "Necesidades", recomendado: recNeeds.toFixed(2), actual: Number(needs).toFixed(2) },
+            { categoria: "Deseos", recomendado: recWants.toFixed(2), actual: Number(wants).toFixed(2) },
+            { categoria: "Ahorro", recomendado: recSavings.toFixed(2), actual: Number(savings).toFixed(2) },
           ]}
         />
       </div>
@@ -297,4 +414,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-        
+            
