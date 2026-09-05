@@ -120,10 +120,10 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
         <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
           <input
             type="text"
             inputMode="decimal"
@@ -142,13 +142,12 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             style={{
               ...fontBody,
               color: accentColor,
-              fontSize: "0.95rem",
-              width: "100px",
-              borderBottom: `1px dashed ${T.border}`,
+              fontSize: "0.9rem",
+              width: "75px",
               outline: "none",
             }}
           />
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{unit}</span>
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
       </div>
       {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
@@ -159,7 +158,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
         step={step}
         value={isNaN(value) ? 0 : value}
         onChange={handleSliderChange}
-        className="w-full cursor-pointer accent-current"
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
       />
     </div>
@@ -414,4 +413,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-            
+                      
