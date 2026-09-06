@@ -6,7 +6,7 @@ import { fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import RelatedTools from "@/components/RelatedTools";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import GoalProjection from "@/components/engines/GoalProjection";
 import { usePersistentState } from "@/lib/persistence";
 import AdSlot from "@/components/AdSlot";
@@ -227,11 +227,24 @@ function SavingsGoalTool({ onBack, onNavigate }) {
             `${active.name}: ${fmtEUR(goal)} — ya ahorrado ${fmtEUR(current)} — ahorro mensual ${fmtEUR(monthly + extra)} — lo conseguirás en ${Number.isFinite(months) ? months + " meses" : "un plazo indeterminado"}.`
           }
         />
+        <ExportCSVButton
+          filename="objetivo-de-ahorro"
+          getRows={() => [
+            {
+              objetivo: active.name,
+              meta_total: goal,
+              ya_ahorrado: current,
+              ahorro_mensual: monthly,
+              ahorro_extra: extra,
+              meses_estimados: Number.isFinite(months) ? months : "Indefinido",
+            },
+          ]}
+        />
       </div>
 
       <div style={{ ...fontBody, color: C.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${C.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Ya seja para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar varios objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
+          Ya sea para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar varios objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
         </p>
       </div>
     </div>
@@ -239,4 +252,4 @@ function SavingsGoalTool({ onBack, onNavigate }) {
 }
 
 export default SavingsGoalTool;
-    
+              
