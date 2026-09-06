@@ -338,7 +338,7 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
         <ExportCSVButton
           filename="planificador-ahorro-anual"
           getRows={() =>
-            MONTHS.main.map((m, i) => ({
+            MONTHS.map((m, i) => ({
               mes: m,
               importe: (lowMonths.has(i) ? lowShare : normalShare).toFixed(2),
               tipo: lowMonths.has(i) ? "flojo" : "normal",
@@ -357,4 +357,4 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
 }
 
 export default AnnualPlannerTool;
-                
+            
