@@ -1,19 +1,16 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
+import { Plus, X } from "lucide-react";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Plus, X, Gift,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -52,6 +49,7 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
     if (current > budget) setCurrent(budget);
   }, [budget, current]);
 
+  const maxCurrentSlider = Math.max(budget, current, 1000);
   const monthsLeft = currentMonth <= 12 ? 12 - currentMonth + 1 : 12;
   const remaining = Math.max(budget - current, 0);
   const requiredMonthly = monthsLeft > 0 ? remaining / monthsLeft : remaining;
@@ -215,13 +213,13 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <SliderControl label="Mes actual" value={currentMonth} min={1} max={12} step={1} unit="" onChange={setCurrentMonth} />
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={10} unit="€" onChange={setCurrent} accent="lavender" />
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={maxCurrentSlider} step={10} unit="€" onChange={setCurrent} accent="lavender" />
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["savings", "challenge"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["savings", "challenge"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -245,3 +243,4 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
 }
 
 export default HolidaySavingsTool;
+        
