@@ -1,32 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS, CATEGORIES } from "@/lib/tools-registry";
+import { usePersistentState } from "@/lib/persistence";
+import { Clock, X, Search, RotateCcw } from "lucide-react";
 
 export default function HomeScreen() {
-  const [activeToolId, setActiveToolId] = useState(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeToolId = searchParams.get("tool");
+
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [recentTools, setRecentTools] = usePersistentState("metabox_recent_tools", []);
 
-  const filtered = ALL_TOOLS.filter(
-    (t) =>
-      t.label.toLowerCase().includes(query.toLowerCase()) ||
-      t.desc.toLowerCase().includes(query.toLowerCase())
-  );
-
-  const handleClear = () => {
-    setQuery("");
+  const setActiveToolId = (id) => {
+    const params = new URLSearchParams(window.location.search);
+    if (id) {
+      params.set("tool", id);
+      // Actualizar recientes
+      setRecentTools((prev) => {
+        const filtered = prev.filter((item) => item !== id);
+        return [id, ...filtered].slice(0, 4);
+      });
+    } else {
+      params.delete("tool");
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  // Buscamos si hay una herramienta activa seleccionada
+  const filtered = ALL_TOOLS.filter((t) => {
+    const matchesQuery =
+      t.label.toLowerCase().includes(query.toLowerCase()) ||
+      t.desc.toLowerCase().includes(query.toLowerCase());
+    const matchesCategory = selectedCategory ? t.category === selectedCategory : true;
+    return matchesQuery && matchesCategory;
+  });
+
   const selectedTool = ALL_TOOLS.find((t) => t.id === activeToolId);
 
-  // Si el usuario seleccionó una herramienta, renderizamos su componente o un mensaje de error claro
   if (activeToolId) {
     return (
-      <div className="pt-8 pb-28 w-full">
+      <div className="pt-8 pb-28 w-full view-enter">
         <button
           onClick={() => setActiveToolId(null)}
           style={{
@@ -35,12 +54,18 @@ export default function HomeScreen() {
             border: `1px solid ${T.border}`,
             color: T.text,
             padding: "0.5rem 1rem",
-            borderRadius: "0.5rem",
+            borderRadius: "0.8rem",
             cursor: "pointer",
             marginBottom: "1.5rem",
             fontWeight: 500,
             fontSize: "0.85rem",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.4rem",
+            transition: "all 0.2s ease",
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.lime; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.border; }}
         >
           ← Volver al inicio
         </button>
@@ -48,7 +73,7 @@ export default function HomeScreen() {
         {selectedTool && selectedTool.component ? (
           (() => {
             const ToolComponent = selectedTool.component;
-            return <ToolComponent />;
+            return <ToolComponent onBack={() => setActiveToolId(null)} />;
           })()
         ) : (
           <div style={{ ...fontBody, color: T.coral, padding: "2rem 0", textAlign: "center" }}>
@@ -60,7 +85,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <div className="pt-8 pb-28 w-full">
+    <div className="pt-8 pb-28 w-full view-enter">
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", letterSpacing: "0.08em" }}>
         METABOX · HERRAMIENTAS FINANCIERAS
       </div>
@@ -68,34 +93,100 @@ export default function HomeScreen() {
         ¿Qué quieres conseguir?
       </h1>
       <p style={{ ...fontBody, color: T.textMuted, fontSize: "0.95rem", marginTop: "0.5rem" }}>
-        Elige un punto de partida. Te llevará directo a la herramienta adecuada.
+        Elige un punto de partida o usa el buscador inteligente.
       </p>
 
+      {/* Recientes */}
+      {recentTools.length > 0 && !query && !selectedCategory && (
+        <div style={{ marginTop: "1.5rem" }}>
+          <div className="flex items-center gap-1.5" style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginBottom: "0.6rem" }}>
+            <Clock size={13} /> Recientes
+          </div>
+          <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+            {recentTools.map((id) => {
+              const tool = ALL_TOOLS.find((t) => t.id === id);
+              if (!tool) return null;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setActiveToolId(tool.id)}
+                  style={{
+                    ...fontBody,
+                    background: T.surfaceAlt,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: "0.7rem",
+                    padding: "0.5rem 0.85rem",
+                    color: T.text,
+                    fontSize: "0.82rem",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    transition: "border-color 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.lime; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.border; }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: T.lime }} />
+                  {tool.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Categorías Interactivas */}
       <div
         className="grid grid-cols-1 md:grid-cols-2"
         style={{ gap: "1rem", marginTop: "1.75rem" }}
       >
-        {CATEGORIES.map((c, i) => (
-          <Card
-            key={i}
-            onClick={c.view ? () => setActiveToolId(c.view) : undefined}
-            disabled={!c.view}
-            style={{ animation: `fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: `${i * 0.05}s` }}
-          >
-            <div className="flex items-center gap-3.5">
-              <IconTile icon={c.icon} tone={c.tone} />
-              <div>
-                <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.98rem" }}>{c.label}</div>
-                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>{c.desc}</div>
+        {CATEGORIES.map((c, i) => {
+          const isSelected = selectedCategory === c.id;
+          return (
+            <Card
+              key={i}
+              onClick={() => {
+                if (c.view) {
+                  setActiveToolId(c.view);
+                } else if (c.id) {
+                  setSelectedCategory(isSelected ? null : c.id);
+                }
+              }}
+              style={{
+                animation: `fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both`,
+                animationDelay: `${i * 0.05}s`,
+                borderColor: isSelected ? T.lime : T.border,
+                background: isSelected ? T.surfaceAlt : T.surface,
+              }}
+            >
+              <div className="flex items-center gap-3.5">
+                <IconTile icon={c.icon} tone={c.tone} />
+                <div>
+                  <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.98rem" }}>{c.label}</div>
+                  <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>{c.desc}</div>
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
 
+      {/* Buscador y Grid Principal */}
       <div style={{ marginTop: "3.5rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1.1rem", marginBottom: "1rem" }}>
-          Todas las herramientas
+        <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1.1rem" }}>
+            {selectedCategory ? "Herramientas de la categoría" : "Todas las herramientas"}
+          </div>
+          {(selectedCategory || query) && (
+            <button
+              onClick={() => { setSelectedCategory(null); setQuery(""); }}
+              style={{ ...fontBody, background: "transparent", border: "none", color: T.lime, fontSize: "0.82rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem" }}
+            >
+              <RotateCcw size={13} /> Ver todas
+            </button>
+          )}
         </div>
 
         <div role="search" aria-label="Buscar herramientas" style={{ position: "relative" }}>
@@ -126,7 +217,7 @@ export default function HomeScreen() {
           {query && (
             <button
               type="button"
-              onClick={handleClear}
+              onClick={() => setQuery("")}
               aria-label="Limpiar búsqueda"
               style={{
                 position: "absolute",
@@ -144,19 +235,10 @@ export default function HomeScreen() {
                 minHeight: "44px",
                 minWidth: "44px",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = T.text; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = T.textMuted; }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+              <X size={18} />
             </button>
           )}
-        </div>
-
-        <div aria-live="polite" style={{ position: "absolute", width: "1px", height: "1px", padding: "0", margin: "-1px", overflow: "hidden", clip: "rect(0,0,0,0)", border: "0" }}>
-          {query ? `${filtered.length} herramientas encontradas` : `${ALL_TOOLS.length} herramientas disponibles`}
         </div>
 
         <div
@@ -175,8 +257,24 @@ export default function HomeScreen() {
             </Card>
           ))}
           {filtered.length === 0 && (
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", gridColumn: "1 / -1", textAlign: "center", padding: "2rem 0" }}>
-              No hay herramientas que coincidan con "{query}".
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", gridColumn: "1 / -1", textAlign: "center", padding: "2.5rem 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+              <div>No hay herramientas que coincidan con "{query}".</div>
+              <button
+                onClick={() => { setQuery(""); setSelectedCategory(null); }}
+                style={{
+                  ...fontBody,
+                  background: T.lime,
+                  color: "#12200A",
+                  border: "none",
+                  padding: "0.6rem 1.2rem",
+                  borderRadius: "0.7rem",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Limpiar filtros y ver todas
+              </button>
             </div>
           )}
         </div>
@@ -193,26 +291,11 @@ export default function HomeScreen() {
           gap: "1.25rem",
         }}
       >
-        <Link
-          href="/aviso-legal"
-          style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}
-        >
-          Aviso legal
-        </Link>
-        <Link
-          href="/privacidad"
-          style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}
-        >
-          Privacidad
-        </Link>
-        <Link
-          href="/cookies"
-          style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}
-        >
-          Cookies
-        </Link>
+        <Link href="/aviso-legal" style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}>Aviso legal</Link>
+        <Link href="/privacidad" style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}>Privacidad</Link>
+        <Link href="/cookies" style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textDecoration: "none" }}>Cookies</Link>
       </footer>
     </div>
   );
 }
-
+  
