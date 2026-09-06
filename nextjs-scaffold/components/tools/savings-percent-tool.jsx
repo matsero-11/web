@@ -2,21 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  RadialBarChart, RadialBar, LineChart, Line,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, PolarAngleAxis,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, SliderControl, Chip, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -172,7 +166,7 @@ function SavingsPercentTool({ onBack, onNavigate }) {
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
-          <SliderControl label="Ahorro mensual" value={savings} min={0} max={income} step={10} unit="€" onChange={setSavings} accent="lavender" />
+          <SliderControl label="Ahorro mensual" value={savings} min={0} max={Math.max(income, 100)} step={10} unit="€" onChange={setSavings} accent="lavender" />
         </div>
       </Card>
 
@@ -218,6 +212,14 @@ function SavingsPercentTool({ onBack, onNavigate }) {
         <CopySummaryButton
           getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${pct.toFixed(1)}%.`}
         />
+        <ExportCSVButton
+          filename="tasa-de-ahorro"
+          getRows={() =>
+            history.length > 0
+              ? history.map((item) => ({ mes: item.label, tasa_ahorro_pct: item.pct }))
+              : [{ mes: "Actual", ingreso: income, ahorro: savings, tasa_ahorro_pct: pct.toFixed(1) }]
+          }
+        />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
@@ -230,3 +232,4 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 }
 
 export default SavingsPercentTool;
+                   
