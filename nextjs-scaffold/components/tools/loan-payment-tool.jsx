@@ -2,18 +2,16 @@
 import React, { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, SliderControl, Chip, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -59,6 +57,9 @@ function LoanPaymentTool({ onBack, onNavigate }) {
   const animatedPayment = useAnimatedNumber(payment);
   const animatedInterest = useAnimatedNumber(totalInterest);
 
+  const maxPrincipalSlider = Math.max(300000, principal * 1.5);
+  const maxExtraSlider = Math.max(1000, payment * 2);
+
   const chartData = useMemo(() => {
     let balance = principal;
     let interestPaid = 0;
@@ -73,23 +74,6 @@ function LoanPaymentTool({ onBack, onNavigate }) {
     return points;
   }, [principal, monthlyRate, payment, months]);
 
-  // Simulación con amortización extra mensual
-  const withExtra = useMemo(() => {
-    let balance = principal;
-    let totalPaidExtra = 0;
-    let m = 0;
-    while (balance > 0.01 && m < 600) {
-      m++;
-      const interest = balance * monthlyRate;
-      const principalPortion = payment - interest;
-      balance = Math.max(balance - principalPortion - extraPayment, 0);
-      totalPaidExtra += payment + (balance > 0 ? extraPayment : Math.max(0, extraPayment - (balance === 0 ? 0 : 0)));
-    }
-    const totalCostExtra = m * payment + Math.min(m, months) * 0; // aproximación simple: recalculamos abajo con más precisión
-    return { months: m };
-  }, [principal, monthlyRate, payment, extraPayment, months]);
-
-  // Cálculo más preciso del coste total con amortización extra
   const extraSimulation = useMemo(() => {
     let balance = principal;
     let totalCost = 0;
@@ -218,7 +202,7 @@ function LoanPaymentTool({ onBack, onNavigate }) {
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Amortización anticipada
           </div>
-          <SliderControl label="Extra al mes" value={extraPayment} min={0} max={Math.max(500, payment)} step={10} unit="€" onChange={setExtraPayment} accent="lavender" />
+          <SliderControl label="Extra al mes" value={extraPayment} min={0} max={maxExtraSlider} step={10} unit="€" onChange={setExtraPayment} accent="lavender" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
             <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Terminas antes</div>
@@ -248,7 +232,7 @@ function LoanPaymentTool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Importe del préstamo" value={principal} min={500} max={100000} step={100} unit="€" onChange={setPrincipal} />
+          <SliderControl label="Importe del préstamo" value={principal} min={500} max={maxPrincipalSlider} step={500} unit="€" onChange={setPrincipal} />
           <SliderControl label="TAE estimada" value={rate} min={0} max={20} step={0.1} unit="%" onChange={setRate} accent="lavender" />
           <SliderControl label="Plazo" value={months} min={1} max={360} step={1} unit="meses" onChange={setMonths} />
         </div>
@@ -260,7 +244,7 @@ function LoanPaymentTool({ onBack, onNavigate }) {
         Cálculo orientativo con cuota fija. No incluye comisiones y no constituye una oferta ni asesoramiento financiero.
       </div>
 
-      <RelatedTools ids={["targetincome", "budget"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["targetincome", "budget"]} onNavigate={onNavigate} primaryId="targetincome" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -291,3 +275,4 @@ function LoanPaymentTool({ onBack, onNavigate }) {
 }
 
 export default LoanPaymentTool;
+    
