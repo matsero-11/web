@@ -1,18 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Plus, X,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
-import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Plus, X } from "lucide-react";
+import { fmtEUR } from "@/lib/hooks";
+import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import RelatedTools from "@/components/RelatedTools";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -20,7 +11,6 @@ import GoalProjection from "@/components/engines/GoalProjection";
 import { usePersistentState } from "@/lib/persistence";
 import AdSlot from "@/components/AdSlot";
 
-// Estilos locales seguros para evitar conflictos de inicialización
 const C = {
   text: "#f4f4f5",
   textMuted: "#a1a1aa",
@@ -63,7 +53,11 @@ function SavingsGoalTool({ onBack, onNavigate }) {
   };
 
   useEffect(() => {
-    if (active && active.current > active.goal) updateActive({ current: active.goal });
+    if (active && active.current > active.goal) {
+      setGoals((prev) =>
+        prev.map((goalObj) => (goalObj.id === active.id ? { ...goalObj, current: goalObj.goal } : goalObj))
+      );
+    }
   }, [active?.goal]);
 
   const addGoal = () => {
@@ -237,7 +231,7 @@ function SavingsGoalTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: C.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${C.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Ya sea para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar varios objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
+          Ya seja para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar varios objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
         </p>
       </div>
     </div>
@@ -245,4 +239,4 @@ function SavingsGoalTool({ onBack, onNavigate }) {
 }
 
 export default SavingsGoalTool;
-
+    
