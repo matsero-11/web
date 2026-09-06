@@ -45,9 +45,9 @@ export const metadata = {
     },
   },
 
-  // Espacio para la verificación de Google Search Console
+  // Verificación de Google Search Console
   verification: {
-    google: "PEGA_AQUI_TU_CODIGO_DE_SEARCH_CONSOLE",
+    google: "ieioMsOsbPGm3H8sX-9FpBz_DMuBSfWAQMFYKw0wgsA",
   },
 
   alternates: {
@@ -106,3 +106,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
