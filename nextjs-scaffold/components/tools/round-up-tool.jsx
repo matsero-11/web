@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -30,8 +30,8 @@ const FAQS = [
     a: "Depende de cuánto quieras ahorrar sin notarlo demasiado: redondear a 1€ genera menos ahorro pero pasa más desapercibido; redondear a 5€ acumula más, aunque se nota algo más en cada compra.",
   },
   {
-    q: "¿Para qué sirve la hucha real de esta herramienta?",
-    a: "Además de la estimación con una media, puedes registrar compras reales una a una: cada vez que añades una, se calcula su redondeo exacto y se suma a tu hucha acumulada real.",
+    q: "¿Para qué sirve el historial de la hucha en esta herramienta?",
+    a: "Puedes registrar compras reales una a una: cada vez que añades una, se calcula su redondeo exacto, se suma a tu hucha y puedes consultar o eliminar movimientos individuales si te equivocas.",
   },
 ];
 
@@ -39,7 +39,7 @@ function RoundUpTool({ onBack, onNavigate }) {
   const [purchasesPerWeek, setPurchasesPerWeek] = useSharedState("roundup_purchasesPerWeek", 8);
   const [avgAmount, setAvgAmount] = useSharedState("roundup_avgAmount", 6.5);
   const [roundTo, setRoundTo] = useSharedState("roundup_roundTo", 1);
-  const [piggyBank, setPiggyBank] = usePersistentState("roundup_piggyBank", 0);
+  const [history, setHistory] = usePersistentState("roundup_history", []);
   const [newPurchase, setNewPurchase] = useState("");
 
   const maxAvgSlider = Math.max(200, avgAmount * 1.5);
@@ -48,6 +48,8 @@ function RoundUpTool({ onBack, onNavigate }) {
   const weekly = purchasesPerWeek * roundUpPerPurchase;
   const monthly = weekly * 4.33;
   const annual = weekly * 52;
+
+  const piggyBank = history.reduce((acc, cur) => acc + cur.roundUp, 0);
 
   const animatedMonthly = useAnimatedNumber(monthly);
   const animatedAnnual = useAnimatedNumber(annual);
@@ -64,15 +66,20 @@ function RoundUpTool({ onBack, onNavigate }) {
     if (!Number.isFinite(amount) || amount <= 0) return;
     const purchaseRem = amount % roundTo;
     const roundUp = purchaseRem === 0 ? 0 : roundTo - purchaseRem;
-    setPiggyBank((p) => Number((p + roundUp).toFixed(2)));
+    const newItem = { id: Date.now(), amount, roundUp };
+    setHistory((prev) => [newItem, ...prev]);
     setNewPurchase("");
   };
 
-  const resetPiggyBank = () => setPiggyBank(0);
+  const removePurchase = (id) => {
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const resetPiggyBank = () => setHistory([]);
 
   const pageTitle = "Calculadora de ahorro por redondeo de compras | MetaBox";
   const pageDescription =
-    "Estima cuánto ahorrarías redondeando tus compras y lleva una hucha real registrando el redondeo de cada compra que hagas. Gratis y sin registro.";
+    "Estima cuánto ahorrarías redondeando tus compras y lleva una hucha real con historial de movimientos y opción de eliminar entradas. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/roundup";
 
   return (
@@ -156,12 +163,44 @@ function RoundUpTool({ onBack, onNavigate }) {
             <Plus size={18} color="#12200A" />
           </button>
         </div>
+
+        {history.length > 0 && (
+          <div className="flex flex-col gap-2 mt-4 text-left" style={{ maxHeight: "160px", overflowY: "auto", paddingRight: "4px" }}>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Últimos movimientos
+            </div>
+            {history.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between py-1.5 px-2.5 rounded-lg"
+                style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}
+              >
+                <div style={{ ...fontBody, fontSize: "0.82rem", color: T.text }}>
+                  Compra de <span style={{ fontWeight: 600 }}>{fmtEUR(item.amount)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span style={{ ...fontBody, fontSize: "0.82rem", color: T.lime, fontWeight: 600 }}>
+                    +{fmtEUR(item.roundUp)}
+                  </span>
+                  <button
+                    onClick={() => removePurchase(item.id)}
+                    aria-label="Eliminar movimiento"
+                    style={{ background: "transparent", border: "none", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center" }}
+                  >
+                    <X size={14} color={T.textMuted} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {piggyBank > 0 && (
           <button
             onClick={resetPiggyBank}
-            style={{ ...fontBody, background: "transparent", border: "none", color: T.textMuted, fontSize: "0.75rem", cursor: "pointer", marginTop: "0.6rem", textDecoration: "underline" }}
+            style={{ ...fontBody, background: "transparent", border: "none", color: T.textMuted, fontSize: "0.75rem", cursor: "pointer", marginTop: "0.8rem", textDecoration: "underline" }}
           >
-            Vaciar hucha (ya la he retirado)
+            Vaciar hucha completa
           </button>
         )}
       </Card>
@@ -194,7 +233,7 @@ function RoundUpTool({ onBack, onNavigate }) {
         text={
           roundUpPerPurchase < 0.3
             ? "Con este importe medio, el redondeo a 1€ apenas suma. Prueba a redondear a 2€ o 5€ para notar más diferencia."
-            : "Registra tus compras reales arriba para ver tu hucha crecer de verdad, no solo la estimación teórica."
+            : "Registra tus compras reales arriba para ver tu hucha crecer de verdad, con opción de revisar o eliminar cualquier entrada."
         }
       />
 
@@ -230,7 +269,7 @@ function RoundUpTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          El ahorro por redondeo es una de las formas más populares de ahorrar sin esfuerzo: cada vez que pagas, la diferencia hasta la cifra redonda más cercana se destina a tu ahorro. Además de la estimación con una media, puedes registrar tus compras reales una a una y ver tu hucha crecer con datos verdaderos, no solo una proyección teórica.
+          El ahorro por redondeo es una de las formas más populares de ahorrar sin esfuerzo: cada vez que pagas, la diferencia hasta la cifra redonda más cercana se destina a tu ahorro. Además de la estimación con una media, puedes registrar tus compras reales una a una en tu historial, comprobar cada aportación y eliminar entradas individuales si te equivocas al introducirlas.
         </p>
       </div>
     </div>
@@ -238,3 +277,4 @@ function RoundUpTool({ onBack, onNavigate }) {
 }
 
 export default RoundUpTool;
+                  
