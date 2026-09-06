@@ -1,21 +1,21 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Plus, X } from "lucide-react";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Plus, X,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
+import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -45,6 +45,8 @@ function DailyExpenseTool({ onBack, onNavigate }) {
   const weekly = daily * 7;
   const monthly = daily * 30;
   const annual = daily * 365;
+
+  const animatedAnnual = useAnimatedNumber(annual);
 
   const barData = [
     { periodo: "Semana", valor: weekly },
@@ -125,6 +127,18 @@ function DailyExpenseTool({ onBack, onNavigate }) {
       </Helmet>
 
       <ToolHeader title="Gastos diarios" subtitle="Desglosa tus pequeños gastos y mira cuánto suman en conjunto." onBack={onBack} />
+
+      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
+          Tus microgastos suman un total anual de
+        </div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
+          {fmtEUR(animatedAnnual)}
+        </div>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>
+          Equivalente a {fmtEUR(daily)} al día ({fmtEUR(monthly)} al mes)
+        </div>
+      </Card>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
@@ -207,7 +221,7 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["roundup", "budget"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["roundup", "budget"]} onNavigate={onNavigate} primaryId="roundup" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -226,3 +240,4 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 }
 
 export default DailyExpenseTool;
+          
