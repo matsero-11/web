@@ -31,10 +31,14 @@ function HomeContent() {
     const matchQ = !q || x.label.toLowerCase().includes(q.toLowerCase()) || x.desc.toLowerCase().includes(q.toLowerCase());
     if (!cat) return matchQ;
     const tc = (x.category || "").toLowerCase(), tt = `${x.label} ${x.desc} ${x.id}`.toLowerCase();
-    const matchCat = cat === "ahorrar" ? tc.includes("ahorr") || tt.includes("ahorr") || tt.includes("meta") :
-                     cat === "organizar" ? tc.includes("organiz") || tc.includes("budg") || tt.includes("presupuesto") :
-                     cat === "planificar" ? tc.includes("plan") || tt.includes("jubil") || tt.includes("hipotec") :
-                     tc.includes(cat) || tc === cat;
+    
+    const matchCat = 
+      cat === "ahorrar" ? tc.includes("ahorr") || tc.includes("sav") || tt.includes("ahorr") || tt.includes("meta") || tt.includes("fondo") :
+      cat === "organizar" ? tc.includes("organiz") || tc.includes("presup") || tc.includes("budg") || tt.includes("presupuesto") || tt.includes("gasto") :
+      cat === "planificar" ? tc.includes("plan") || tt.includes("plan") || tt.includes("jubil") || tt.includes("hipotec") || tt.includes("prestam") :
+      cat === "crecer" ? tc.includes("crec") || tc.includes("invers") || tc.includes("grow") || tc.includes("invest") || tt.includes("inversión") || tt.includes("interés") :
+      tc.includes(cat) || tc === cat;
+
     return matchQ && matchCat;
   });
 
@@ -159,5 +163,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-                                                                                   }
-          
+}
+  
