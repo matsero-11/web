@@ -1,12 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Repeat,
-} from "lucide-react";
+import { Repeat } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, AdviceBlock, Chip } from "@/components/ui";
+import { Card, AdviceBlock, Chip } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
@@ -27,6 +25,75 @@ const FAQS = [
     a: "Cada vez que conviertes con una combinación de monedas nueva, se guarda automáticamente como acceso rápido, para que la próxima vez no tengas que volver a escribir el tipo de cambio desde cero.",
   },
 ];
+
+function DecimalRateRow({ label, value, setValue, min = 0.0001, max = 10000, unit = "" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) {
+      setValue(parsed);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) {
+                setTextVal(String(value ?? 0));
+              } else {
+                setValue(parsed);
+                setTextVal(String(parsed));
+              }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{
+              ...fontBody,
+              color: T.lavender,
+              fontSize: "0.9rem",
+              width: "100px",
+              outline: "none",
+            }}
+          />
+          {unit && <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>}
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={Math.max(max, value || 0, 10)}
+        step={value > 100 ? 1 : value > 10 ? 0.1 : 0.0001}
+        value={isNaN(value) ? 0 : value}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor: T.lavender }}
+      />
+    </div>
+  );
+}
 
 function CurrencyConverterTool({ onBack, onNavigate }) {
   const [amount, setAmount] = useSharedState("currency_amount", 100);
@@ -122,7 +189,9 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
       <ToolHeader title="Conversor de moneda para viajes" subtitle="Introduce el tipo de cambio del día y convierte al instante." onBack={onBack} />
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{amount} {fromLabel} equivalen a</div>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
+          {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(amount)} {fromLabel} equivalen a
+        </div>
         <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
           {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(animatedConverted)} {toLabel}
         </div>
@@ -197,8 +266,23 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
             />
           </div>
 
-          <SliderControl label={`Importe en ${fromLabel || "origen"}`} value={amount} min={0} max={5000} step={5} unit="" onChange={setAmount} />
-          <SliderControl label="Tipo de cambio" value={rate} min={0.01} max={5} step={0.01} unit="" onChange={setRate} accent="lavender" />
+          <DecimalRateRow
+            label={`Importe en ${fromLabel || "origen"}`}
+            value={amount}
+            setValue={setAmount}
+            min={0}
+            max={50000}
+            unit={fromLabel}
+          />
+
+          <DecimalRateRow
+            label="Tipo de cambio"
+            value={rate}
+            setValue={setRate}
+            min={0.0001}
+            max={5000}
+            unit={`1 ${fromLabel} = X ${toLabel}`}
+          />
 
           <button
             onClick={savePair}
@@ -218,7 +302,7 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
         El tipo de cambio no se actualiza automáticamente: introduce el del día antes de viajar.
       </div>
 
-      <RelatedTools ids={["trip", "tripdaily"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["trip", "tripdaily"]} onNavigate={onNavigate} primaryId="trip" />
 
       <div className="flex justify-center pt-2">
         <CopySummaryButton
@@ -236,3 +320,4 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
 }
 
 export default CurrencyConverterTool;
+                   
