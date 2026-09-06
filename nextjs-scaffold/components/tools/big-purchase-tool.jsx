@@ -16,7 +16,7 @@ import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -40,6 +40,78 @@ const FAQS = [
     a: "Depende de tu situación: financiar reduce el esfuerzo de ahorro inicial pero añade intereses al coste total. Usa el comparador de esta herramienta para ver la diferencia exacta en euros entre ambas opciones.",
   },
 ];
+
+function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) {
+      setValue(parsed);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) {
+                setTextVal(String(value ?? 0));
+              } else {
+                setValue(parsed);
+                setTextVal(String(parsed));
+              }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{
+              ...fontBody,
+              color: accentColor,
+              fontSize: "0.9rem",
+              width: "85px",
+              outline: "none",
+            }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
+        </div>
+      </div>
+      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
+      <input
+        type="range"
+        min={min}
+        max={Math.max(max, value || 0, 100)}
+        step={step}
+        value={isNaN(value) ? 0 : value}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 
 function BigPurchaseTool({ onBack, onNavigate }) {
   const [type, setType] = usePersistentState("bigpurchase_type", "coche");
@@ -71,6 +143,7 @@ function BigPurchaseTool({ onBack, onNavigate }) {
   const animatedRequired = useAnimatedNumber(requiredMonthly);
   const pct = budget > 0 ? (current / budget) * 100 : 0;
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
+  const isGoalAchieved = current >= budget && budget > 0;
 
   // Comparador: financiar una parte del importe restante vs ahorrar todo
   const financedAmount = remaining * (financePct / 100);
@@ -190,6 +263,23 @@ function BigPurchaseTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {isGoalAchieved && (
+        <div style={{
+          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
+          border: `1px solid ${T.lime}`,
+          borderRadius: "0.8rem",
+          padding: "1rem",
+          textAlign: "center",
+        }}>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
+            🎉 ¡Objetivo de compra cumplido!
+          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
+            Ya tienes ahorrado el presupuesto completo para tu {typeInfo.label.toLowerCase()}. ¡Es hora de dar el paso!
+          </div>
+        </div>
+      )}
+
       <AdviceBlock
         text={
           type === "vivienda"
@@ -204,8 +294,8 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Presupuesto" value={budget} min={200} max={80000} step={100} unit="€" onChange={setBudget} />
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={50} unit="€" onChange={setCurrent} />
+          <DecimalSliderRow label="Presupuesto" value={budget} min={200} max={80000} step={100} unit="€" accent="lime" setValue={setBudget} />
+          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={budget} step={50} unit="€" accent="lavender" setValue={setCurrent} />
           <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={0} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
@@ -252,7 +342,7 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -260,6 +350,22 @@ function BigPurchaseTool({ onBack, onNavigate }) {
             `Ahorro para ${typeInfo.label}: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses → necesitas ${fmtEUR(requiredMonthly)}/mes.` +
             (showFinancing ? ` Financiando ${financePct}%: ${fmtEUR(combinedMonthly)}/mes (${fmtEUR(interestCost)} en intereses).` : "")
           }
+        />
+        <ExportCSVButton
+          filename="ahorro-compra-grande"
+          getRows={() => [
+            { concepto: "Tipo de compra", valor: typeInfo.label },
+            { concepto: "Presupuesto total", valor: budget.toFixed(2) },
+            { concepto: "Ya ahorrado", valor: current.toFixed(2) },
+            { concepto: "Restante", valor: remaining.toFixed(2) },
+            { concepto: "Plazo objetivo (meses)", valor: monthsLeft },
+            { concepto: "Ahorro mensual necesario", valor: requiredMonthly.toFixed(2) },
+            ...(showFinancing ? [
+              { concepto: "Porcentaje financiado", valor: `${financePct}%` },
+              { concepto: "Cuota mensual del préstamo", valor: loanPayment.toFixed(2) },
+              { concepto: "Intereses totales", valor: interestCost.toFixed(2) }
+            ] : [])
+          ]}
         />
       </div>
 
@@ -273,3 +379,4 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 }
 
 export default BigPurchaseTool;
+                
