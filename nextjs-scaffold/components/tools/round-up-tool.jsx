@@ -1,22 +1,22 @@
 "use client";
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Plus } from "lucide-react";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Plus,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -42,6 +42,7 @@ function RoundUpTool({ onBack, onNavigate }) {
   const [piggyBank, setPiggyBank] = usePersistentState("roundup_piggyBank", 0);
   const [newPurchase, setNewPurchase] = useState("");
 
+  const maxAvgSlider = Math.max(200, avgAmount * 1.5);
   const rem = avgAmount % roundTo;
   const roundUpPerPurchase = rem === 0 ? 0 : roundTo - rem;
   const weekly = purchasesPerWeek * roundUpPerPurchase;
@@ -200,7 +201,7 @@ function RoundUpTool({ onBack, onNavigate }) {
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <SliderControl label="Compras por semana" value={purchasesPerWeek} min={0} max={30} step={1} unit="compras" onChange={setPurchasesPerWeek} />
-          <SliderControl label="Importe medio por compra" value={avgAmount} min={0.5} max={50} step={0.5} unit="€" onChange={setAvgAmount} accent="lavender" />
+          <SliderControl label="Importe medio por compra" value={avgAmount} min={0.5} max={maxAvgSlider} step={0.5} unit="€" onChange={setAvgAmount} accent="lavender" />
         </div>
       </Card>
 
@@ -210,11 +211,20 @@ function RoundUpTool({ onBack, onNavigate }) {
         La estimación es simplificada a partir de un importe medio; la hucha real refleja las compras que registres tú.
       </div>
 
-      <RelatedTools ids={["daily", "challenge"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["daily", "challenge"]} onNavigate={onNavigate} primaryId="daily" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() => `Ahorro por redondeo: hucha real ${fmtEUR(piggyBank)}. Estimación redondeando a ${roundTo}€ con ${purchasesPerWeek} compras/semana → ${fmtEUR(monthly)}/mes.`}
+        />
+        <ExportCSVButton
+          filename="ahorro-redondeo"
+          getRows={() => [
+            { concepto: "Hucha real acumulada", importe: piggyBank.toFixed(2) },
+            { concepto: "Ahorro estimado semanal", importe: weekly.toFixed(2) },
+            { concepto: "Ahorro estimado mensual", importe: monthly.toFixed(2) },
+            { concepto: "Ahorro estimado anual", importe: annual.toFixed(2) },
+          ]}
         />
       </div>
 
