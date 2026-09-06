@@ -1,12 +1,13 @@
 import { ALL_TOOLS } from "@/lib/tools-registry";
-import { GUIDES } from "@/lib/guides-data"; // Si tienes guías, inclúyelas también
 
 const BASE_URL = "https://metabox-web.vercel.app";
-const LAST_MODIFIED = new Date("2026-09-02T00:00:00.000Z");
+const LAST_MODIFIED = new Date();
 
-export default function sitemap() {
-  // 1. URLs de las herramientas usando query params
-  const toolUrls = ALL_TOOLS
+export default async function sitemap() {
+  // Protección por si la lista de herramientas viene vacía o no es un array
+  const safeTools = Array.isArray(ALL_TOOLS) ? ALL_TOOLS : [];
+
+  const toolUrls = safeTools
     .filter(tool => tool && typeof tool.id === "string" && tool.id.trim().length > 0)
     .map(tool => ({
       url: `${BASE_URL}/?tool=${encodeURIComponent(tool.id)}`,
@@ -15,23 +16,31 @@ export default function sitemap() {
       priority: 0.8,
     }));
 
-  // 2. URLs de las guías (si las manejas con ?guide= o similar)
-  const guideUrls = (GUIDES || []).map(guide => ({
-    url: `${BASE_URL}/?guide=${guide.id}`,
-    lastModified: LAST_MODIFIED,
-    changeFrequency: "monthly",
-    priority: 0.7,
-  }));
-
   return [
     {
       url: `${BASE_URL}/`,
       lastModified: LAST_MODIFIED,
-      changeFrequency: "weekly",
+      changeFrequency: "daily",
       priority: 1.0,
     },
+    {
+      url: `${BASE_URL}/aviso-legal`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${BASE_URL}/cookies`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${BASE_URL}/privacidad`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
     ...toolUrls,
-    ...guideUrls,
   ];
 }
-
