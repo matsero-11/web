@@ -1,22 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Plus, X,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
+import { X, Plus } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -237,6 +228,14 @@ function TipCalculatorTool({ onBack, onNavigate }) {
               : `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)} total, ${fmtEUR(perPerson)}/persona entre ${people}.`
           }
         />
+        <ExportCSVButton
+          filename="calculadora-de-propina"
+          getRows={() =>
+            byConsumption
+              ? consumers.map((c) => ({ persona: c.name, consumo: c.amount, total_con_propina: consumerShare(c.amount).toFixed(2) }))
+              : [{ cuenta: bill, propina_pct: tipPct, propina_eur: tipAmount.toFixed(2), total: total.toFixed(2), personas: people, por_persona: perPerson.toFixed(2) }]
+          }
+        />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
@@ -249,3 +248,4 @@ function TipCalculatorTool({ onBack, onNavigate }) {
 }
 
 export default TipCalculatorTool;
+          
