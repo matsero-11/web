@@ -6,13 +6,8 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 import { usePersistentState } from "@/lib/persistence";
-import { Clock, X, Search, RotateCcw, ArrowRight, Star, BookOpen, Lock, Sparkles } from "lucide-react";
-
-const GUIDES = [
-  { id: "fondo-emergencia", title: "Cómo crear un fondo de emergencia", subtitle: "La red de seguridad indispensable para tus finanzas.", content: [{ h: "¿Qué es y por qué?", p: "Reserva para imprevistos graves que evita deudas." }, { h: "¿Cuánto ahorrar?", p: "Entre 3 y 6 meses de tus gastos esenciales." }] },
-  { id: "cuanto-ahorrar", title: "Cuánto ahorrar cada mes", subtitle: "Métodos prácticos para automatizar tu progreso.", content: [{ h: "Regla 50/30/20", p: "50% necesidades, 30% ocio, 20% ahorro." }, { h: "Págate primero", p: "Aparta el ahorro antes de gastar en ocio." }] },
-  { id: "interes-compuesto", title: "El interés compuesto", subtitle: "El secreto para multiplicar tus ahorros.", content: [{ h: "Efecto bola de nieve", p: "Los intereses generan nuevos intereses." }, { h: "El tiempo", p: "Empezar antes importa más que la cantidad inicial." }] }
-];
+import { GUIDES } from "@/lib/guides-data";
+import { Clock, X, Search, RotateCcw, ArrowRight, BookOpen, Lock } from "lucide-react";
 
 function HomeContent() {
   const router = useRouter();
@@ -48,11 +43,99 @@ function HomeContent() {
 
   if (curGuide) return (
     <div className="pt-6 pb-28 w-full px-4 max-w-2xl mx-auto">
-      <button onClick={() => setGuide(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: "0.5rem 1rem", borderRadius: "0.8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: "0.85rem" }}>← Volver</button>
-      <div className="p-6 rounded-2xl" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
-        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.5rem", marginBottom: "0.5rem" }}>{curGuide.title}</h1>
-        <p style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginBottom: "1.2rem" }}>{curGuide.subtitle}</p>
-        {curGuide.content.map((s, i) => <div key={i} className="mb-4"><h3 style={{ ...fontBody, color: T.text, fontWeight: 700, fontSize: "0.95rem" }}>{s.h}</h3><p style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{s.p}</p></div>)}
+      <button onClick={() => setGuide(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: "0.5rem 1rem", borderRadius: "0.8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>← Volver al inicio</button>
+      <div className="p-6 md:p-8 rounded-2xl" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
+        <div style={{ ...fontBody, color: T.lime, fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>{curGuide.badge}</div>
+        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2, marginBottom: "0.5rem" }}>{curGuide.title}</h1>
+        <p style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginBottom: "1.2rem", lineHeight: 1.5 }}>{curGuide.subtitle}</p>
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginBottom: "1.5rem", borderBottom: `1px solid ${T.border}`, paddingBottom: "1rem" }}>{curGuide.meta}</div>
+        
+        {curGuide.summaryBox && (
+          <div className="p-4 mb-6 rounded-xl" style={{ background: T.surfaceAlt, borderLeft: `4px solid ${T.lime}` }}>
+            <span style={{ ...fontBody, color: T.lime, fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "0.2rem" }}>{curGuide.summaryBox.label}</span>
+            <p style={{ ...fontBody, color: T.text, fontSize: "0.85rem", lineHeight: 1.5 }}>{curGuide.summaryBox.text}</p>
+          </div>
+        )}
+
+        {curGuide.tableOfContents && (
+          <div className="p-4 mb-6 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+            <div style={{ ...fontBody, color: T.text, fontWeight: 700, fontSize: "0.85rem", marginBottom: "0.5rem" }}>En esta guía</div>
+            <div className="space-y-1.5">
+              {curGuide.tableOfContents.map(item => (
+                <a key={item.id} href={`#${item.id}`} style={{ ...fontBody, color: T.lime, fontSize: "0.8rem", display: "block", textDecoration: "none" }}>→ {item.label}</a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-8">
+          {curGuide.sections.map(sec => (
+            <div key={sec.id} id={sec.id} className="scroll-mt-20">
+              <h2 style={{ ...fontDisplay, color: T.text, fontSize: "1.2rem", marginBottom: "0.5rem" }}>{sec.title}</h2>
+              {sec.content && <p style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", lineHeight: 1.6, marginBottom: "0.75rem" }}>{sec.content}</p>}
+              
+              {sec.example && (
+                <div className="p-4 rounded-xl my-3" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+                  <div style={{ ...fontBody, color: "#f59e0b", fontSize: "0.78rem", fontWeight: 700, marginBottom: "0.25rem" }}>💡 {sec.example.title}</div>
+                  <p style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.5 }}>{sec.example.text}</p>
+                </div>
+              )}
+
+              {sec.table && (
+                <div className="overflow-x-auto my-3 rounded-xl" style={{ border: `1px solid ${T.border}` }}>
+                  <table className="w-full text-left text-xs">
+                    <thead style={{ background: T.surfaceAlt, color: T.text, borderBottom: `1px solid ${T.border}` }}>
+                      <tr>{sec.table.headers.map((th, i) => <th key={i} className="p-2.5 font-semibold">{th}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {sec.table.rows.map((row, i) => (
+                        <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>
+                          {row.map((cell, j) => <td key={j} className="p-2.5" style={{ ...fontBody, color: T.textMuted }}>{cell}</td>)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {sec.steps && (
+                <div className="space-y-3 my-3">
+                  {sec.steps.map((st, i) => (
+                    <div key={i} className="p-3 rounded-xl flex gap-3 items-start" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+                      <span style={{ ...fontDisplay, color: T.lime, fontSize: "0.8rem", fontWeight: 700 }}>{st.num}</span>
+                      <div>
+                        <div style={{ ...fontBody, color: T.text, fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.15rem" }}>{st.title}</div>
+                        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", lineHeight: 1.5 }}>{st.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {sec.errors && (
+                <div className="space-y-3 my-3">
+                  {sec.errors.map((err, i) => (
+                    <div key={i} className="p-3 rounded-xl" style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+                      <div style={{ ...fontBody, color: "#f87171", fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.15rem" }}>⚠️ {err.title}</div>
+                      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", lineHeight: 1.5 }}>{err.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {sec.faqs && (
+                <div className="space-y-3 my-3">
+                  {sec.faqs.map((faq, i) => (
+                    <div key={i} className="p-3 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+                      <div style={{ ...fontBody, color: T.text, fontWeight: 700, fontSize: "0.82rem", marginBottom: "0.15rem" }}>{faq.q}</div>
+                      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", lineHeight: 1.5 }}>{faq.a}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -130,12 +213,15 @@ function HomeContent() {
       </div>
 
       <div className="mb-6">
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.5rem" }}><BookOpen size={14} className="inline mr-1 text-lime" /> Guías rápidas</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.5rem" }}><BookOpen size={14} className="inline mr-1 text-lime" /> Guías financieras detalladas</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
           {GUIDES.map(g => (
-            <div key={g.id} onClick={() => setGuide(g.id)} className="p-3 rounded-xl cursor-pointer" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
-              <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.8rem" }}>{g.title}</div>
-              <div style={{ ...fontBody, color: T.lime, fontSize: "0.7rem", marginTop: "0.3rem" }}>Leer guía →</div>
+            <div key={g.id} onClick={() => setGuide(g.id)} className="p-3.5 rounded-xl cursor-pointer flex flex-col justify-between" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
+              <div>
+                <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.82rem", marginBottom: "0.25rem" }}>{g.title}</div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.72rem" }} className="line-clamp-2">{g.subtitle}</div>
+              </div>
+              <div style={{ ...fontBody, color: T.lime, fontSize: "0.72rem", fontWeight: 600, marginTop: "0.75rem" }} className="flex items-center gap-1">Leer guía paso a paso <ArrowRight size={11} /></div>
             </div>
           ))}
         </div>
@@ -169,5 +255,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: "0.85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-        }
-          
+                          }
+                                                                                                                                          
