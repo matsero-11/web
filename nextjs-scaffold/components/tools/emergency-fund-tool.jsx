@@ -2,21 +2,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
+  Home as HomeIcon,
+  Tv, Utensils, Car,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
-import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
-import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { T, fontBody } from "@/lib/design-tokens";
+import { fmtEUR } from "@/lib/hooks";
+import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import GoalProjection from "@/components/engines/GoalProjection";
 import AdSlot from "@/components/AdSlot";
@@ -64,6 +58,8 @@ function EmergencyFundTool({ onBack, onNavigate }) {
   useEffect(() => {
     if (current > goal) setCurrent(goal);
   }, [goal, current]);
+
+  const maxCurrentSlider = Math.max(goal, current, 1000);
 
   const pageTitle = "Calculadora de fondo de emergencia: cuánto ahorrar y en cuántos meses | MetaBox";
   const pageDescription =
@@ -182,20 +178,30 @@ function EmergencyFundTool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={goal} step={50} unit="€" onChange={setCurrent} />
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={maxCurrentSlider} step={50} unit="€" onChange={setCurrent} />
           <SliderControl label="Aportación mensual" value={monthly} min={10} max={1000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["savings", "budget", "percent"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["savings", "budget", "percent"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Fondo de emergencia: gasto esencial ${fmtEUR(expenses)}/mes × ${monthsTarget} meses = objetivo ${fmtEUR(goal)}. Ya ahorrado ${fmtEUR(current)}, aportando ${fmtEUR(monthly)}/mes.`
           }
+        />
+        <ExportCSVButton
+          filename="fondo-emergencia"
+          getRows={() => [
+            { metrica: "Gasto esencial mensual", valor: expenses.toFixed(2) },
+            { metrica: "Meses de cobertura", valor: monthsTarget },
+            { metrica: "Objetivo total", valor: goal.toFixed(2) },
+            { metrica: "Ya ahorrado", valor: current.toFixed(2) },
+            { metrica: "Aportación mensual", valor: monthly.toFixed(2) },
+          ]}
         />
       </div>
 
@@ -209,3 +215,4 @@ function EmergencyFundTool({ onBack, onNavigate }) {
 }
 
 export default EmergencyFundTool;
+      
