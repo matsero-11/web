@@ -274,5 +274,5 @@ export default function HomeScreen() {
       <HomeContent />
     </Suspense>
   );
-      }
-                
+    }
+        
