@@ -214,6 +214,8 @@ function Rule502030Tool({ onBack, onNavigate }) {
     ];
   }, [donutView, needs, wants, savings, recNeeds, recWants, recSavings]);
 
+  const currentDonutTotal = donutData.reduce((acc, cur) => acc + cur.value, 0);
+
   const pageTitle = "Regla 50/30/20: reparte tu ingreso entre necesidades, deseos y ahorro | MetaBox";
   const pageDescription =
     "Aplica la regla 50/30/20 a tu ingreso mensual con soporte completo de decimales. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
@@ -293,6 +295,20 @@ function Rule502030Tool({ onBack, onNavigate }) {
         </div>
 
         <DonutChart data={donutData} size={170} strokeWidth={22} />
+
+        <div className="flex justify-center gap-4 mt-4 flex-wrap">
+          {donutData.map((item, idx) => {
+            const pct = currentDonutTotal > 0 ? Math.round((item.value / currentDonutTotal) * 100) : 0;
+            return (
+              <div key={idx} className="flex items-center gap-1.5" style={{ ...fontBody, fontSize: "0.8rem" }}>
+                <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item.color }} />
+                <span style={{ color: T.text, fontWeight: 500 }}>{item.name}:</span>
+                <span style={{ color: item.color, fontWeight: 600 }}>{pct}%</span>
+                <span style={{ color: T.textMuted }}>({fmtEUR(item.value)})</span>
+              </div>
+            );
+          })}
+        </div>
 
         <div className="flex gap-2 justify-center mt-4">
           <Chip label="Tu reparto" active={donutView === "actual"} onClick={() => setDonutView("actual")} />
@@ -413,4 +429,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-                      
+                  
