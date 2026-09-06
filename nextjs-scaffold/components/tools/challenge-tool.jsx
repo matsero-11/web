@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -49,6 +49,78 @@ function shuffleWithSeed(array, seed) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) {
+      setValue(parsed);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) {
+                setTextVal(String(value ?? 0));
+              } else {
+                setValue(parsed);
+                setTextVal(String(parsed));
+              }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{
+              ...fontBody,
+              color: accentColor,
+              fontSize: "0.9rem",
+              width: "85px",
+              outline: "none",
+            }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
+        </div>
+      </div>
+      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
+      <input
+        type="range"
+        min={min}
+        max={Math.max(max, value || 0, 100)}
+        step={step}
+        value={isNaN(value) ? 0 : value}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor }}
+      />
+    </div>
+  );
 }
 
 function ChallengeTool({ onBack, onNavigate }) {
@@ -87,6 +159,7 @@ function ChallengeTool({ onBack, onNavigate }) {
   const pct = totalGoal > 0 ? (savedSoFar / totalGoal) * 100 : 0;
   const animatedSaved = useAnimatedNumber(savedSoFar);
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
+  const isChallengeCompleted = done.size === weeks && weeks > 0;
 
   const toggleWeek = (w) => {
     const next = new Set(done);
@@ -187,6 +260,23 @@ function ChallengeTool({ onBack, onNavigate }) {
         )}
       </Card>
 
+      {isChallengeCompleted && (
+        <div style={{
+          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
+          border: `1px solid ${T.lime}`,
+          borderRadius: "0.8rem",
+          padding: "1rem",
+          textAlign: "center",
+        }}>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
+            🎉 ¡Reto de ahorro completado al 100%!
+          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
+            Has completado todas las {weeks} semanas y acumulado un total de {fmtEUR(totalGoal)}. ¡Impresionante disciplina!
+          </div>
+        </div>
+      )}
+
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div className="flex items-center justify-between" style={{ marginBottom: "0.8rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
@@ -242,7 +332,7 @@ function ChallengeTool({ onBack, onNavigate }) {
             <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
             <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
           </div>
-          <SliderControl label="Incremento semanal base" value={baseAmount} min={1} max={20} step={1} unit="€" onChange={setBaseAmount} accent="lavender" />
+          <DecimalSliderRow label="Incremento semanal base" value={baseAmount} min={1} max={20} step={0.5} unit="€" accent="lavender" setValue={setBaseAmount} />
         </div>
       </Card>
 
@@ -280,7 +370,7 @@ function ChallengeTool({ onBack, onNavigate }) {
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["savings", "roundup"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["savings", "roundup"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -310,3 +400,4 @@ function ChallengeTool({ onBack, onNavigate }) {
 }
 
 export default ChallengeTool;
+        
