@@ -76,12 +76,26 @@ function HomeContent() {
 
   if (inf === "about") return (
     <div className="pt-6 pb-28 w-full px-4 max-w-xl mx-auto">
-      <button onClick={() => setInf(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem" }}>← Volver</button>
-      <div className="p-6 rounded-2xl space-y-4" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
+      <button onClick={() => setInf(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem" }}>← Volver al inicio</button>
+      <div className="p-6 md:p-8 rounded-2xl space-y-4" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
         <div style={{ color: T.lime, fontSize: ".75rem", fontWeight: 700, textTransform: "uppercase" }}>Manifiesto MetaBox</div>
-        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem" }}>Sobre nosotros y nuestra misión</h1>
-        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".88rem", lineHeight: 1.6 }}>MetaBox prioriza la educación y planificación financiera sin muros de pago ni comprometer tu privacidad.</p>
-        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}><h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem" }}>🔒 Privacidad radical local</h3><p style={{ color: T.textMuted, fontSize: ".82rem" }}>Tus datos se procesan localmente en tu dispositivo.</p></div>
+        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2 }}>Sobre nosotros y nuestra misión</h1>
+        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".88rem", lineHeight: 1.6 }}>MetaBox nace con una convicción clara: la educación y planificación financiera personal no deben ser complejas, estar ocultas tras muros de pago ni comprometer tu privacidad.</p>
+        
+        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+          <h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem", marginBottom: ".3rem" }}>🔒 Privacidad radical local</h3>
+          <p style={{ color: T.textMuted, fontSize: ".82rem", lineHeight: 1.5 }}>Todos tus cálculos, datos y simulaciones se procesan localmente en tu propio dispositivo mediante tu navegador. Ningún dato financiero personal sale jamás de tu teléfono.</p>
+        </div>
+
+        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+          <h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem", marginBottom: ".3rem" }}>⚡️ Simplicidad sin rodeos</h3>
+          <p style={{ color: T.textMuted, fontSize: ".82rem", lineHeight: 1.5 }}>Diseñamos cada herramienta bajo el principio de claridad absoluta. Sin letra pequeña ni complejidad innecesaria: matemáticas transparentes para tomar el control real de tu economía.</p>
+        </div>
+
+        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
+          <h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem", marginBottom: ".3rem" }}>🎯 Independencia financiera</h3>
+          <p style={{ color: T.textMuted, fontSize: ".82rem", lineHeight: 1.5 }}>Un espacio pensado por y para tomar decisiones informadas sobre ahorro, inversión y organización personal de forma totalmente gratuita y accesible.</p>
+        </div>
       </div>
     </div>
   );
@@ -163,5 +177,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-}
-  
+        }
+                     
