@@ -339,7 +339,10 @@ function Rule502030Tool({ onBack, onNavigate }) {
             step={1}
             unit="%"
             accent="lime"
-            setValue={(v) => setNeedsPct(Math.min(v, 100 - wantsPct))}
+            setValue={(v) => {
+              const maxAllowed = Math.max(10, 100 - wantsPct);
+              setNeedsPct(Math.min(v, maxAllowed));
+            }}
           />
           <DecimalSliderRow
             label="Deseos (%)"
@@ -349,7 +352,10 @@ function Rule502030Tool({ onBack, onNavigate }) {
             step={1}
             unit="%"
             accent="lavender"
-            setValue={(v) => setWantsPct(Math.min(v, 100 - needsPct))}
+            setValue={(v) => {
+              const maxAllowed = Math.max(0, 100 - needsPct);
+              setWantsPct(Math.min(v, maxAllowed));
+            }}
           />
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
             Ahorro (resto): <span style={{ color: T.lime, fontWeight: 600 }}>{savingsPct}%</span>
@@ -429,4 +435,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-                  
+                               
