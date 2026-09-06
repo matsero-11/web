@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS, CATEGORIES } from "@/lib/tools-registry";
 import { usePersistentState } from "@/lib/persistence";
-import { Clock, X, Search, RotateCcw } from "lucide-react";
+import { Clock, X, RotateCcw } from "lucide-react";
 
-export default function HomeScreen() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeToolId = searchParams.get("tool");
@@ -22,7 +22,6 @@ export default function HomeScreen() {
     const params = new URLSearchParams(window.location.search);
     if (id) {
       params.set("tool", id);
-      // Actualizar recientes
       setRecentTools((prev) => {
         const filtered = prev.filter((item) => item !== id);
         return [id, ...filtered].slice(0, 4);
@@ -96,7 +95,6 @@ export default function HomeScreen() {
         Elige un punto de partida o usa el buscador inteligente.
       </p>
 
-      {/* Recientes */}
       {recentTools.length > 0 && !query && !selectedCategory && (
         <div style={{ marginTop: "1.5rem" }}>
           <div className="flex items-center gap-1.5" style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginBottom: "0.6rem" }}>
@@ -137,7 +135,6 @@ export default function HomeScreen() {
         </div>
       )}
 
-      {/* Categorías Interactivas */}
       <div
         className="grid grid-cols-1 md:grid-cols-2"
         style={{ gap: "1rem", marginTop: "1.75rem" }}
@@ -173,7 +170,6 @@ export default function HomeScreen() {
         })}
       </div>
 
-      {/* Buscador y Grid Principal */}
       <div style={{ marginTop: "3.5rem" }}>
         <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1.1rem" }}>
@@ -298,4 +294,12 @@ export default function HomeScreen() {
     </div>
   );
 }
-  
+
+export default function HomeScreen() {
+  return (
+    <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888" }}>Cargando...</div>}>
+      <HomeContent />
+    </Suspense>
+  );
+                                                             }
+                  
