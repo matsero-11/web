@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -38,6 +38,78 @@ const FAQS = [
     a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques.",
   },
 ];
+
+function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) {
+      setValue(parsed);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) {
+                setTextVal(String(value ?? 0));
+              } else {
+                setValue(parsed);
+                setTextVal(String(parsed));
+              }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{
+              ...fontBody,
+              color: accentColor,
+              fontSize: "0.9rem",
+              width: "85px",
+              outline: "none",
+            }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
+        </div>
+      </div>
+      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
+      <input
+        type="range"
+        min={min}
+        max={Math.max(max, value || 0, 100)}
+        step={step}
+        value={isNaN(value) ? 0 : value}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 
 function CompoundInterestTool({ onBack, onNavigate }) {
   const [initial, setInitial] = useSharedState("interest_initial", 1000);
@@ -73,6 +145,7 @@ function CompoundInterestTool({ onBack, onNavigate }) {
   const animatedFinal = useAnimatedNumber(finalAmount);
   const animatedInterest = useAnimatedNumber(Math.max(interestEarned, 0));
   const animatedReal = useAnimatedNumber(finalReal);
+  const isInterestMilestoneReached = interestEarned >= totalContributed && totalContributed > 0;
 
   const pageTitle = "Calculadora de interés compuesto: simula el crecimiento de tu dinero | MetaBox";
   const pageDescription =
@@ -141,6 +214,23 @@ function CompoundInterestTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {isInterestMilestoneReached && (
+        <div style={{
+          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
+          border: `1px solid ${T.lime}`,
+          borderRadius: "0.8rem",
+          padding: "1rem",
+          textAlign: "center",
+        }}>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
+            🚀 ¡Efecto bola de nieve desatado!
+          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
+            Los intereses generados ya superan el total de tu capital aportado. El dinero trabaja por ti a plena potencia.
+          </div>
+        </div>
+      )}
+
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -180,7 +270,7 @@ function CompoundInterestTool({ onBack, onNavigate }) {
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Poder adquisitivo real
           </div>
-          <SliderControl label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" onChange={setInflationRate} accent="lavender" />
+          <DecimalSliderRow label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" accent="lavender" setValue={setInflationRate} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
             <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Euros nominales</div>
@@ -209,10 +299,10 @@ function CompoundInterestTool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Capital inicial" value={initial} min={0} max={50000} step={100} unit="€" onChange={setInitial} />
-          <SliderControl label="Aportación mensual" value={monthly} min={0} max={2000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
-          <SliderControl label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" onChange={setRate} />
-          <SliderControl label="Años" value={years} min={1} max={40} step={1} unit="años" onChange={setYears} />
+          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={50000} step={100} unit="€" accent="lime" setValue={setInitial} />
+          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={2000} step={10} unit="€" accent="lavender" setValue={setMonthly} />
+          <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} />
+          <DecimalSliderRow label="Años" value={years} min={1} max={40} step={1} unit="años" accent="lavender" setValue={setYears} />
         </div>
       </Card>
 
@@ -222,7 +312,7 @@ function CompoundInterestTool({ onBack, onNavigate }) {
         Resultado orientativo. No constituye asesoramiento financiero ni garantiza rentabilidad futura.
       </div>
 
-      <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -249,3 +339,4 @@ function CompoundInterestTool({ onBack, onNavigate }) {
 }
 
 export default CompoundInterestTool;
+        
