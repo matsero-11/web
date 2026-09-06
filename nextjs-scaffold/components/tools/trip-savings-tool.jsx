@@ -16,7 +16,7 @@ import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -176,6 +176,18 @@ function TripSavingsTool({ onBack, onNavigate }) {
             `Ahorro para un viaje: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${effectiveMonths} meses hasta el viaje → necesitas ${fmtEUR(requiredMonthly)}/mes.`
           }
         />
+        <ExportCSVButton
+          filename="ahorro-para-un-viaje"
+          getRows={() => [
+            {
+              presupuesto: budget,
+              ya_ahorrado: current,
+              meses_restantes: effectiveMonths,
+              necesario_mensual: requiredMonthly.toFixed(2),
+              porcentaje_cubierto: pct.toFixed(1) + "%",
+            },
+          ]}
+        />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
@@ -188,3 +200,4 @@ function TripSavingsTool({ onBack, onNavigate }) {
 }
 
 export default TripSavingsTool;
+          
