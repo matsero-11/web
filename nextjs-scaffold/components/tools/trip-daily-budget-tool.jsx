@@ -16,7 +16,7 @@ import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -57,7 +57,7 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
     const amount = Number(String(todaySpend).replace(",", "."));
     if (!Number.isFinite(amount) || amount <= 0) return;
     setSpent((s) => Math.min(s + amount, totalBudget));
-    setDaysElapsed((d) => Math.min(d + (amount > 0 ? 0 : 0), totalDays)); // el día se avanza manualmente con el slider
+    setDaysElapsed((d) => Math.min(d + (amount > 0 ? 0 : 0), totalDays));
     setTodaySpend("");
   };
 
@@ -171,6 +171,18 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
             `Presupuesto de viaje: ${fmtEUR(totalBudget)} para ${totalDays} días, gastado ${fmtEUR(spent)} en ${daysElapsed} días → ${fmtEUR(dailyAllowanceLeft)}/día restante.`
           }
         />
+        <ExportCSVButton
+          filename="presupuesto-diario-de-viaje"
+          getRows={() => [
+            {
+              presupuesto_total: totalBudget,
+              dias_totales: totalDays,
+              gastado: spent,
+              dias_pasados: daysElapsed,
+              presupuesto_diario_restante: dailyAllowanceLeft.toFixed(2),
+            },
+          ]}
+        />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
@@ -183,3 +195,4 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
 }
 
 export default TripDailyBudgetTool;
+                                   
