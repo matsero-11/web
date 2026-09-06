@@ -1,22 +1,15 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Plus, X, ArrowRight,
+  Plus, X, ArrowRight,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
-import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { fmtEUR } from "@/lib/hooks";
+import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { usePersistentState } from "@/lib/persistence";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -40,6 +33,7 @@ function GroupSplitTool({ onBack, onNavigate }) {
 
   const total = people.reduce((sum, p) => sum + (p.paid || 0), 0);
   const share = people.length > 0 ? total / people.length : 0;
+  const maxSliderValue = Math.max(2000, total, ...people.map(p => p.paid || 0));
 
   const updatePaid = (id, paid) => {
     setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, paid } : p)));
@@ -60,7 +54,6 @@ function GroupSplitTool({ onBack, onNavigate }) {
     setPeople((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Algoritmo de liquidación mínima: empareja quien más debe con quien más le deben
   const settlements = useMemo(() => {
     const balances = people.map((p) => ({ name: p.name, balance: (p.paid || 0) - share }));
     const debtors = balances.filter((b) => b.balance < -0.01).map((b) => ({ ...b, balance: -b.balance })).sort((a, b) => b.balance - a.balance);
@@ -162,12 +155,12 @@ function GroupSplitTool({ onBack, onNavigate }) {
                 value={p.name}
                 onChange={(e) => updateName(p.id, e.target.value)}
                 style={{
-                  ...fontBody, width: "6.5rem", background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                  ...fontBody, width: "7rem", background: T.surfaceAlt, border: `1px solid ${T.border}`,
                   borderRadius: "0.6rem", padding: "0.5rem 0.7rem", color: T.text, fontSize: "0.85rem", outline: "none", flexShrink: 0,
                 }}
               />
               <div style={{ flex: 1 }}>
-                <SliderControl label="" value={p.paid} min={0} max={2000} step={5} unit="€" onChange={(v) => updatePaid(p.id, v)} />
+                <SliderControl label="" value={p.paid} min={0} max={maxSliderValue} step={5} unit="€" onChange={(v) => updatePaid(p.id, v)} />
               </div>
               {people.length > 2 && (
                 <button
@@ -232,7 +225,7 @@ function GroupSplitTool({ onBack, onNavigate }) {
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["tip"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["tip", "budget"]} onNavigate={onNavigate} primaryId="tip" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
@@ -240,6 +233,13 @@ function GroupSplitTool({ onBack, onNavigate }) {
             `Reparto de gastos: ${fmtEUR(total)} entre ${people.length} personas (${fmtEUR(share)} c/u). ` +
             (settlements.length === 0 ? "Nadie debe nada." : settlements.map((s) => `${s.from} debe ${fmtEUR(s.amount)} a ${s.to}`).join("; "))
           }
+        />
+        <ExportCSVButton
+          filename="reparto-gastos-grupo"
+          getRows={() => [
+            ...people.map(p => ({ tipo: "Participante", nombre: p.name, pagado: p.paid.toFixed(2), parte_proporcional: share.toFixed(2) })),
+            ...settlements.map(s => ({ tipo: "Transferencia", nombre: `${s.from} -> ${s.to}`, pagado: s.amount.toFixed(2), parte_proporcional: "" }))
+          ]}
         />
       </div>
 
@@ -253,3 +253,4 @@ function GroupSplitTool({ onBack, onNavigate }) {
 }
 
 export default GroupSplitTool;
+
