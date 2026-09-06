@@ -13,10 +13,10 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { useSharedState, usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
@@ -44,6 +44,78 @@ const FAQS = [
     a: "Al guardar una foto de tu presupuesto cada mes, puedes ver cómo evoluciona tu disponible real a lo largo del tiempo, en vez de mirar solo el mes actual de forma aislada.",
   },
 ];
+
+function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) {
+      setValue(parsed);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) {
+                setTextVal(String(value ?? 0));
+              } else {
+                setValue(parsed);
+                setTextVal(String(parsed));
+              }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{
+              ...fontBody,
+              color: accentColor,
+              fontSize: "0.9rem",
+              width: "85px",
+              outline: "none",
+            }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
+        </div>
+      </div>
+      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
+      <input
+        type="range"
+        min={min}
+        max={Math.max(max, value || 0, 100)}
+        step={step}
+        value={isNaN(value) ? 0 : value}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 
 function BudgetTool({ onBack, onNavigate }) {
   const [selected, setSelected] = usePersistentState("budget_selected", ["vivienda", "comida", "transporte"]);
@@ -81,6 +153,7 @@ function BudgetTool({ onBack, onNavigate }) {
   const available = income - total;
   const animatedAvailable = useAnimatedNumber(available);
   const spentPct = income > 0 ? Math.min((total / income) * 100, 100) : 0;
+  const isSurplusBalanced = available >= 0 && income > 0;
 
   const chartData = activeCats
     .map((c) => ({
@@ -219,6 +292,23 @@ function BudgetTool({ onBack, onNavigate }) {
         </div>
       </Card>
 
+      {isSurplusBalanced && (
+        <div style={{
+          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
+          border: `1px solid ${T.lime}`,
+          borderRadius: "0.8rem",
+          padding: "1rem",
+          textAlign: "center",
+        }}>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
+            🎉 ¡Presupuesto equilibrado con éxito!
+          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
+            Tus gastos están cubiertos dentro de tus ingresos y te queda un margen libre de {fmtEUR(available)}.
+          </div>
+        </div>
+      )}
+
       <AdviceBlock
         text={
           available < 0
@@ -230,7 +320,7 @@ function BudgetTool({ onBack, onNavigate }) {
       />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <SliderControl label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} accent="lavender" />
+        <DecimalSliderRow label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" accent="lavender" setValue={setIncome} />
       </Card>
 
       {activeCats.length > 0 && (
@@ -261,14 +351,15 @@ function BudgetTool({ onBack, onNavigate }) {
               const overBenchmark = c.maxPct && catPct > c.maxPct;
               return (
                 <div key={c.id}>
-                  <SliderControl
+                  <DecimalSliderRow
                     label={c.label}
                     value={amounts[c.id] || 0}
                     min={0}
                     max={2000}
                     step={10}
                     unit="€"
-                    onChange={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))}
+                    accent="lime"
+                    setValue={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))}
                   />
                   {c.maxPct && (
                     <div style={{ ...fontBody, fontSize: "0.72rem", color: overBenchmark ? T.coral : T.textMuted, marginTop: "0.3rem" }}>
@@ -315,13 +406,25 @@ function BudgetTool({ onBack, onNavigate }) {
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} primaryId="savings" />
 
-      <div className="flex justify-center pt-2">
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Presupuesto mensual: ingresos ${fmtEUR(income)}, gastos ${fmtEUR(total)}, disponible ${fmtEUR(available)}.`
           }
+        />
+        <ExportCSVButton
+          filename="presupuesto-mensual"
+          getRows={() => [
+            { concepto: "Ingresos mensuales", valor: income.toFixed(2) },
+            { concepto: "Gasto total", valor: total.toFixed(2) },
+            { concepto: "Disponible real", valor: available.toFixed(2) },
+            ...activeCats.map((c) => ({
+              concepto: `Categoría: ${c.label}`,
+              valor: (amounts[c.id] || 0).toFixed(2),
+            }))
+          ]}
         />
       </div>
 
@@ -335,3 +438,4 @@ function BudgetTool({ onBack, onNavigate }) {
 }
 
 export default BudgetTool;
+    
