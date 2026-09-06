@@ -58,7 +58,7 @@ function HomeContent() {
 
   return (
     <div className="pt-6 pb-28 w-full view-enter px-4 md:px-0">
-      {/* Hero */}
+      {/* Hero Único y Limpio */}
       <div className="mb-6">
         <div style={{ ...fontBody, color: T.lime, fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.08em", marginBottom: "0.3rem", textTransform: "uppercase" }}>MetaBox · Finanzas Inteligentes</div>
         <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.85rem", lineHeight: 1.15 }}>Tu dinero, con un plan.</h1>
@@ -229,7 +229,7 @@ function HomeContent() {
         </div>
       </div>
 
-      {/* Footer Corregido (Enlaces con display block para evitar que se junten) */}
+      {/* Footer */}
       <footer style={{ paddingTop: "2rem", borderTop: `1px solid ${T.border}` }} className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div>
           <div style={{ ...fontBody, color: T.text, fontWeight: 700, fontSize: "0.85rem", marginBottom: "0.6rem" }}>Herramientas</div>
@@ -274,5 +274,5 @@ export default function HomeScreen() {
       <HomeContent />
     </Suspense>
   );
-    }
+                                                                                                                                                                                                                                                                                                                                                                                                                      }
         
