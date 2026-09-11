@@ -100,6 +100,21 @@ export default function RootLayout({ children }) {
             {children}
           </main>
 
+          <footer className="mx-auto w-full max-w-md px-5 py-6 text-center md:max-w-2xl md:px-8 lg:max-w-4xl">
+            <a
+              href="https://fazier.com/launches/metabox-web.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=light"
+                width={250}
+                alt="Fazier badge"
+                className="mx-auto inline-block"
+              />
+            </a>
+          </footer>
+
           <RegisterServiceWorker />
         </ClientProviders>
       </body>
