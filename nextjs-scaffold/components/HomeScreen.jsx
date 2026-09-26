@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { Card, IconTile } from "@/components/ui";
 import { ALL_TOOLS } from "@/lib/tools-registry";
@@ -10,20 +9,12 @@ import { GUIDES } from "@/lib/guides-data";
 import { Search, RotateCcw, ArrowRight, BookOpen, Lock } from "lucide-react";
 
 function HomeContent() {
-  const router = useRouter(), sp = useSearchParams(), toolId = sp.get("tool");
   const [q, setQ] = useState(""), [cat, setCat] = useState(null), [g, setG] = useState(null), [inf, setInf] = useState(null);
-  const [recent, setRecent] = usePersistentState("metabox_recent_tools", []);
-  const [total, setTotal] = usePersistentState("metabox_total_calc", 125420);
+  const [total] = usePersistentState("metabox_total_calc", 125420);
 
   const top = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-  const setTool = (id) => {
-    setG(null); setInf(null); top();
-    const p = new URLSearchParams(window.location.search);
-    id ? (p.set("tool", id), setRecent(r => [id, ...r.filter(x => x !== id)].slice(0, 4)), setTotal(c => c + 1)) : p.delete("tool");
-    router.push(`?${p.toString()}`, { scroll: false });
-  };
 
-  const curG = GUIDES.find(x => x.id === g), activeT = ALL_TOOLS.find(x => x.id === toolId);
+  const curG = GUIDES.find(x => x.id === g);
   const feat = ALL_TOOLS.find(x => x.id === "goal") || ALL_TOOLS[0];
   const smart = q.length > 2 ? ALL_TOOLS.find(x => x.id === (q.toLowerCase().includes("inver") ? "compound" : "goal")) : null;
 
@@ -41,13 +32,6 @@ function HomeContent() {
 
     return matchQ && matchCat;
   });
-
-  if (toolId) return (
-    <div className="pt-6 pb-28 w-full px-4">
-      <button onClick={() => setTool(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem" }}>← Volver</button>
-      {activeT?.component ? <activeT.component onBack={() => setTool(null)} /> : <div style={{ color: T.coral }}>No encontrada.</div>}
-    </div>
-  );
 
   if (curG) return (
     <div className="pt-6 pb-28 w-full px-4 max-w-2xl mx-auto">
@@ -108,25 +92,23 @@ function HomeContent() {
         <p style={{ ...fontBody, color: T.textMuted, fontSize: ".9rem", marginTop: ".3rem" }}>Calcula y planifica tus finanzas gratis.</p>
       </div>
 
-      {recent.length > 0 && !q && !cat && (
-        <div className="mb-4">
-          <div style={{ color: T.textMuted, fontSize: ".75rem", marginBottom: ".3rem" }}>Recientes</div>
-          <div className="flex gap-2 overflow-x-auto pb-1">{recent.map(id => { const t = ALL_TOOLS.find(x => x.id === id); return t ? <button key={id} onClick={() => setTool(t.id)} style={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: ".5rem", padding: ".3rem .6rem", color: T.text, fontSize: ".75rem", cursor: "pointer", whiteSpace: "nowrap" }}>{t.label}</button> : null; })}</div>
-        </div>
-      )}
-
       <div className="relative mb-5">
         <div style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginBottom: ".3rem" }}><Search size={14} className="inline mr-1 text-lime" /> ¿Qué necesitas calcular?</div>
         <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder='Ej: "Ahorrar 5.000 €"...' style={{ width: "100%", background: T.surface, border: `1px solid ${q ? T.lime : T.border}`, borderRadius: ".8rem", padding: ".8rem 1rem .8rem 2.4rem", color: T.text, fontSize: ".85rem", outline: "none" }} />
-        {smart && <div onClick={() => setTool(smart.id)} className="cursor-pointer mt-2 p-3 rounded-xl flex items-center justify-between" style={{ background: T.surface, border: `1px solid ${T.lime}` }}><span style={{ color: T.lime, fontSize: ".8rem", fontWeight: 600 }}>Sugerencia: {smart.label}</span><ArrowRight size={12} style={{ color: T.lime }} /></div>}
+        {smart && (
+          <Link href={`/herramientas/${smart.id}`} className="block mt-2 p-3 rounded-xl flex items-center justify-between no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
+            <span style={{ color: T.lime, fontSize: ".8rem", fontWeight: 600 }}>Sugerencia: {smart.label}</span>
+            <ArrowRight size={12} style={{ color: T.lime }} />
+          </Link>
+        )}
       </div>
 
       {!q && !cat && feat && (
-        <div onClick={() => setTool(feat.id)} className="cursor-pointer rounded-xl p-4 mb-5" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
+        <Link href={`/herramientas/${feat.id}`} className="block rounded-xl p-4 mb-5 no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
           <div style={{ color: T.lime, fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase" }}>Destacada</div>
           <div style={{ color: T.text, fontWeight: 700, fontSize: "1rem" }}>{feat.label}</div>
           <div style={{ color: T.textMuted, fontSize: ".78rem" }}>{feat.desc}</div>
-        </div>
+        </Link>
       )}
 
       {!q && (
@@ -144,7 +126,15 @@ function HomeContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {filtered.map(t => <Card key={t.id} onClick={() => setTool(t.id)} style={{ padding: "1rem", cursor: "pointer" }}><IconTile icon={t.icon} tone={t.tone} /><div style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginTop: ".5rem" }}>{t.label}</div><div style={{ color: T.textMuted, fontSize: ".72rem", marginTop: ".2rem" }} className="line-clamp-2">{t.desc}</div></Card>)}
+            {filtered.map(t => (
+              <Link key={t.id} href={`/herramientas/${t.id}`} className="no-underline block">
+                <Card style={{ padding: "1rem", cursor: "pointer", height: "100%" }}>
+                  <IconTile icon={t.icon} tone={t.tone} />
+                  <div style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginTop: ".5rem" }}>{t.label}</div>
+                  <div style={{ color: T.textMuted, fontSize: ".72rem", marginTop: ".2rem" }} className="line-clamp-2">{t.desc}</div>
+                </Card>
+              </Link>
+            ))}
           </div>
         )}
       </div>
@@ -177,5 +167,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-        }
-                     
+      }
+                   
