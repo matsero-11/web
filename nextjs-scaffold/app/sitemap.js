@@ -10,9 +10,9 @@ export default async function sitemap() {
   const toolUrls = safeTools
     .filter(tool => tool && typeof tool.id === "string" && tool.id.trim().length > 0)
     .map(tool => ({
-      url: `${BASE_URL}/?tool=${encodeURIComponent(tool.id)}`,
+      url: `${BASE_URL}/herramientas/${encodeURIComponent(tool.id)}`,
       lastModified: LAST_MODIFIED,
-      changeFrequency: "monthly",
+      changeFrequency: "weekly",
       priority: 0.8,
     }));
 
@@ -44,3 +44,4 @@ export default async function sitemap() {
     ...toolUrls,
   ];
 }
+
