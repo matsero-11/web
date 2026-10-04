@@ -1,10 +1,12 @@
 import { ALL_TOOLS } from "@/lib/tools-registry";
 
-const BASE_URL = "https://metabox-web.vercel.app";
+// Detecta automáticamente la URL de Vercel o usa la fija como respaldo
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 
+                 (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://metabox-web.vercel.app");
+
 const LAST_MODIFIED = new Date();
 
 export default async function sitemap() {
-  // Protección por si la lista de herramientas viene vacía o no es un array
   const safeTools = Array.isArray(ALL_TOOLS) ? ALL_TOOLS : [];
 
   const toolUrls = safeTools
@@ -44,4 +46,3 @@ export default async function sitemap() {
     ...toolUrls,
   ];
 }
-
