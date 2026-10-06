@@ -11,3 +11,4 @@ export default function robots() {
     host: BASE_URL,
   };
 }
+
