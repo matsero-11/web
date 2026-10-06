@@ -1,8 +1,7 @@
 import { ALL_TOOLS } from "@/lib/tools-registry";
 
-// Detecta automáticamente la URL de Vercel o usa la fija como respaldo
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 
-                 (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://metabox-web.vercel.app");
+// Usa la variable de entorno o fija directamente tu dominio de producción definitivo
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
 
 const LAST_MODIFIED = new Date();
 
