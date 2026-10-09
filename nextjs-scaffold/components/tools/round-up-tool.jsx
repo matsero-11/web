@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Plus, X } from "lucide-react";
 import {
@@ -15,7 +15,7 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
+import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -35,12 +35,34 @@ const FAQS = [
   },
 ];
 
-function RoundUpTool({ onBack, onNavigate }) {
-  const [purchasesPerWeek, setPurchasesPerWeek] = useSharedState("roundup_purchasesPerWeek", 8);
-  const [avgAmount, setAvgAmount] = useSharedState("roundup_avgAmount", 6.5);
-  const [roundTo, setRoundTo] = useSharedState("roundup_roundTo", 1);
+function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [purchasesPerWeek, setPurchasesPerWeek] = useState(() => {
+    const p = initialParams?.purchasesPerWeek;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 8;
+  });
+
+  const [avgAmount, setAvgAmount] = useState(() => {
+    const p = initialParams?.avgAmount;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 6.5;
+  });
+
+  const [roundTo, setRoundTo] = useState(() => {
+    const p = initialParams?.roundTo;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 1;
+  });
+
   const [history, setHistory] = usePersistentState("roundup_history", []);
   const [newPurchase, setNewPurchase] = useState("");
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        purchasesPerWeek,
+        avgAmount,
+        roundTo,
+      });
+    }
+  }, [purchasesPerWeek, avgAmount, roundTo, onStateChange]);
 
   const maxAvgSlider = Math.max(200, avgAmount * 1.5);
   const rem = avgAmount % roundTo;
@@ -269,7 +291,7 @@ function RoundUpTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          El ahorro por redondeo es una de las formas más populares de ahorrar sin esfuerzo: cada vez que pagas, la diferencia hasta la cifra redonda más cercana se destina a tu ahorro. Además de la estimación con una media, puedes registrar tus compras reales una a una en tu historial, comprobar cada aportación y eliminar entradas individuales si te equivocas al introducirlas.
+          El ahorro por redondeo es una de las populares formas de ahorrar sin esfuerzo: cada vez que pagas, la diferencia hasta la cifra redonda más cercana se destina a tu ahorro. Además de la estimación con una media, puedes registrar tus compras reales una a una en tu historial, comprobar cada aportación y eliminar entradas individuales si te equivocas al introducirlas.
         </p>
       </div>
     </div>
@@ -277,4 +299,4 @@ function RoundUpTool({ onBack, onNavigate }) {
 }
 
 export default RoundUpTool;
-                  
+                    
