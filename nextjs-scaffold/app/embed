@@ -25,11 +25,11 @@ export async function generateMetadata({ params }) {
     title: `${meta.title} — Widget Embebido`,
     description: meta.description,
     robots: {
-      index: false, // Evita contenido duplicado en la vista iframe pura
+      index: false,
       follow: true,
     },
     alternates: {
-      canonical: `${baseUrl}/herramientas/${slug}`, // Señaliza la página principal como la dueña absoluta del SEO
+      canonical: `${baseUrl}/herramientas/${slug}`,
     },
   };
 }
@@ -85,4 +85,3 @@ export default async function EmbedToolPage({ params }) {
     </div>
   );
 }
-
