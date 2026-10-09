@@ -15,56 +15,34 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
 const FAQS = [
-  {
-    q: "¿Qué es el interés compuesto?",
-    a: "Es el interés que se calcula no solo sobre tu capital inicial, sino también sobre los intereses ya generados en periodos anteriores, por lo que tu dinero crece de forma acelerada cuanto más tiempo lo dejas invertido.",
-  },
-  {
-    q: "¿Cuánto influye la aportación mensual frente al capital inicial?",
-    a: "A largo plazo, las aportaciones mensuales constantes suelen pesar más que el capital inicial en el resultado final, especialmente en plazos de 10 años o más. Compara ambos sliders para verlo.",
-  },
-  {
-    q: "¿Este cálculo garantiza esa rentabilidad?",
-    a: "No. Es una simulación orientativa con un interés anual estimado y constante; la rentabilidad real de cualquier producto financiero puede variar y no está garantizada.",
-  },
-  {
-    q: "¿Por qué el valor ajustado a inflación es más bajo que el saldo total?",
-    a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques.",
-  },
+  { q: "¿Qué es el interés compuesto?", a: "Es el interés que se calcula no solo sobre tu capital inicial, sino también sobre los intereses ya generados en periodos anteriores, por lo que tu dinero crece de forma acelerada cuanto más tiempo lo dejas invertido." },
+  { q: "¿Cuánto influye la aportación mensual frente al capital inicial?", a: "A largo plazo, las aportaciones mensuales constantes suelen pesar más que el capital inicial en el resultado final, especialmente en plazos de 10 años o más. Compara ambos sliders para verlo." },
+  { q: "¿Este cálculo garantiza esa rentabilidad?", a: "No. Es una simulación orientativa con un interés anual estimado y constante; la rentabilidad real de cualquier producto financiero puede variar y no está garantizada." },
+  { q: "¿Por qué el valor ajustado a inflación es más bajo que el saldo total?", a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques." },
 ];
 
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-
   useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
+    if (value !== parseFloat(textVal.replace(",", "."))) setTextVal(String(value ?? 0));
   }, [value]);
-
   const handleInputChange = (e) => {
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) {
-      setValue(parsed);
-    }
+    if (!isNaN(parsed)) setValue(parsed);
   };
-
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
     setTextVal(String(val));
   };
-
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
@@ -77,21 +55,11 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             onChange={handleInputChange}
             onBlur={() => {
               const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) {
-                setTextVal(String(value ?? 0));
-              } else {
-                setValue(parsed);
-                setTextVal(String(parsed));
-              }
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
             }}
             className="bg-transparent text-right font-semibold"
-            style={{
-              ...fontBody,
-              color: accentColor,
-              fontSize: "0.9rem",
-              width: "85px",
-              outline: "none",
-            }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
@@ -111,13 +79,48 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   );
 }
 
-function CompoundInterestTool({ onBack, onNavigate }) {
-  const [initial, setInitial] = useSharedState("interest_initial", 1000);
-  const [monthly, setMonthly] = useSharedState("interest_monthly", 100);
-  const [rate, setRate] = useSharedState("interest_rate", 5);
-  const [years, setYears] = useSharedState("interest_years", 10);
-  const [showInflation, setShowInflation] = useState(false);
-  const [inflationRate, setInflationRate] = useSharedState("interest_inflationRate", 2.5);
+function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [initial, setInitial] = useState(() => {
+    const p = initialParams?.initial;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1000;
+  });
+
+  const [monthly, setMonthly] = useState(() => {
+    const p = initialParams?.monthly;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 100;
+  });
+
+  const [rate, setRate] = useState(() => {
+    const p = initialParams?.rate;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 5;
+  });
+
+  const [years, setYears] = useState(() => {
+    const p = initialParams?.years;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 10;
+  });
+
+  const [showInflation, setShowInflation] = useState(() => {
+    return initialParams?.showInflation === "true" || initialParams?.inflationRate !== undefined;
+  });
+
+  const [inflationRate, setInflationRate] = useState(() => {
+    const p = initialParams?.inflationRate;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 2.5;
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        initial,
+        monthly,
+        rate,
+        years,
+        showInflation: showInflation ? "true" : null,
+        inflationRate: showInflation ? inflationRate : null,
+      });
+    }
+  }, [initial, monthly, rate, years, showInflation, inflationRate, onStateChange]);
 
   const monthlyRate = rate / 100 / 12;
   const monthlyInflation = inflationRate / 100 / 12;
@@ -148,8 +151,7 @@ function CompoundInterestTool({ onBack, onNavigate }) {
   const isInterestMilestoneReached = interestEarned >= totalContributed && totalContributed > 0;
 
   const pageTitle = "Calculadora de interés compuesto: simula el crecimiento de tu dinero | MetaBox";
-  const pageDescription =
-    "Simula cuánto puede crecer tu capital con el interés compuesto, incluyendo el valor real ajustado a inflación, según tu aportación, tipo de interés y plazo. Gráfica interactiva y gratis.";
+  const pageDescription = "Simula cuánto puede crecer tu capital con el interés compuesto, incluyendo el valor real ajustado a inflación, según tu aportación, tipo de interés y plazo. Gráfica interactiva y gratis.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/interest";
 
   return (
@@ -157,12 +159,8 @@ function CompoundInterestTool({ onBack, onNavigate }) {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="calculadora de interés compuesto, simulador interés compuesto, cómo funciona el interés compuesto, interés compuesto mensual, interés compuesto ajustado a inflación"
-        />
+        <meta name="keywords" content="calculadora de interés compuesto, simulador interés compuesto, cómo funciona el interés compuesto, interés compuesto mensual, interés compuesto ajustado a inflación" />
         <link rel="canonical" href={pageUrl} />
-
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
@@ -170,12 +168,10 @@ function CompoundInterestTool({ onBack, onNavigate }) {
         <meta property="og:image" content="https://metabox-web.vercel.app/og/interest.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content="https://metabox-web.vercel.app/og/interest.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -215,13 +211,7 @@ function CompoundInterestTool({ onBack, onNavigate }) {
       </Card>
 
       {isInterestMilestoneReached && (
-        <div style={{
-          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
-          border: `1px solid ${T.lime}`,
-          borderRadius: "0.8rem",
-          padding: "1rem",
-          textAlign: "center",
-        }}>
+        <div style={{ background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`, border: `1px solid ${T.lime}`, borderRadius: "0.8rem", padding: "1rem", textAlign: "center" }}>
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
             🚀 ¡Efecto bola de nieve desatado!
           </div>
@@ -339,4 +329,4 @@ function CompoundInterestTool({ onBack, onNavigate }) {
 }
 
 export default CompoundInterestTool;
-        
+              
