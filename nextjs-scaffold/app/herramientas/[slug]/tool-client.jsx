@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { useCallback, useMemo, Suspense } from "react";
+import { ALL_TOOLS } from "@/lib/tools-registry";
 
 function ToolLoading() {
   return (
@@ -100,6 +101,14 @@ function ToolClientContent({ slug }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Resolución segura: mapeamos el slug largo recibido de la URL al id corto de la herramienta
+  const resolvedToolId = useMemo(() => {
+    if (!slug) return null;
+    if (TOOL_COMPONENTS[slug]) return slug;
+    const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
+    return found ? found.id : null;
+  }, [slug]);
+
   const initialParams = useMemo(() => {
     const params = {};
     if (searchParams) {
@@ -127,7 +136,7 @@ function ToolClientContent({ slug }) {
     window.history.replaceState(null, "", newUrl);
   }, [pathname, searchParams]);
 
-  const Tool = TOOL_COMPONENTS[slug];
+  const Tool = resolvedToolId ? TOOL_COMPONENTS[resolvedToolId] : null;
 
   if (!Tool) {
     return <ToolNotFound onBack={() => router.push("/")} />;
@@ -135,16 +144,19 @@ function ToolClientContent({ slug }) {
 
   const handleNavigate = (val) => {
     const targetId = typeof val === "object" && val !== null ? (val.id || val.slug || val.key) : val;
-    const cleanId = typeof targetId === "string" ? targetId.replace("/herramientas/", "").trim() : null;
-    if (cleanId && TOOL_COMPONENTS[cleanId]) {
-      router.push(`/herramientas/${cleanId}`);
+    let cleanId = typeof targetId === "string" ? targetId.replace("/herramientas/", "").trim() : null;
+    
+    if (cleanId) {
+      const targetTool = ALL_TOOLS.find((t) => t.id === cleanId || t.slug === cleanId);
+      const finalSlug = targetTool ? targetTool.slug : cleanId;
+      router.push(`/herramientas/${finalSlug}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   return (
     <Tool
-      key={slug}
+      key={resolvedToolId}
       initialParams={initialParams}
       onStateChange={handleStateChange}
       onBack={() => router.back()}
@@ -170,11 +182,14 @@ export default function ToolClient({ slug }) {
     }
 
     const cleanId = targetId?.replace(/^\//, "").trim();
-    if (cleanId && TOOL_COMPONENTS[cleanId]) {
-      e.preventDefault();
-      e.stopPropagation();
-      router.push(`/herramientas/${cleanId}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (cleanId) {
+      const targetTool = ALL_TOOLS.find((t) => t.id === cleanId || t.slug === cleanId);
+      if (targetTool) {
+        e.preventDefault();
+        e.stopPropagation();
+        router.push(`/herramientas/${targetTool.slug}`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
   };
 
@@ -185,5 +200,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-}
-
+                                                                            }
+    
