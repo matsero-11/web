@@ -60,12 +60,12 @@ function ToolRecommendationCard({
     const rawId = typeof tool.id === "object" && tool.id !== null ? (tool.id.id || tool.id.slug) : tool.id;
     if (!rawId) return;
 
-    // Buscamos la herramienta en ALL_TOOLS para extraer su slug real en lugar del ID corto
+    // Buscamos siempre el slug largo en ALL_TOOLS para garantizar que coincide con la ruta dinámica
     const foundTool = ALL_TOOLS.find((t) => t.id === rawId || t.slug === rawId);
     const targetSlug = foundTool ? foundTool.slug : rawId;
 
     if (typeof onNavigate === "function") {
-      onNavigate(rawId);
+      onNavigate(targetSlug);
     } else {
       router.push(`/herramientas/${targetSlug}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -457,4 +457,4 @@ function RelatedTools({
 }
 
 export default RelatedTools;
-                
+    
