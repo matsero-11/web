@@ -1,93 +1,143 @@
-// Contenido tomado directamente de mapa-seo.md (ya redactado y revisado).
-// IMPORTANTE: los "keyword objetivo" son hipótesis de intención, no datos de
-// volumen verificados — revisar con una herramienta real antes de confiar
-// en ellos para priorizar.
+// Contenido optimizado con los monstruos de SEO programático, Schema y Long-Tail
 export const SEO_METADATA = {
   savings: {
     title: "Calculadora de objetivo de ahorro — ¿cuánto tardarás?",
-    description:
-      "Calcula en segundos cuántos meses necesitas para alcanzar tu objetivo de ahorro según lo que ya tienes y lo que ahorras al mes.",
+    description: "Calcula en segundos cuántos meses necesitas para alcanzar tu objetivo de ahorro según lo que ya tienes y lo que ahorras al mes.",
+    schemaType: "FinancialCalculator",
+    keywords: ["calcular objetivo ahorro", "cuanto tardare en ahorrar", "meta de ahorro mensual"],
+    priority: 0.9,
   },
   emergency: {
     title: "Calculadora de fondo de emergencia",
-    description:
-      "Descubre cuánto necesitas ahorrado según tus gastos esenciales y en cuánto tiempo puedes conseguirlo.",
+    description: "Descubre cuánto necesitas ahorrado según tus gastos esenciales y en cuánto tiempo puedes conseguirlo.",
+    schemaType: "FinancialCalculator",
+    keywords: ["fondo de emergencia cuanto ahorrar", "calcular colchon financiero", "gastos esenciales ahorro"],
+    priority: 0.9,
   },
   budget: {
     title: "Calculadora de presupuesto mensual por categorías",
-    description:
-      "Organiza tus gastos por categoría y ve al instante cuánto te queda disponible cada mes.",
+    description: "Organiza tus gastos por categoría y ve al instante cuánto te queda disponible cada mes.",
+    schemaType: "FinancialCalculator",
+    keywords: ["presupuesto mensual categorias", "organizar gastos casa", "cuanto gastar al mes"],
+    priority: 0.8,
   },
   interest: {
     title: "Calculadora de interés compuesto con aportaciones",
-    description:
-      "Simula cómo crece tu dinero con el interés compuesto, incluyendo aportaciones mensuales.",
+    description: "Simula cómo crece tu dinero con el interés compuesto, incluyendo aportaciones mensuales.",
+    schemaType: "FinancialCalculator",
+    keywords: ["interes compuesto aportaciones mensuales", "simulador interes compuesto", "crecimiento inversion a largo plazo"],
+    priority: 1.0,
   },
   challenge: {
     title: "Reto de ahorro de 52 semanas (o 26)",
-    description:
-      "Sigue tu progreso semana a semana en el reto de ahorro progresivo y marca lo que ya has conseguido.",
+    description: "Sigue tu progreso semana a semana en el reto de ahorro progresivo y marca lo que ya has conseguido.",
+    schemaType: "FinancialCalculator",
+    keywords: ["reto de ahorro 52 semanas", "tabla reto de ahorro", "ahorro progresivo semanal"],
+    priority: 0.7,
   },
   trip: {
     title: "Calculadora de ahorro para un viaje",
     description: "Fija tu presupuesto de viaje y la fecha, y calculamos cuánto ahorrar cada mes.",
+    schemaType: "FinancialCalculator",
+    keywords: ["cuanto ahorrar para un viaje", "calculadora presupuesto vacaciones", "meta ahorro viaje"],
+    priority: 0.7,
   },
   daily: {
     title: "De gasto diario a mensual y anual",
     description: "Convierte un gasto diario en su equivalente mensual y anual al instante.",
+    schemaType: "FinancialCalculator",
+    keywords: ["cuanto gasto al año en cafe", "convertir gasto diario a anual", "impacto gastos hormiga"],
+    priority: 0.6,
   },
   comparator: {
     title: "Comparador de escenarios de ahorro",
     description: "Compara dos formas de ahorrar y ve la diferencia acumulada a 1, 5 y 10 años.",
+    schemaType: "FinancialCalculator",
+    keywords: ["comparar planes de ahorro", "escenarios de inversion a 5 años", "diferencia ahorro acumulado"],
+    priority: 0.8,
   },
   rule502030: {
     title: "Calculadora de la regla 50/30/20",
     description: "Reparte tu ingreso entre necesidades, deseos y ahorro según la regla 50/30/20.",
+    schemaType: "FinancialCalculator",
+    keywords: ["regla 50 30 20 calculadora", "como repartir sueldo ahorro", "distribucion ingresos necesidades deseos"],
+    priority: 0.9,
   },
   percent: {
     title: "Calculadora de porcentaje de ahorro",
     description: "Descubre qué porcentaje de tu ingreso estás ahorrando realmente.",
+    schemaType: "FinancialCalculator",
+    keywords: ["que porcentaje de mi sueldo ahorro", "calcular tasa de ahorro", "ratio de ahorro personal"],
+    priority: 0.8,
   },
   bigpurchase: {
     title: "Calculadora de ahorro para coche o vivienda",
-    description:
-      "Calcula cuánto ahorrar al mes para una compra grande: coche, entrada de vivienda u otra meta.",
+    description: "Calcula cuánto ahorrar al mes para una compra grande: coche, entrada de vivienda u otra meta.",
+    schemaType: "FinancialCalculator",
+    keywords: ["cuanto ahorrar para entrada piso", "ahorrar para coche nuevo", "calculadora metas grandes"],
+    priority: 0.9,
   },
   roundup: {
     title: "Simulador de ahorro por redondeo",
     description: "Simula cuánto ahorrarías redondeando cada compra hacia arriba.",
+    schemaType: "FinancialCalculator",
+    keywords: ["ahorro por redondeo", "simulador guardar céntimos", "metodo de ahorro automatico"],
+    priority: 0.7,
   },
   annual: {
     title: "Planificador de ahorro anual mes a mes",
     description: "Reparte tu objetivo anual entre los 12 meses, ajustando los meses más difíciles.",
+    schemaType: "FinancialCalculator",
+    keywords: ["planificador ahorro anual", "presupuesto mes a mes", "repartir metas financieras año"],
+    priority: 0.8,
   },
   loan: {
     title: "Calculadora de cuota de préstamo",
     description: "Calcula la cuota mensual de un préstamo y cuánto pagarás en intereses.",
+    schemaType: "FinancialCalculator",
+    keywords: ["calcular cuota prestamo", "cuanto pagar de intereses banco", "simulador prestamo personal"],
+    priority: 0.9,
   },
   groupsplit: {
     title: "Calculadora para repartir gastos en grupo",
     description: "Divide un gasto entre varias personas y ve quién debe qué.",
+    schemaType: "FinancialCalculator",
+    keywords: ["repartir gastos en grupo", "quien debe cuanto dinero amigos", "dividir cuenta cenas viajes"],
+    priority: 0.8,
   },
   tripdaily: {
     title: "Calculadora de presupuesto diario de viaje",
     description: "Ajusta lo que llevas gastado y descubre cuánto puedes gastar cada día restante.",
+    schemaType: "FinancialCalculator",
+    keywords: ["presupuesto diario de viaje", "cuanto puedo gastar por dia vacaciones", "control gastos viaje"],
+    priority: 0.7,
   },
   holiday: {
     title: "Calculadora de ahorro para Navidad",
     description: "Calcula cuánto ahorrar cada mes hasta diciembre para tu presupuesto navideño.",
+    schemaType: "FinancialCalculator",
+    keywords: ["cuanto ahorrar para navidad", "presupuesto regalos diciembre", "planificar gastos navideños"],
+    priority: 0.7,
   },
   currency: {
     title: "Conversor de moneda para viajes",
     description: "Convierte importes con el tipo de cambio del día antes de tu viaje.",
+    schemaType: "FinancialCalculator",
+    keywords: ["conversor de moneda viaje", "tipo de cambio actualizado", "cambiar divisa extranjero"],
+    priority: 0.7,
   },
   tip: {
     title: "Calculadora de propina y reparto de cuenta",
     description: "Calcula la propina y reparte la cuenta entre varias personas al instante.",
+    schemaType: "FinancialCalculator",
+    keywords: ["calcular propina restaurante", "repartir cuenta y propina", "dividir factura bar"],
+    priority: 0.6,
   },
   targetincome: {
     title: "Calculadora de cuánto necesitas ganar",
-    description:
-      "Calcula el ingreso mínimo que necesitas según tus gastos fijos y lo que quieres ahorrar.",
+    description: "Calcula el ingreso mínimo que necesitas según tus gastos fijos y lo que quieres ahorrar.",
+    schemaType: "FinancialCalculator",
+    keywords: ["cuanto necesito ganar al mes", "ingreso minimo necesario", "salario objetivo para ahorrar"],
+    priority: 0.9,
   },
 };
