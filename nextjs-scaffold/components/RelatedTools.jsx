@@ -63,7 +63,7 @@ function ToolRecommendationCard({
     if (typeof onNavigate === "function") {
       onNavigate(targetId);
     } else {
-      router.push(`/herramientas/${targetId}`);
+      router.push(`/${targetId}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -453,4 +453,4 @@ function RelatedTools({
 }
 
 export default RelatedTools;
-      
+        
