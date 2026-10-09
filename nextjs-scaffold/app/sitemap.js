@@ -1,4 +1,6 @@
+// app/sitemap.js
 import { ALL_TOOLS } from "@/lib/tools-registry";
+import { generateMatrixPaths } from "@/lib/seo-matrix";
 
 // Usa la variable de entorno o fija directamente tu dominio de producción definitivo
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
@@ -15,6 +17,17 @@ export default async function sitemap() {
       lastModified: LAST_MODIFIED,
       changeFrequency: "weekly",
       priority: tool.priority || 0.8,
+    }));
+
+  // Generamos de forma segura las URLs de la Matriz de SEO Programático
+  const matrixPaths = typeof generateMatrixPaths === "function" ? generateMatrixPaths(safeTools) : [];
+  const matrixUrls = matrixPaths
+    .filter(path => path && typeof path.seoSlug === "string" && path.seoSlug.trim().length > 0)
+    .map(path => ({
+      url: `${BASE_URL}/aprende/${encodeURIComponent(path.seoSlug)}`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: "weekly",
+      priority: 0.7,
     }));
 
   return [
@@ -43,5 +56,7 @@ export default async function sitemap() {
       priority: 0.3,
     },
     ...toolUrls,
+    ...matrixUrls,
   ];
 }
+
