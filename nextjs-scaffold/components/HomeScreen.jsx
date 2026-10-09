@@ -15,8 +15,8 @@ function HomeContent() {
   const top = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const curG = GUIDES.find(x => x.id === g);
-  const feat = ALL_TOOLS.find(x => x.id === "goal") || ALL_TOOLS[0];
-  const smart = q.length > 2 ? ALL_TOOLS.find(x => x.id === (q.toLowerCase().includes("inver") ? "compound" : "goal")) : null;
+  const feat = ALL_TOOLS.find(x => x.id === "savings") || ALL_TOOLS[0];
+  const smart = q.length > 2 ? ALL_TOOLS.find(x => x.id === (q.toLowerCase().includes("inver") ? "interest" : "savings")) : null;
 
   const filtered = ALL_TOOLS.filter(x => {
     const matchQ = !q || x.label.toLowerCase().includes(q.toLowerCase()) || x.desc.toLowerCase().includes(q.toLowerCase());
@@ -96,7 +96,7 @@ function HomeContent() {
         <div style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginBottom: ".3rem" }}><Search size={14} className="inline mr-1 text-lime" /> ¿Qué necesitas calcular?</div>
         <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder='Ej: "Ahorrar 5.000 €"...' style={{ width: "100%", background: T.surface, border: `1px solid ${q ? T.lime : T.border}`, borderRadius: ".8rem", padding: ".8rem 1rem .8rem 2.4rem", color: T.text, fontSize: ".85rem", outline: "none" }} />
         {smart && (
-          <Link href={`/herramientas/${smart.id}`} className="block mt-2 p-3 rounded-xl flex items-center justify-between no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
+          <Link href={`/herramientas/${smart.slug}`} className="block mt-2 p-3 rounded-xl flex items-center justify-between no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
             <span style={{ color: T.lime, fontSize: ".8rem", fontWeight: 600 }}>Sugerencia: {smart.label}</span>
             <ArrowRight size={12} style={{ color: T.lime }} />
           </Link>
@@ -104,7 +104,7 @@ function HomeContent() {
       </div>
 
       {!q && !cat && feat && (
-        <Link href={`/herramientas/${feat.id}`} className="block rounded-xl p-4 mb-5 no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
+        <Link href={`/herramientas/${feat.slug}`} className="block rounded-xl p-4 mb-5 no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
           <div style={{ color: T.lime, fontSize: ".7rem", fontWeight: 700, textTransform: "uppercase" }}>Destacada</div>
           <div style={{ color: T.text, fontWeight: 700, fontSize: "1rem" }}>{feat.label}</div>
           <div style={{ color: T.textMuted, fontSize: ".78rem" }}>{feat.desc}</div>
@@ -127,7 +127,7 @@ function HomeContent() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {filtered.map(t => (
-              <Link key={t.id} href={`/herramientas/${t.id}`} className="no-underline block">
+              <Link key={t.id} href={`/herramientas/${t.slug}`} className="no-underline block">
                 <Card style={{ padding: "1rem", cursor: "pointer", height: "100%" }}>
                   <IconTile icon={t.icon} tone={t.tone} />
                   <div style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginTop: ".5rem" }}>{t.label}</div>
@@ -167,5 +167,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-      }
-                   
+                     }
+      
