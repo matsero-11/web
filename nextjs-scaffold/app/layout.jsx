@@ -3,7 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import ClientProviders from "@/components/ClientProviders";
 
-const BASE_URL = "https://metabox-web.vercel.app";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -106,7 +106,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
-
-
 
