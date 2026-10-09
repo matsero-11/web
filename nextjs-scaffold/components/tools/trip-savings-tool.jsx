@@ -15,7 +15,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -40,11 +39,37 @@ function monthsBetween(dateStr) {
   return Math.max(Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 30.44)), 0);
 }
 
-function TripSavingsTool({ onBack, onNavigate }) {
-  const [budget, setBudget] = useSharedState("trip_budget", 1200);
-  const [current, setCurrent] = useSharedState("trip_current", 200);
-  const [tripDate, setTripDate] = usePersistentState("trip_date", "");
-  const [monthsLeft, setMonthsLeft] = useSharedState("trip_monthsLeft", 6);
+function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [budget, setBudget] = useState(() => {
+    const p = initialParams?.budget;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1200;
+  });
+
+  const [current, setCurrent] = useState(() => {
+    const p = initialParams?.current;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 200;
+  });
+
+  const [tripDate, setTripDate] = useState(() => {
+    const p = initialParams?.tripDate;
+    return typeof p === "string" ? p : "";
+  });
+
+  const [monthsLeft, setMonthsLeft] = useState(() => {
+    const p = initialParams?.monthsLeft;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 6;
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        budget,
+        current,
+        tripDate: tripDate ? tripDate : null,
+        monthsLeft: !tripDate ? monthsLeft : null,
+      });
+    }
+  }, [budget, current, tripDate, monthsLeft, onStateChange]);
 
   useEffect(() => {
     if (current > budget) setCurrent(budget);
@@ -200,4 +225,4 @@ function TripSavingsTool({ onBack, onNavigate }) {
 }
 
 export default TripSavingsTool;
-          
+      
