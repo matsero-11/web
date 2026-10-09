@@ -15,7 +15,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -31,12 +30,39 @@ const FAQS = [
   },
 ];
 
-function TripDailyBudgetTool({ onBack, onNavigate }) {
-  const [totalBudget, setTotalBudget] = useSharedState("tripdaily_totalBudget", 900);
-  const [totalDays, setTotalDays] = useSharedState("tripdaily_totalDays", 6);
-  const [spent, setSpent] = useSharedState("tripdaily_spent", 300);
-  const [daysElapsed, setDaysElapsed] = useSharedState("tripdaily_daysElapsed", 2);
+function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [totalBudget, setTotalBudget] = useState(() => {
+    const p = initialParams?.totalBudget;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 900;
+  });
+
+  const [totalDays, setTotalDays] = useState(() => {
+    const p = initialParams?.totalDays;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 6;
+  });
+
+  const [spent, setSpent] = useState(() => {
+    const p = initialParams?.spent;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 300;
+  });
+
+  const [daysElapsed, setDaysElapsed] = useState(() => {
+    const p = initialParams?.daysElapsed;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 2;
+  });
+
   const [todaySpend, setTodaySpend] = useState("");
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        totalBudget,
+        totalDays,
+        spent,
+        daysElapsed,
+      });
+    }
+  }, [totalBudget, totalDays, spent, daysElapsed, onStateChange]);
 
   useEffect(() => {
     if (spent > totalBudget) setSpent(totalBudget);
@@ -195,4 +221,4 @@ function TripDailyBudgetTool({ onBack, onNavigate }) {
 }
 
 export default TripDailyBudgetTool;
-                                   
+            
