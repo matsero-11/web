@@ -6,7 +6,7 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, AdviceBlock, Chip } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
+import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -95,13 +95,40 @@ function DecimalRateRow({ label, value, setValue, min = 0.0001, max = 10000, uni
   );
 }
 
-function CurrencyConverterTool({ onBack, onNavigate }) {
-  const [amount, setAmount] = useSharedState("currency_amount", 100);
-  const [rate, setRate] = useSharedState("currency_rate", 1.08);
-  const [fromLabel, setFromLabel] = usePersistentState("currency_fromLabel", "EUR");
-  const [toLabel, setToLabel] = usePersistentState("currency_toLabel", "USD");
+function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [amount, setAmount] = useState(() => {
+    const p = initialParams?.amount;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 100;
+  });
+
+  const [rate, setRate] = useState(() => {
+    const p = initialParams?.rate;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1.08;
+  });
+
+  const [fromLabel, setFromLabel] = useState(() => {
+    const p = initialParams?.fromLabel;
+    return typeof p === "string" && p.trim() !== "" ? p.toUpperCase().slice(0, 4) : "EUR";
+  });
+
+  const [toLabel, setToLabel] = useState(() => {
+    const p = initialParams?.toLabel;
+    return typeof p === "string" && p.trim() !== "" ? p.toUpperCase().slice(0, 4) : "USD";
+  });
+
   const [isRotated, setIsRotated] = useState(false);
   const [savedPairs, setSavedPairs] = usePersistentState("currency_savedPairs", []);
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        amount,
+        rate,
+        fromLabel,
+        toLabel,
+      });
+    }
+  }, [amount, rate, fromLabel, toLabel, onStateChange]);
 
   const converted = amount * rate;
   const animatedConverted = useAnimatedNumber(converted);
@@ -320,4 +347,4 @@ function CurrencyConverterTool({ onBack, onNavigate }) {
 }
 
 export default CurrencyConverterTool;
-                   
+      
