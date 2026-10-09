@@ -1,4 +1,3 @@
-// app/sitemap.js
 import { ALL_TOOLS } from "@/lib/tools-registry";
 import { generateMatrixPaths } from "@/lib/seo-matrix";
 
@@ -59,4 +58,3 @@ export default async function sitemap() {
     ...matrixUrls,
   ];
 }
-
