@@ -15,7 +15,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -113,17 +112,64 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   );
 }
 
-function BigPurchaseTool({ onBack, onNavigate }) {
-  const [type, setType] = usePersistentState("bigpurchase_type", "coche");
-  const typeInfo = PURCHASE_TYPES.find((t) => t.id === type) || PURCHASE_TYPES[0];
-  const [budget, setBudget] = useSharedState("bigpurchase_budget", typeInfo.defaultBudget);
-  const [current, setCurrent] = useSharedState("bigpurchase_current", 1000);
-  const [monthsLeft, setMonthsLeft] = useSharedState("bigpurchase_monthsLeft", 18);
+function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  // Inicialización inteligente con soporte de initialParams
+  const [type, setType] = useState(() => {
+    const p = initialParams?.type;
+    return PURCHASE_TYPES.some((t) => t.id === p) ? p : "coche";
+  });
 
-  const [showFinancing, setShowFinancing] = useState(false);
-  const [financePct, setFinancePct] = useSharedState("bigpurchase_financePct", 30);
-  const [financeRate, setFinanceRate] = useSharedState("bigpurchase_financeRate", 7);
-  const [financeMonths, setFinanceMonths] = useSharedState("bigpurchase_financeMonths", 48);
+  const typeInfo = PURCHASE_TYPES.find((t) => t.id === type) || PURCHASE_TYPES[0];
+
+  const [budget, setBudget] = useState(() => {
+    const p = initialParams?.budget;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : typeInfo.defaultBudget;
+  });
+
+  const [current, setCurrent] = useState(() => {
+    const p = initialParams?.current;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1000;
+  });
+
+  const [monthsLeft, setMonthsLeft] = useState(() => {
+    const p = initialParams?.monthsLeft;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 18;
+  });
+
+  const [showFinancing, setShowFinancing] = useState(() => {
+    return initialParams?.showFinancing === "true" || initialParams?.financePct !== undefined;
+  });
+
+  const [financePct, setFinancePct] = useState(() => {
+    const p = initialParams?.financePct;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 30;
+  });
+
+  const [financeRate, setFinanceRate] = useState(() => {
+    const p = initialParams?.financeRate;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 7;
+  });
+
+  const [financeMonths, setFinanceMonths] = useState(() => {
+    const p = initialParams?.financeMonths;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 48;
+  });
+
+  // Sincronización automática con la URL mediante onStateChange
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        type,
+        budget,
+        current,
+        monthsLeft,
+        showFinancing: showFinancing ? "true" : null,
+        financePct: showFinancing ? financePct : null,
+        financeRate: showFinancing ? financeRate : null,
+        financeMonths: showFinancing ? financeMonths : null,
+      });
+    }
+  }, [type, budget, current, monthsLeft, showFinancing, financePct, financeRate, financeMonths, onStateChange]);
 
   const changeType = (id) => {
     setType(id);
@@ -379,4 +425,4 @@ function BigPurchaseTool({ onBack, onNavigate }) {
 }
 
 export default BigPurchaseTool;
-                
+    
