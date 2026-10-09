@@ -1,12 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { X, Plus } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -22,15 +21,51 @@ const FAQS = [
   },
 ];
 
-function TipCalculatorTool({ onBack, onNavigate }) {
-  const [bill, setBill] = useSharedState("tip_bill", 45);
-  const [tipPct, setTipPct] = useSharedState("tip_tipPct", 10);
-  const [people, setPeople] = useSharedState("tip_people", 2);
-  const [byConsumption, setByConsumption] = useState(false);
-  const [consumers, setConsumers] = usePersistentState("tip_consumers", [
-    { id: "1", name: "Persona 1", amount: 22.5 },
-    { id: "2", name: "Persona 2", amount: 22.5 },
-  ]);
+function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [bill, setBill] = useState(() => {
+    const p = initialParams?.bill;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 45;
+  });
+
+  const [tipPct, setTipPct] = useState(() => {
+    const p = initialParams?.tipPct;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 10;
+  });
+
+  const [people, setPeople] = useState(() => {
+    const p = initialParams?.people;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 2;
+  });
+
+  const [byConsumption, setByConsumption] = useState(() => {
+    return initialParams?.byConsumption === "true";
+  });
+
+  const [consumers, setConsumers] = useState(() => {
+    const p = initialParams?.consumers;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return [
+      { id: "1", name: "Persona 1", amount: 22.5 },
+      { id: "2", name: "Persona 2", amount: 22.5 },
+    ];
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        bill,
+        tipPct,
+        people,
+        byConsumption: byConsumption ? "true" : null,
+        consumers: byConsumption && consumers.length > 0 ? JSON.stringify(consumers) : null,
+      });
+    }
+  }, [bill, tipPct, people, byConsumption, consumers, onStateChange]);
 
   const tipAmount = bill * (tipPct / 100);
   const total = bill + tipAmount;
