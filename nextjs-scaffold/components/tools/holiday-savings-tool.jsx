@@ -12,7 +12,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -32,16 +31,44 @@ const FAQS = [
   },
 ];
 
-function HolidaySavingsTool({ onBack, onNavigate }) {
+function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const realMonth = new Date().getMonth() + 1;
-  const [currentMonth, setCurrentMonth] = useSharedState("holiday_currentMonth", realMonth);
-  const [current, setCurrent] = useSharedState("holiday_current", 50);
-  const [gifts, setGifts] = usePersistentState("holiday_gifts", [
-    { id: "1", name: "Familia", amount: 200 },
-    { id: "2", name: "Amigos", amount: 150 },
-    { id: "3", name: "Comida y decoración", amount: 250 },
-  ]);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const p = initialParams?.currentMonth;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : realMonth;
+  });
+
+  const [current, setCurrent] = useState(() => {
+    const p = initialParams?.current;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 50;
+  });
+
+  const [gifts, setGifts] = useState(() => {
+    const p = initialParams?.gifts;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return [
+      { id: "1", name: "Familia", amount: 200 },
+      { id: "2", name: "Amigos", amount: 150 },
+      { id: "3", name: "Comida y decoración", amount: 250 },
+    ];
+  });
+
   const [newName, setNewName] = useState("");
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        currentMonth,
+        current,
+        gifts: gifts.length > 0 ? JSON.stringify(gifts) : null,
+      });
+    }
+  }, [currentMonth, current, gifts, onStateChange]);
 
   const budget = useMemo(() => gifts.reduce((sum, g) => sum + (g.amount || 0), 0), [gifts]);
 
@@ -243,4 +270,3 @@ function HolidaySavingsTool({ onBack, onNavigate }) {
 }
 
 export default HolidaySavingsTool;
-        
