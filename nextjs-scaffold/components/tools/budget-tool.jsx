@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Target, PiggyBank, Plane, Home as HomeIcon,
@@ -15,7 +15,7 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
+import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -31,46 +31,28 @@ const EXPENSE_CATEGORIES = [
 ];
 
 const FAQS = [
-  {
-    q: "¿Qué porcentaje de mis ingresos debería destinar a cada categoría?",
-    a: "No hay una regla única, pero muchas personas usan como referencia el 50% en necesidades, el 30% en deseos y el 20% en ahorro. Ajusta cada categoría según tu situación real con los sliders.",
-  },
-  {
-    q: "¿Qué hago si mis gastos superan mis ingresos?",
-    a: "Revisa el desglose por categoría y prioriza recortar primero en las partidas más flexibles, como ocio o suscripciones, antes de tocar gastos fijos como vivienda o transporte.",
-  },
-  {
-    q: "¿Para qué sirve guardar el mes en el histórico?",
-    a: "Al guardar una foto de tu presupuesto cada mes, puedes ver cómo evoluciona tu disponible real a lo largo del tiempo, en vez de mirar solo el mes actual de forma aislada.",
-  },
+  { q: "¿Qué porcentaje de mis ingresos debería destinar a cada categoría?", a: "No hay una regla única, pero muchas personas usan como referencia el 50% en necesidades, el 30% en deseos y el 20% en ahorro. Ajusta cada categoría según tu situación real con los sliders." },
+  { q: "¿Qué hago si mis gastos superan mis ingresos?", a: "Revisa el desglose por categoría y prioriza recortar primero en las partidas más flexibles, como ocio o suscripciones, antes de tocar gastos fijos como vivienda o transporte." },
+  { q: "¿Para qué sirve guardar el mes en el histórico?", a: "Al guardar una foto de tu presupuesto cada mes, puedes ver cómo evoluciona tu disponible real a lo largo del tiempo, en vez de mirar solo el mes actual de forma aislada." },
 ];
 
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-
   useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
+    if (value !== parseFloat(textVal.replace(",", "."))) setTextVal(String(value ?? 0));
   }, [value]);
-
   const handleInputChange = (e) => {
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) {
-      setValue(parsed);
-    }
+    if (!isNaN(parsed)) setValue(parsed);
   };
-
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
     setTextVal(String(val));
   };
-
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
@@ -83,21 +65,11 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             onChange={handleInputChange}
             onBlur={() => {
               const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) {
-                setTextVal(String(value ?? 0));
-              } else {
-                setValue(parsed);
-                setTextVal(String(parsed));
-              }
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
             }}
             className="bg-transparent text-right font-semibold"
-            style={{
-              ...fontBody,
-              color: accentColor,
-              fontSize: "0.9rem",
-              width: "85px",
-              outline: "none",
-            }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
@@ -117,19 +89,57 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   );
 }
 
-function BudgetTool({ onBack, onNavigate }) {
-  const [selected, setSelected] = usePersistentState("budget_selected", ["vivienda", "comida", "transporte"]);
-  const [amounts, setAmounts] = usePersistentState("budget_amounts", Object.fromEntries(EXPENSE_CATEGORIES.map((c) => [c.id, c.default])));
-  const [income, setIncome] = useSharedState("budget_income", 1800);
-  const [customCategories, setCustomCategories] = usePersistentState("budget_customCategories", []);
+function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [selected, setSelected] = useState(() => {
+    const p = initialParams?.selected;
+    if (typeof p === "string" && p.trim() !== "") return p.split(",").map((s) => s.trim()).filter(Boolean);
+    return ["vivienda", "comida", "transporte"];
+  });
+
+  const [amounts, setAmounts] = useState(() => {
+    const p = initialParams?.amounts;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (parsed && typeof parsed === "object") return { ...Object.fromEntries(EXPENSE_CATEGORIES.map((c) => [c.id, c.default])), ...parsed };
+      } catch (e) {}
+    }
+    return Object.fromEntries(EXPENSE_CATEGORIES.map((c) => [c.id, c.default]));
+  });
+
+  const [income, setIncome] = useState(() => {
+    const p = initialParams?.income;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800;
+  });
+
+  const [customCategories, setCustomCategories] = useState(() => {
+    const p = initialParams?.customCategories;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  const [history, setHistory] = usePersistentState("budget_history", []);
   const [newCatName, setNewCatName] = useState("");
   const [showAddCat, setShowAddCat] = useState(false);
-  const [history, setHistory] = usePersistentState("budget_history", []);
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        income,
+        selected: selected.length > 0 ? selected.join(",") : null,
+        amounts: Object.keys(amounts).length > 0 ? JSON.stringify(amounts) : null,
+        customCategories: customCategories.length > 0 ? JSON.stringify(customCategories) : null,
+      });
+    }
+  }, [income, selected, amounts, customCategories, onStateChange]);
 
   const allCategories = [...EXPENSE_CATEGORIES, ...customCategories];
-
-  const toggle = (id) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const toggle = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   const addCustomCategory = () => {
     const name = newCatName.trim();
@@ -156,26 +166,20 @@ function BudgetTool({ onBack, onNavigate }) {
   const isSurplusBalanced = available >= 0 && income > 0;
 
   const chartData = activeCats
-    .map((c) => ({
-      name: c.label,
-      importe: amounts[c.id] || 0,
-    }))
+    .map((c) => ({ name: c.label, importe: amounts[c.id] || 0 }))
     .sort((a, b) => b.importe - a.importe);
 
   const saveSnapshot = () => {
     const snapshot = {
       date: new Date().toISOString(),
       label: new Date().toLocaleDateString("es-ES", { month: "short", year: "2-digit" }),
-      income,
-      total,
-      available,
+      income, total, available,
     };
-    setHistory((prev) => [...prev.slice(-11), snapshot]); // guarda hasta 12 meses
+    setHistory((prev) => [...prev.slice(-11), snapshot]);
   };
 
   const pageTitle = "Presupuesto mensual por categorías: organiza tus gastos | MetaBox";
-  const pageDescription =
-    "Organiza tu presupuesto mensual por categorías, compáralas con referencias razonables de gasto, añade categorías propias y guarda tu histórico mes a mes. Gratis y sin registro.";
+  const pageDescription = "Organiza tu presupuesto mensual por categorías, compáralas con referencias razonables de gasto, añade categorías propias y guarda tu histórico mes a mes. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/budget";
 
   return (
@@ -183,12 +187,8 @@ function BudgetTool({ onBack, onNavigate }) {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="presupuesto mensual, cómo hacer un presupuesto mensual, calculadora de gastos por categoría, organizar gastos mensuales, histórico de presupuesto"
-        />
+        <meta name="keywords" content="presupuesto mensual, cómo hacer un presupuesto mensual, calculadora de gastos por categoría, organizar gastos mensuales, histórico de presupuesto" />
         <link rel="canonical" href={pageUrl} />
-
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
@@ -196,12 +196,10 @@ function BudgetTool({ onBack, onNavigate }) {
         <meta property="og:image" content="https://metabox-web.vercel.app/og/budget.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content="https://metabox-web.vercel.app/og/budget.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -239,11 +237,7 @@ function BudgetTool({ onBack, onNavigate }) {
               <button
                 onClick={(e) => { e.stopPropagation(); removeCustomCategory(c.id); }}
                 aria-label={`Eliminar categoría ${c.label}`}
-                style={{
-                  position: "absolute", top: "-6px", right: "-6px",
-                  background: T.coral, borderRadius: "50%", width: "16px", height: "16px",
-                  display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer",
-                }}
+                style={{ position: "absolute", top: "-6px", right: "-6px", background: T.coral, borderRadius: "50%", width: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
               >
                 <X size={10} color="#fff" />
               </button>
@@ -253,11 +247,7 @@ function BudgetTool({ onBack, onNavigate }) {
         {!showAddCat ? (
           <button
             onClick={() => setShowAddCat(true)}
-            style={{
-              ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem",
-              padding: "0.55rem 0.9rem", borderRadius: "999px", fontSize: "0.85rem", fontWeight: 500,
-              border: `1px dashed ${T.border}`, background: "transparent", color: T.textMuted, cursor: "pointer",
-            }}
+            style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", padding: "0.55rem 0.9rem", borderRadius: "999px", fontSize: "0.85rem", fontWeight: 500, border: `1px dashed ${T.border}`, background: "transparent", color: T.textMuted, cursor: "pointer" }}
           >
             <Plus size={14} /> Añadir categoría
           </button>
@@ -269,10 +259,7 @@ function BudgetTool({ onBack, onNavigate }) {
               onKeyDown={(e) => e.key === "Enter" && addCustomCategory()}
               placeholder="Nombre..."
               autoFocus
-              style={{
-                ...fontBody, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "999px",
-                padding: "0.5rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", width: "9rem",
-              }}
+              style={{ ...fontBody, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "999px", padding: "0.5rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", width: "9rem" }}
             />
             <button onClick={addCustomCategory} aria-label="Confirmar categoría" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <Plus size={16} color="#12200A" />
@@ -293,13 +280,7 @@ function BudgetTool({ onBack, onNavigate }) {
       </Card>
 
       {isSurplusBalanced && (
-        <div style={{
-          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
-          border: `1px solid ${T.lime}`,
-          borderRadius: "0.8rem",
-          padding: "1rem",
-          textAlign: "center",
-        }}>
+        <div style={{ background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`, border: `1px solid ${T.lime}`, borderRadius: "0.8rem", padding: "1rem", textAlign: "center" }}>
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
             🎉 ¡Presupuesto equilibrado con éxito!
           </div>
@@ -332,10 +313,7 @@ function BudgetTool({ onBack, onNavigate }) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="name" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  formatter={(value) => [`${value} €`, "Gasto"]}
-                  contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
-                />
+                <Tooltip formatter={(value) => [`${value} €`, "Gasto"]} contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
                 <Bar dataKey="importe" fill={T.lime} radius={[4, 4, 0, 0]} animationDuration={300} />
               </BarChart>
             </ResponsiveContainer>
@@ -351,16 +329,7 @@ function BudgetTool({ onBack, onNavigate }) {
               const overBenchmark = c.maxPct && catPct > c.maxPct;
               return (
                 <div key={c.id}>
-                  <DecimalSliderRow
-                    label={c.label}
-                    value={amounts[c.id] || 0}
-                    min={0}
-                    max={2000}
-                    step={10}
-                    unit="€"
-                    accent="lime"
-                    setValue={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))}
-                  />
+                  <DecimalSliderRow label={c.label} value={amounts[c.id] || 0} min={0} max={2000} step={10} unit="€" accent="lime" setValue={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))} />
                   {c.maxPct && (
                     <div style={{ ...fontBody, fontSize: "0.72rem", color: overBenchmark ? T.coral : T.textMuted, marginTop: "0.3rem" }}>
                       {catPct.toFixed(0)}% de tus ingresos {overBenchmark ? `— por encima del ${c.maxPct}% recomendado` : `(referencia: hasta ${c.maxPct}%)`}
@@ -375,12 +344,8 @@ function BudgetTool({ onBack, onNavigate }) {
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex items-center justify-between" style={{ marginBottom: history.length > 0 ? "1rem" : 0 }}>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
-            Histórico mensual
-          </div>
-          <Button variant="ghost" onClick={saveSnapshot} style={{ width: "auto", padding: "0.5rem 0.9rem", fontSize: "0.8rem" }}>
-            Guardar este mes
-          </Button>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>Histórico mensual</div>
+          <Button variant="ghost" onClick={saveSnapshot} style={{ width: "auto", padding: "0.5rem 0.9rem", fontSize: "0.8rem" }}>Guardar este mes</Button>
         </div>
         {history.length > 0 && (
           <div style={{ width: "100%", height: "150px" }}>
@@ -388,54 +353,36 @@ function BudgetTool({ onBack, onNavigate }) {
               <LineChart data={history} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="label" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
                 <YAxis hide />
-                <Tooltip
-                  contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                  formatter={(v) => [fmtEUR(v), "Disponible"]}
-                />
+                <Tooltip contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }} formatter={(v) => [fmtEUR(v), "Disponible"]} />
                 <Line type="monotone" dataKey="available" stroke={T.lime} strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         )}
         {history.length === 0 && (
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
-            Guarda tu primer mes para empezar a ver la evolución de tu presupuesto en el tiempo.
-          </div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>Guarda tu primer mes para empezar a ver la evolución de tu presupuesto en el tiempo.</div>
         )}
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <CopySummaryButton
-          getText={() =>
-            `Presupuesto mensual: ingresos ${fmtEUR(income)}, gastos ${fmtEUR(total)}, disponible ${fmtEUR(available)}.`
-          }
-        />
-        <ExportCSVButton
-          filename="presupuesto-mensual"
-          getRows={() => [
-            { concepto: "Ingresos mensuales", valor: income.toFixed(2) },
-            { concepto: "Gasto total", valor: total.toFixed(2) },
-            { concepto: "Disponible real", valor: available.toFixed(2) },
-            ...activeCats.map((c) => ({
-              concepto: `Categoría: ${c.label}`,
-              valor: (amounts[c.id] || 0).toFixed(2),
-            }))
-          ]}
-        />
+        <CopySummaryButton getText={() => `Presupuesto mensual: ingresos ${fmtEUR(income)}, gastos ${fmtEUR(total)}, disponible ${fmtEUR(available)}.`} />
+        <ExportCSVButton filename="presupuesto-mensual" getRows={() => [
+          { concepto: "Ingresos mensuales", valor: income.toFixed(2) },
+          { concepto: "Gasto total", valor: total.toFixed(2) },
+          { concepto: "Disponible real", valor: available.toFixed(2) },
+          ...activeCats.map((c) => ({ concepto: `Categoría: ${c.label}`, valor: (amounts[c.id] || 0).toFixed(2) }))
+        ]} />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
-        <p>
-          Hacer un presupuesto mensual por categorías te ayuda a ver de un vistazo en qué se va realmente tu dinero, en lugar de descubrirlo a final de mes. Ajusta vivienda, comida, transporte y el resto de partidas con los sliders, añade tus propias categorías si lo necesitas, y guarda cada mes para ver cómo evoluciona tu presupuesto real con el tiempo.
-        </p>
+        <p>Hacer un presupuesto mensual por categorías te ayuda a ver de un vistazo en qué se va realmente tu dinero, en lugar de descubrirlo a final de mes. Ajusta vivienda, comida, transporte y el resto de partidas con los sliders, añade tus propias categorías si lo necesitas, y guarda cada mes para ver cómo evoluciona tu presupuesto real con el tiempo.</p>
       </div>
     </div>
   );
 }
 
 export default BudgetTool;
-    
+          
