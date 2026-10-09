@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   ResponsiveContainer,
@@ -13,7 +13,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, Chip, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -37,13 +36,48 @@ const FAQS = [
   },
 ];
 
-function LoanPaymentTool({ onBack, onNavigate }) {
-  const [principal, setPrincipal] = useSharedState("loan_principal", 10000);
-  const [rate, setRate] = useSharedState("loan_rate", 6);
-  const [months, setMonths] = useSharedState("loan_months", 48);
-  const [chartMode, setChartMode] = useState("saldo");
-  const [showExtra, setShowExtra] = useState(false);
-  const [extraPayment, setExtraPayment] = useSharedState("loan_extraPayment", 50);
+function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [principal, setPrincipal] = useState(() => {
+    const p = initialParams?.principal;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 10000;
+  });
+
+  const [rate, setRate] = useState(() => {
+    const p = initialParams?.rate;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 6;
+  });
+
+  const [months, setMonths] = useState(() => {
+    const p = initialParams?.months;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 48;
+  });
+
+  const [chartMode, setChartMode] = useState(() => {
+    const p = initialParams?.chartMode;
+    return typeof p === "string" && p.trim() !== "" ? p : "saldo";
+  });
+
+  const [showExtra, setShowExtra] = useState(() => {
+    return initialParams?.showExtra === "true" || initialParams?.extraPayment !== undefined;
+  });
+
+  const [extraPayment, setExtraPayment] = useState(() => {
+    const p = initialParams?.extraPayment;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 50;
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        principal,
+        rate,
+        months,
+        chartMode: chartMode !== "saldo" ? chartMode : null,
+        showExtra: showExtra ? "true" : null,
+        extraPayment: showExtra ? extraPayment : null,
+      });
+    }
+  }, [principal, rate, months, chartMode, showExtra, extraPayment, onStateChange]);
 
   const monthlyRate = rate / 100 / 12;
   const payment = useMemo(() => {
@@ -275,4 +309,4 @@ function LoanPaymentTool({ onBack, onNavigate }) {
 }
 
 export default LoanPaymentTool;
-    
+      
