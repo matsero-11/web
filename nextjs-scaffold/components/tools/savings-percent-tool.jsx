@@ -9,7 +9,7 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, Chip, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
+import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -29,11 +29,43 @@ const FAQS = [
   },
 ];
 
-function SavingsPercentTool({ onBack, onNavigate }) {
-  const [income, setIncome] = useSharedState("percent_income", 1800);
-  const [savings, setSavings] = useSharedState("percent_savings", 250);
-  const [period, setPeriod] = usePersistentState("percent_period", "mes");
-  const [history, setHistory] = usePersistentState("percent_history", []);
+function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [income, setIncome] = useState(() => {
+    const p = initialParams?.income;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800;
+  });
+
+  const [savings, setSavings] = useState(() => {
+    const p = initialParams?.savings;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 250;
+  });
+
+  const [period, setPeriod] = useState(() => {
+    const p = initialParams?.period;
+    return typeof p === "string" && p.trim() !== "" ? p : "mes";
+  });
+
+  const [history, setHistory] = usePersistentState("percent_history", () => {
+    const p = initialParams?.history;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        income,
+        savings,
+        period: period !== "mes" ? period : null,
+        history: history.length > 0 ? JSON.stringify(history) : null,
+      });
+    }
+  }, [income, savings, period, history, onStateChange]);
 
   useEffect(() => {
     if (savings > income) setSavings(income);
@@ -224,7 +256,7 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambian. Guarda tu porcentaje cada mes para ver si tu tasa de ahorro mejora con el tiempo.
+          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambien. Guarda tu porcentaje cada mes para ver si tu tasa de ahorro mejora con el tiempo.
         </p>
       </div>
     </div>
@@ -232,4 +264,4 @@ function SavingsPercentTool({ onBack, onNavigate }) {
 }
 
 export default SavingsPercentTool;
-                   
+    
