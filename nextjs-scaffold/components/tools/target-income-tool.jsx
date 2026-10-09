@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -8,7 +8,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -28,11 +27,36 @@ const FAQS = [
   },
 ];
 
-function TargetIncomeTool({ onBack, onNavigate }) {
-  const [expenses, setExpenses] = useSharedState("targetincome_expenses", 1200);
-  const [desiredSavings, setDesiredSavings] = useSharedState("targetincome_desiredSavings", 300);
-  const [showGross, setShowGross] = useState(false);
-  const [retentionPct, setRetentionPct] = useSharedState("targetincome_retentionPct", 20);
+function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [expenses, setExpenses] = useState(() => {
+    const p = initialParams?.expenses;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1200;
+  });
+
+  const [desiredSavings, setDesiredSavings] = useState(() => {
+    const p = initialParams?.desiredSavings;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 300;
+  });
+
+  const [showGross, setShowGross] = useState(() => {
+    return initialParams?.showGross === "true" || initialParams?.retentionPct !== undefined;
+  });
+
+  const [retentionPct, setRetentionPct] = useState(() => {
+    const p = initialParams?.retentionPct;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 20;
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        expenses,
+        desiredSavings,
+        showGross: showGross ? "true" : null,
+        retentionPct: showGross ? retentionPct : null,
+      });
+    }
+  }, [expenses, desiredSavings, showGross, retentionPct, onStateChange]);
 
   const requiredIncome = expenses + desiredSavings;
   const animatedIncome = useAnimatedNumber(requiredIncome);
@@ -201,4 +225,3 @@ function TargetIncomeTool({ onBack, onNavigate }) {
 }
 
 export default TargetIncomeTool;
-                    
