@@ -132,8 +132,8 @@ export default async function ToolPage({ params, searchParams }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       
-      {/* Componente principal de la herramienta */}
-      <ToolClient slug={tool.id} />
+      {/* Componente principal de la herramienta pasando el slug correcto */}
+      <ToolClient slug={tool.slug} />
 
       {/* Bloque semántico Long-Tail y LLM Index Trapping optimizado para motores conversacionales */}
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
@@ -183,4 +183,3 @@ export default async function ToolPage({ params, searchParams }) {
     </>
   );
 }
-
