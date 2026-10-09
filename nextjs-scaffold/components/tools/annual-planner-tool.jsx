@@ -107,7 +107,6 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
 }
 
 function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
-  // Inicialización inteligente con soporte de initialParams para el bucle viral
   const [goal, setGoal] = useState(() => {
     const p = initialParams?.goal;
     return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 3600;
@@ -131,7 +130,6 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
     return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 0;
   });
 
-  // Sincronización automática con la URL mediante onStateChange
   useEffect(() => {
     if (typeof onStateChange === "function") {
       onStateChange({
@@ -387,4 +385,4 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default AnnualPlannerTool;
-                
+      
