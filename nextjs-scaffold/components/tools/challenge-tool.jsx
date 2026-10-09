@@ -15,31 +15,17 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
 const FAQS = [
-  {
-    q: "¿Cómo funciona el reto de ahorro de 52 semanas?",
-    a: "Cada semana ahorras una cantidad progresiva: la semana 1 ahorras el importe base, la semana 2 el doble, y así sucesivamente. Al final del reto habrás acumulado el total de todas las semanas.",
-  },
-  {
-    q: "¿Qué pasa si me salto una semana del reto?",
-    a: "No pasa nada: puedes marcarla como pendiente y recuperarla más adelante, combinando dos semanas en una si lo necesitas, sin perder el objetivo final del reto.",
-  },
-  {
-    q: "¿Es mejor el reto de 26 o el de 52 semanas?",
-    a: "El de 26 semanas es más intenso pero más corto; el de 52 semanas reparte el esfuerzo en todo el año con cuotas más bajas. Depende de cuánto margen mensual tengas disponible.",
-  },
-  {
-    q: "¿Qué es el modo aleatorio del reto?",
-    a: "En vez de ahorrar cantidades crecientes en orden predecible, el modo aleatorio baraja qué semana corresponde a cada importe, para que no sepas de antemano cuándo llega la semana más cara.",
-  },
+  { q: "¿Cómo funciona el reto de ahorro de 52 semanas?", a: "Cada semana ahorras una cantidad progresiva: la semana 1 ahorras el importe base, la semana 2 el doble, y así sucesivamente. Al final del reto habrás acumulado el total de todas las semanas." },
+  { q: "¿Qué pasa si me salto una semana del reto?", a: "No pasa nada: puedes marcarla como pendiente y recuperarla más adelante, combinando dos semanas en una si lo necesitas, sin perder el objetivo final del reto." },
+  { q: "¿Es mejor el reto de 26 o el de 52 semanas?", a: "El de 26 semanas es más intenso pero más corto; el de 52 semanas reparte el esfuerzo en todo el año con cuotas más bajas. Depende de cuánto margen mensual tengas disponible." },
+  { q: "¿Qué es el modo aleatorio del reto?", a: "En vez de ahorrar cantidades crecientes en orden predecible, el modo aleatorio baraja qué semana corresponde a cada importe, para que no sepas de antemano cuándo llega la semana más cara." },
 ];
 
-// Genera un orden barajado y estable (mismo resultado mientras no cambie la semilla)
 function shuffleWithSeed(array, seed) {
   const arr = [...array];
   let s = seed;
@@ -53,30 +39,21 @@ function shuffleWithSeed(array, seed) {
 
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-
   useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
+    if (value !== parseFloat(textVal.replace(",", "."))) setTextVal(String(value ?? 0));
   }, [value]);
-
   const handleInputChange = (e) => {
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) {
-      setValue(parsed);
-    }
+    if (!isNaN(parsed)) setValue(parsed);
   };
-
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
     setTextVal(String(val));
   };
-
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
@@ -89,21 +66,11 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             onChange={handleInputChange}
             onBlur={() => {
               const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) {
-                setTextVal(String(value ?? 0));
-              } else {
-                setValue(parsed);
-                setTextVal(String(parsed));
-              }
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
             }}
             className="bg-transparent text-right font-semibold"
-            style={{
-              ...fontBody,
-              color: accentColor,
-              fontSize: "0.9rem",
-              width: "85px",
-              outline: "none",
-            }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
@@ -123,13 +90,50 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   );
 }
 
-function ChallengeTool({ onBack, onNavigate }) {
-  const [weeks, setWeeks] = useSharedState("challenge_weeks", 26);
-  const [baseAmount, setBaseAmount] = useSharedState("challenge_baseAmount", 5);
-  const [doneArray, setDoneArray] = usePersistentState("challenge_done", []);
-  const [shuffleMode, setShuffleMode] = usePersistentState("challenge_shuffleMode", false);
-  const [shuffleSeed] = usePersistentState("challenge_shuffleSeed", Math.floor(Math.random() * 100000));
-  const [startDate, setStartDate] = usePersistentState("challenge_startDate", null);
+function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [weeks, setWeeks] = useState(() => {
+    const p = initialParams?.weeks;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 26;
+  });
+
+  const [baseAmount, setBaseAmount] = useState(() => {
+    const p = initialParams?.baseAmount;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 5;
+  });
+
+  const [doneArray, setDoneArray] = useState(() => {
+    const p = initialParams?.done;
+    if (typeof p === "string" && p.trim() !== "") {
+      return p.split(",").map(Number).filter((n) => !isNaN(n));
+    }
+    return [];
+  });
+
+  const [shuffleMode, setShuffleMode] = useState(() => {
+    return initialParams?.shuffleMode === "true";
+  });
+
+  const [shuffleSeed] = useState(() => {
+    const p = initialParams?.shuffleSeed;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : Math.floor(Math.random() * 100000);
+  });
+
+  const [startDate, setStartDate] = useState(() => {
+    return initialParams?.startDate || null;
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        weeks,
+        baseAmount,
+        done: doneArray.length > 0 ? doneArray.join(",") : null,
+        shuffleMode: shuffleMode ? "true" : null,
+        shuffleSeed,
+        startDate,
+      });
+    }
+  }, [weeks, baseAmount, doneArray, shuffleMode, shuffleSeed, startDate, onStateChange]);
 
   const done = useMemo(() => new Set(doneArray), [doneArray]);
 
@@ -175,7 +179,6 @@ function ChallengeTool({ onBack, onNavigate }) {
     }));
   }, [weeks, orderedAmounts]);
 
-  // Seguimiento por fecha real
   const weeksElapsed = startDate
     ? Math.min(Math.max(Math.floor((Date.now() - new Date(startDate).getTime()) / (7 * 24 * 60 * 60 * 1000)), 0), weeks)
     : 0;
@@ -186,8 +189,7 @@ function ChallengeTool({ onBack, onNavigate }) {
   };
 
   const pageTitle = "Reto de ahorro de 26 o 52 semanas gratis | MetaBox";
-  const pageDescription =
-    "Sigue un reto de ahorro progresivo semana a semana, con modo aleatorio opcional, seguimiento real por fecha y 26 o 52 semanas a elegir. Gratis y sin registro.";
+  const pageDescription = "Sigue un reto de ahorro progresivo semana a semana, con modo aleatorio opcional, seguimiento real por fecha y 26 o 52 semanas a elegir. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/challenge";
 
   return (
@@ -195,12 +197,8 @@ function ChallengeTool({ onBack, onNavigate }) {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="reto de ahorro 52 semanas, reto de ahorro 26 semanas, cómo hacer el reto de las 52 semanas, calculadora reto de ahorro, reto de ahorro aleatorio"
-        />
+        <meta name="keywords" content="reto de ahorro 52 semanas, reto de ahorro 26 semanas, cómo hacer el reto de las 52 semanas, calculadora reto de ahorro, reto de ahorro aleatorio" />
         <link rel="canonical" href={pageUrl} />
-
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
@@ -208,12 +206,10 @@ function ChallengeTool({ onBack, onNavigate }) {
         <meta property="og:image" content="https://metabox-web.vercel.app/og/challenge.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content="https://metabox-web.vercel.app/og/challenge.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -261,13 +257,7 @@ function ChallengeTool({ onBack, onNavigate }) {
       </Card>
 
       {isChallengeCompleted && (
-        <div style={{
-          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
-          border: `1px solid ${T.lime}`,
-          borderRadius: "0.8rem",
-          padding: "1rem",
-          textAlign: "center",
-        }}>
+        <div style={{ background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`, border: `1px solid ${T.lime}`, borderRadius: "0.8rem", padding: "1rem", textAlign: "center" }}>
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
             🎉 ¡Reto de ahorro completado al 100%!
           </div>
@@ -306,10 +296,7 @@ function ChallengeTool({ onBack, onNavigate }) {
                 </linearGradient>
               </defs>
               <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} interval={weeks > 26 ? 6 : 3} />
-              <Tooltip 
-                formatter={(value) => [`${value} €`, "Ahorro semanal"]}
-                contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
-              />
+              <Tooltip formatter={(value) => [`${value} €`, "Ahorro semanal"]} contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
               <Area type="monotone" dataKey="importe" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
             </AreaChart>
           </ResponsiveContainer>
@@ -349,16 +336,12 @@ function ChallengeTool({ onBack, onNavigate }) {
                 onClick={() => toggleWeek(w)}
                 title={`Semana ${w}: ${fmtEUR(weekAmount(w))}`}
                 style={{
-                  aspectRatio: "1",
-                  borderRadius: "0.6rem",
+                  aspectRatio: "1", borderRadius: "0.6rem",
                   border: `1px solid ${active ? T.lime : T.border}`,
                   background: active ? T.limeSoft : T.surfaceAlt,
                   color: active ? T.lime : T.textMuted,
-                  ...fontBody,
-                  fontSize: "0.72rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
+                  ...fontBody, fontSize: "0.72rem", fontWeight: 600,
+                  cursor: "pointer", transition: "all 0.15s ease",
                 }}
               >
                 {w}
@@ -369,35 +352,19 @@ function ChallengeTool({ onBack, onNavigate }) {
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["savings", "roundup"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <CopySummaryButton
-          getText={() =>
-            `Reto de ahorro: ${weeks} semanas, incremento base ${fmtEUR(baseAmount)} — objetivo total ${fmtEUR(totalGoal)}, llevas ahorrado ${fmtEUR(savedSoFar)}.`
-          }
-        />
-        <ExportCSVButton
-          filename="reto-de-ahorro"
-          getRows={() =>
-            Array.from({ length: weeks }, (_, i) => i + 1).map((w) => ({
-              semana: w,
-              importe: weekAmount(w).toFixed(2),
-              completada: done.has(w) ? "sí" : "no",
-            }))
-          }
-        />
+        <CopySummaryButton getText={() => `Reto de ahorro: ${weeks} semanas, incremento base ${fmtEUR(baseAmount)} — objetivo total ${fmtEUR(totalGoal)}, llevas ahorrado ${fmtEUR(savedSoFar)}.`} />
+        <ExportCSVButton filename="reto-de-ahorro" getRows={() => Array.from({ length: weeks }, (_, i) => i + 1).map((w) => ({ semana: w, importe: weekAmount(w).toFixed(2), completada: done.has(w) ? "sí" : "no" }))} />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
-        <p>
-          El reto de ahorro progresivo (26 o 52 semanas) es una forma popular de ahorrar sin apenas notarlo: empiezas con cantidades pequeñas y vas subiendo semana a semana. Marca aquí las semanas que completes, activa el modo aleatorio si prefieres no saber de antemano cuándo toca la semana más cara, y consulta si vas al día según la fecha en que empezaste el reto.
-        </p>
+        <p>El reto de ahorro progresivo (26 o 52 semanas) es una forma popular de ahorrar sin apenas notarlo: empiezas con cantidades pequeñas y vas subiendo semana a semana. Marca aquí las semanas que completes, activa el modo aleatorio si prefieres no saber de antemano cuándo toca la semana más cara, y consulta si vas al día según la fecha en que empezaste el reto.</p>
       </div>
     </div>
   );
 }
 
 export default ChallengeTool;
-        
+                     
