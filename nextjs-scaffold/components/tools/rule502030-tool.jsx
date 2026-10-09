@@ -5,7 +5,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -165,20 +164,61 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   );
 }
 
-function Rule502030Tool({ onBack, onNavigate }) {
-  const [income, setIncome] = useSharedState("rule502030_income", 1800);
-  const [needsPct, setNeedsPct] = usePersistentState("rule502030_needsPct", 50);
-  const [wantsPct, setWantsPct] = usePersistentState("rule502030_wantsPct", 30);
+function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [income, setIncome] = useState(() => {
+    const p = initialParams?.income;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800;
+  });
+
+  const [needsPct, setNeedsPct] = useState(() => {
+    const p = initialParams?.needsPct;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 50;
+  });
+
+  const [wantsPct, setWantsPct] = useState(() => {
+    const p = initialParams?.wantsPct;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 30;
+  });
+
   const savingsPct = Math.max(100 - needsPct - wantsPct, 0);
 
   const recNeeds = income * (needsPct / 100);
   const recWants = income * (wantsPct / 100);
   const recSavings = income * (savingsPct / 100);
 
-  const [needs, setNeeds] = useSharedState("rule502030_needs", recNeeds);
-  const [wants, setWants] = useSharedState("rule502030_wants", recWants);
-  const [savings, setSavings] = useSharedState("rule502030_savings", recSavings);
-  const [donutView, setDonutView] = usePersistentState("rule502030_donutView", "actual");
+  const [needs, setNeeds] = useState(() => {
+    const p = initialParams?.needs;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800 * (50 / 100);
+  });
+
+  const [wants, setWants] = useState(() => {
+    const p = initialParams?.wants;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800 * (30 / 100);
+  });
+
+  const [savings, setSavings] = useState(() => {
+    const p = initialParams?.savings;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800 * (20 / 100);
+  });
+
+  const [donutView, setDonutView] = useState(() => {
+    const p = initialParams?.donutView;
+    return typeof p === "string" && p.trim() !== "" ? p : "actual";
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        income,
+        needsPct: needsPct !== 50 ? needsPct : null,
+        wantsPct: wantsPct !== 30 ? wantsPct : null,
+        needs,
+        wants,
+        savings,
+        donutView: donutView !== "actual" ? donutView : null,
+      });
+    }
+  }, [income, needsPct, wantsPct, needs, wants, savings, donutView, onStateChange]);
 
   const prevIncome = useRef(income);
   useEffect(() => {
@@ -435,4 +475,4 @@ function Rule502030Tool({ onBack, onNavigate }) {
 }
 
 export default Rule502030Tool;
-                               
+        
