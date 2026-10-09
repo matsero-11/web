@@ -6,7 +6,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR, useAnimatedNumber } from "@/lib/hooks";
 import { Card, AdviceBlock, ProgressBar } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -107,11 +106,42 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   );
 }
 
-function AnnualPlannerTool({ onBack, onNavigate }) {
-  const [goal, setGoal] = useSharedState("annual_goal", 3600);
-  const [lowMonthsArray, setLowMonthsArray] = usePersistentState("annual_lowMonths", []);
-  const [reductionPct, setReductionPct] = useSharedState("annual_reductionPct", 50);
-  const [currentSaved, setCurrentSaved] = useSharedState("annual_currentSaved", 0);
+function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  // Inicialización inteligente con soporte de initialParams para el bucle viral
+  const [goal, setGoal] = useState(() => {
+    const p = initialParams?.goal;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 3600;
+  });
+
+  const [lowMonthsArray, setLowMonthsArray] = useState(() => {
+    const p = initialParams?.lowMonths;
+    if (p) {
+      return p.split(",").map(Number).filter((n) => !isNaN(n));
+    }
+    return [];
+  });
+
+  const [reductionPct, setReductionPct] = useState(() => {
+    const p = initialParams?.reductionPct;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 50;
+  });
+
+  const [currentSaved, setCurrentSaved] = useState(() => {
+    const p = initialParams?.currentSaved;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 0;
+  });
+
+  // Sincronización automática con la URL mediante onStateChange
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        goal,
+        reductionPct,
+        currentSaved,
+        lowMonths: lowMonthsArray.length > 0 ? lowMonthsArray.join(",") : null,
+      });
+    }
+  }, [goal, reductionPct, currentSaved, lowMonthsArray, onStateChange]);
 
   const lowMonths = useMemo(() => new Set(lowMonthsArray), [lowMonthsArray]);
   const realMonth = new Date().getMonth();
@@ -357,4 +387,4 @@ function AnnualPlannerTool({ onBack, onNavigate }) {
 }
 
 export default AnnualPlannerTool;
-            
+                
