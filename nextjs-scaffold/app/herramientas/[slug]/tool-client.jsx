@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
+import { useCallback, useMemo } from "react";
 
 function ToolLoading() {
   return (
@@ -95,10 +96,41 @@ const TOOL_COMPONENTS = {
 
 export default function ToolClient({ slug }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Convertir los searchParams actuales en un objeto limpio de estado inicial para la herramienta
+  const initialParams = useMemo(() => {
+    const params = {};
+    if (searchParams) {
+      searchParams.forEach((value, key) => {
+        params[key] = value;
+      });
+    }
+    return params;
+  }, [searchParams]);
+
+  // Monstruo 2: Sincronización de estado con la URL de forma instantánea y fluida (Bucle Viral)
+  const handleStateChange = useCallback((newState) => {
+    if (!newState || typeof newState !== "object") return;
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    
+    Object.entries(newState).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    const queryStr = params.toString();
+    const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
+    window.history.replaceState(null, "", newUrl);
+  }, [pathname, searchParams]);
+
   const Tool = TOOL_COMPONENTS[slug];
 
   const handleGlobalClick = (e) => {
-    // Busca si se hizo clic en un enlace o tarjeta con identificador de herramienta
     const el = e.target.closest("a, [data-tool-id], [data-slug], [data-id]");
     if (!el) return;
 
@@ -135,6 +167,8 @@ export default function ToolClient({ slug }) {
     <div onClickCapture={handleGlobalClick}>
       <Tool
         key={slug}
+        initialParams={initialParams}
+        onStateChange={handleStateChange}
         onBack={() => router.back()}
         onNavigate={handleNavigate}
         onSelect={handleNavigate}
@@ -142,5 +176,5 @@ export default function ToolClient({ slug }) {
       />
     </div>
   );
-  }
+}
 
