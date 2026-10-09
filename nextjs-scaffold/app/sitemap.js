@@ -9,12 +9,12 @@ export default async function sitemap() {
   const safeTools = Array.isArray(ALL_TOOLS) ? ALL_TOOLS : [];
 
   const toolUrls = safeTools
-    .filter(tool => tool && typeof tool.id === "string" && tool.id.trim().length > 0)
+    .filter(tool => tool && typeof tool.slug === "string" && tool.slug.trim().length > 0)
     .map(tool => ({
-      url: `${BASE_URL}/herramientas/${encodeURIComponent(tool.id)}`,
+      url: `${BASE_URL}/herramientas/${encodeURIComponent(tool.slug)}`,
       lastModified: LAST_MODIFIED,
       changeFrequency: "weekly",
-      priority: 0.8,
+      priority: tool.priority || 0.8,
     }));
 
   return [
