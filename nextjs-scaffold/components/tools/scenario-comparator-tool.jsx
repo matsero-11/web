@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -8,7 +8,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -28,11 +27,36 @@ const FAQS = [
   },
 ];
 
-function ScenarioComparatorTool({ onBack, onNavigate }) {
-  const [current, setCurrent] = useSharedState("comparator_current", 150);
-  const [alternative, setAlternative] = useSharedState("comparator_alternative", 220);
-  const [showThird, setShowThird] = useState(false);
-  const [thirdScenario, setThirdScenario] = useSharedState("comparator_third", 300);
+function ScenarioComparatorTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [current, setCurrent] = useState(() => {
+    const p = initialParams?.current;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 150;
+  });
+
+  const [alternative, setAlternative] = useState(() => {
+    const p = initialParams?.alternative;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 220;
+  });
+
+  const [showThird, setShowThird] = useState(() => {
+    return initialParams?.showThird === "true" || initialParams?.thirdScenario !== undefined;
+  });
+
+  const [thirdScenario, setThirdScenario] = useState(() => {
+    const p = initialParams?.thirdScenario;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 300;
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        current,
+        alternative,
+        showThird: showThird ? "true" : null,
+        thirdScenario: showThird ? thirdScenario : null,
+      });
+    }
+  }, [current, alternative, showThird, thirdScenario, onStateChange]);
 
   const monthlyDiff = alternative - current;
   const annualDiff = monthlyDiff * 12;
@@ -197,3 +221,4 @@ function ScenarioComparatorTool({ onBack, onNavigate }) {
 }
 
 export default ScenarioComparatorTool;
+            
