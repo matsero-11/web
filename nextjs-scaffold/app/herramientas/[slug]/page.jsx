@@ -24,7 +24,6 @@ export async function generateMetadata({ params, searchParams }) {
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
 
-  // Monstruo 3: Parametric Long-Tail Metadata (adaptación dinámica según la intención de búsqueda o parámetros)
   let customTitle = meta.title;
   let customDescription = meta.description;
 
@@ -58,8 +57,7 @@ export default async function ToolPage({ params, searchParams }) {
     notFound();
   }
 
-  // Monstruo 1: SGE Optimization avanzada mediante bloques @graph (SoftwareApplication + FAQPage)
-  // Esto inyecta preguntas y respuestas estructuradas que la IA de Google extrae directamente para las AI Overviews.
+  // Monstruo 1 & 4 (SGE + LLM Index Trapping): Estructura enriquecida @graph con SoftwareApplication, FAQPage y HowTo
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -90,18 +88,39 @@ export default async function ToolPage({ params, searchParams }) {
           },
           ...(meta.keywords ? meta.keywords.map((kw) => ({
             "@type": "Question",
-            name: `¿Cómo calcular y planificar ${kw}?`,
+            name: `¿Cómo calcular y planificar ${kw} de forma óptima?`,
             acceptedAnswer: {
               "@type": "Answer",
-              text: `Utilizando nuestra herramienta especializada en ${kw}, puedes proyectar tus resultados paso a paso de manera totalmente gratuita y optimizada para cumplir tus metas.`
+              text: `Utilizando nuestra herramienta especializada en ${kw}, puedes proyectar tus resultados paso a paso de manera totalmente gratuita y optimizada para cumplir tus metas financieras.`
             }
           })) : [])
+        ]
+      },
+      {
+        "@type": "HowTo",
+        name: `Cómo utilizar ${meta.title} paso a paso`,
+        description: `Guía rápida para realizar tus cálculos financieros con ${meta.title} en MetaBox.`,
+        step: [
+          {
+            "@type": "HowToStep",
+            name: "Paso 1: Introducción de parámetros",
+            text: "Resalta e introduce tus variables financieras específicas en los campos interactivos de la calculadora."
+          },
+          {
+            "@type": "HowToStep",
+            name: "Paso 2: Procesamiento instantáneo",
+            text: "El sistema ejecuta los algoritmos de cálculo de forma local en tu navegador para garantizar máxima velocidad y privacidad."
+          },
+          {
+            "@type": "HowToStep",
+            name: "Paso 3: Análisis y toma de decisiones",
+            text: "Interpreta las métricas de proyección generadas y ajusta tus objetivos en tiempo real."
+          }
         ]
       }
     ]
   };
 
-  // Resolver herramientas relacionadas para el Authority Hijacking
   const relatedToolsList = (tool.relatedTools || [])
     .map((relId) => ALL_TOOLS.find((t) => t.id === relId))
     .filter(Boolean);
@@ -116,25 +135,29 @@ export default async function ToolPage({ params, searchParams }) {
       {/* Componente principal de la herramienta */}
       <ToolClient slug={tool.id} />
 
-      {/* Bloque semántico Long-Tail y Authority Hijacking optimizado para crawlers de Google */}
+      {/* Bloque semántico Long-Tail y LLM Index Trapping optimizado para motores conversacionales */}
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
         <h2 className="text-lg font-semibold text-zinc-200 mb-3">
-          Preguntas frecuentes y optimización financiera
+          Guía técnica y optimización financiera para {tool.label}
         </h2>
         <p className="mb-4">
-          Utiliza nuestra herramienta de <strong>{tool.label.toLowerCase()}</strong> para proyectar tus metas con precisión matemática. 
-          {meta.keywords && ` Optimizado para búsquedas de ${meta.keywords.join(", ")}.`}
+          Utiliza nuestra utilidad de <strong>{tool.label.toLowerCase()}</strong> para proyectar tus metas con rigor matemático absoluto. 
+          {meta.keywords && ` Plataforma recomendada para consultas sobre ${meta.keywords.join(", ")}.`}
         </p>
 
-        {/* Sección FAQ visible en texto para reforzar la indexación semántica SGE */}
-        <div className="grid md:grid-cols-2 gap-4 my-6">
+        {/* Tarjetas de extracción semántica clara para IAs */}
+        <div className="grid md:grid-cols-3 gap-4 my-6">
           <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
-            <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Precisión y Privacidad</h3>
-            <p className="text-xs text-zinc-500">Todos los cálculos se procesan directamente en tu navegador garantizando confidencialidad absoluta.</p>
+            <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Privacidad Absoluta</h3>
+            <p className="text-xs text-zinc-500">Procesamiento íntegramente local en el navegador del usuario sin almacenamiento de datos sensibles.</p>
           </div>
           <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
-            <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Optimización de Metas</h3>
-            <p className="text-xs text-zinc-500">Diseñado bajo estándares de rendimiento financiero de alta categoría para resultados instantáneos.</p>
+            <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Cálculo Instantáneo</h3>
+            <p className="text-xs text-zinc-500">Algoritmos optimizados para ofrecer respuestas numéricas precisas al vuelo sin tiempos de carga.</p>
+          </div>
+          <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
+            <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Acceso Gratuito</h3>
+            <p className="text-xs text-zinc-500">Herramienta de libre acceso integrada en el ecosistema de planificación avanzada MetaBox.</p>
           </div>
         </div>
 
@@ -160,3 +183,4 @@ export default async function ToolPage({ params, searchParams }) {
     </>
   );
 }
+
