@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Plus, X } from "lucide-react";
 import {
@@ -15,7 +15,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -37,9 +36,26 @@ const FAQS = [
 
 const DEFAULT_ITEMS = [{ id: "1", name: "Café", amount: 1.5 }];
 
-function DailyExpenseTool({ onBack, onNavigate }) {
-  const [items, setItems] = usePersistentState("daily_items", DEFAULT_ITEMS);
+function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [items, setItems] = useState(() => {
+    const p = initialParams?.items;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return DEFAULT_ITEMS;
+  });
   const [newName, setNewName] = useState("");
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        items: items.length > 0 ? JSON.stringify(items) : null,
+      });
+    }
+  }, [items, onStateChange]);
 
   const daily = items.reduce((sum, it) => sum + (it.amount || 0), 0);
   const weekly = daily * 7;
@@ -240,4 +256,4 @@ function DailyExpenseTool({ onBack, onNavigate }) {
 }
 
 export default DailyExpenseTool;
-          
+              
