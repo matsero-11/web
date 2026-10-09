@@ -9,7 +9,6 @@ import { T, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { useSharedState, usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import GoalProjection from "@/components/engines/GoalProjection";
@@ -37,16 +36,56 @@ const ESSENTIAL_CATEGORIES = [
   { id: "transporte", label: "Transporte", icon: Car, default: 100 },
 ];
 
-function EmergencyFundTool({ onBack, onNavigate }) {
-  const [monthsTarget, setMonthsTarget] = useSharedState("emergency_monthsTarget", 6);
-  const [current, setCurrent] = useSharedState("emergency_current", 800);
-  const [monthly, setMonthly] = useSharedState("emergency_monthly", 120);
-  const [useBreakdown, setUseBreakdown] = usePersistentState("emergency_useBreakdown", false);
-  const [simpleExpenses, setSimpleExpenses] = useSharedState("emergency_expenses", 1100);
-  const [breakdown, setBreakdown] = usePersistentState(
-    "emergency_breakdown",
-    Object.fromEntries(ESSENTIAL_CATEGORIES.map((c) => [c.id, c.default]))
-  );
+function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [monthsTarget, setMonthsTarget] = useState(() => {
+    const p = initialParams?.monthsTarget;
+    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 6;
+  });
+
+  const [current, setCurrent] = useState(() => {
+    const p = initialParams?.current;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 800;
+  });
+
+  const [monthly, setMonthly] = useState(() => {
+    const p = initialParams?.monthly;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 120;
+  });
+
+  const [useBreakdown, setUseBreakdown] = useState(() => {
+    return initialParams?.useBreakdown === "true";
+  });
+
+  const [simpleExpenses, setSimpleExpenses] = useState(() => {
+    const p = initialParams?.simpleExpenses;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1100;
+  });
+
+  const [breakdown, setBreakdown] = useState(() => {
+    const p = initialParams?.breakdown;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (parsed && typeof parsed === "object") {
+          return { ...Object.fromEntries(ESSENTIAL_CATEGORIES.map((c) => [c.id, c.default])), ...parsed };
+        }
+      } catch (e) {}
+    }
+    return Object.fromEntries(ESSENTIAL_CATEGORIES.map((c) => [c.id, c.default]));
+  });
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        monthsTarget,
+        current,
+        monthly,
+        useBreakdown: useBreakdown ? "true" : null,
+        simpleExpenses: !useBreakdown ? simpleExpenses : null,
+        breakdown: useBreakdown ? JSON.stringify(breakdown) : null,
+      });
+    }
+  }, [monthsTarget, current, monthly, useBreakdown, simpleExpenses, breakdown, onStateChange]);
 
   const breakdownTotal = useMemo(
     () => ESSENTIAL_CATEGORIES.reduce((sum, c) => sum + (breakdown[c.id] || 0), 0),
@@ -215,4 +254,4 @@ function EmergencyFundTool({ onBack, onNavigate }) {
 }
 
 export default EmergencyFundTool;
-      
+        
