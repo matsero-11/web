@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, Suspense } from "react";
 
 function ToolLoading() {
   return (
@@ -94,12 +94,12 @@ const TOOL_COMPONENTS = {
   targetincome: dynamic(() => import("@/components/tools/target-income-tool"), { loading: () => <ToolLoading />, ssr: false }),
 };
 
-export default function ToolClient({ slug }) {
+// Componente interno que consume useSearchParams envuelto en Suspense
+function ToolClientContent({ slug }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Convertir los searchParams actuales en un objeto limpio de estado inicial para la herramienta
   const initialParams = useMemo(() => {
     const params = {};
     if (searchParams) {
@@ -110,7 +110,6 @@ export default function ToolClient({ slug }) {
     return params;
   }, [searchParams]);
 
-  // Monstruo 2: Sincronización de estado con la URL de forma instantánea y fluida (Bucle Viral)
   const handleStateChange = useCallback((newState) => {
     if (!newState || typeof newState !== "object") return;
     const params = new URLSearchParams(searchParams?.toString() || "");
@@ -129,6 +128,35 @@ export default function ToolClient({ slug }) {
   }, [pathname, searchParams]);
 
   const Tool = TOOL_COMPONENTS[slug];
+
+  if (!Tool) {
+    return <ToolNotFound onBack={() => router.push("/")} />;
+  }
+
+  const handleNavigate = (val) => {
+    const targetId = typeof val === "object" && val !== null ? (val.id || val.slug || val.key) : val;
+    const cleanId = typeof targetId === "string" ? targetId.replace("/herramientas/", "").trim() : null;
+    if (cleanId && TOOL_COMPONENTS[cleanId]) {
+      router.push(`/herramientas/${cleanId}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  return (
+    <Tool
+      key={slug}
+      initialParams={initialParams}
+      onStateChange={handleStateChange}
+      onBack={() => router.back()}
+      onNavigate={handleNavigate}
+      onSelect={handleNavigate}
+      onToolClick={handleNavigate}
+    />
+  );
+}
+
+export default function ToolClient({ slug }) {
+  const router = useRouter();
 
   const handleGlobalClick = (e) => {
     const el = e.target.closest("a, [data-tool-id], [data-slug], [data-id]");
@@ -150,30 +178,11 @@ export default function ToolClient({ slug }) {
     }
   };
 
-  const handleNavigate = (val) => {
-    const targetId = typeof val === "object" && val !== null ? (val.id || val.slug || val.key) : val;
-    const cleanId = typeof targetId === "string" ? targetId.replace("/herramientas/", "").trim() : null;
-    if (cleanId && TOOL_COMPONENTS[cleanId]) {
-      router.push(`/herramientas/${cleanId}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  if (!Tool) {
-    return <ToolNotFound onBack={() => router.push("/")} />;
-  }
-
   return (
     <div onClickCapture={handleGlobalClick}>
-      <Tool
-        key={slug}
-        initialParams={initialParams}
-        onStateChange={handleStateChange}
-        onBack={() => router.back()}
-        onNavigate={handleNavigate}
-        onSelect={handleNavigate}
-        onToolClick={handleNavigate}
-      />
+      <Suspense fallback={<ToolLoading />}>
+        <ToolClientContent slug={slug} />
+      </Suspense>
     </div>
   );
 }
