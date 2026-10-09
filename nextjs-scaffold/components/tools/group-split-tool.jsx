@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Plus, X, ArrowRight,
@@ -8,7 +8,6 @@ import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
@@ -24,12 +23,29 @@ const FAQS = [
   },
 ];
 
-function GroupSplitTool({ onBack, onNavigate }) {
-  const [people, setPeople] = usePersistentState("groupsplit_peopleList", [
-    { id: "1", name: "Yo", paid: 120 },
-    { id: "2", name: "Persona 2", paid: 0 },
-  ]);
+function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [people, setPeople] = useState(() => {
+    const p = initialParams?.people;
+    if (p) {
+      try {
+        const parsed = JSON.parse(p);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return [
+      { id: "1", name: "Yo", paid: 120 },
+      { id: "2", name: "Persona 2", paid: 0 },
+    ];
+  });
   const [newName, setNewName] = useState("");
+
+  useEffect(() => {
+    if (typeof onStateChange === "function") {
+      onStateChange({
+        people: people.length > 0 ? JSON.stringify(people) : null,
+      });
+    }
+  }, [people, onStateChange]);
 
   const total = people.reduce((sum, p) => sum + (p.paid || 0), 0);
   const share = people.length > 0 ? total / people.length : 0;
@@ -253,4 +269,4 @@ function GroupSplitTool({ onBack, onNavigate }) {
 }
 
 export default GroupSplitTool;
-
+      
