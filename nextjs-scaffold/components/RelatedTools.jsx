@@ -57,12 +57,9 @@ function ToolRecommendationCard({
   const Icon = style.icon;
 
   const handleClick = () => {
-    const rawId = typeof tool.id === "object" && tool.id !== null ? (tool.id.id || tool.id.slug) : tool.id;
-    if (!rawId) return;
-
-    // Buscamos siempre el slug largo en ALL_TOOLS para garantizar que coincide con la ruta dinámica
-    const foundTool = ALL_TOOLS.find((t) => t.id === rawId || t.slug === rawId);
-    const targetSlug = foundTool ? foundTool.slug : rawId;
+    // Como el id y el slug están unificados de forma directa, obtenemos el slug universal sin conversiones
+    const targetSlug = typeof tool.id === "string" ? tool.id : tool.slug;
+    if (!targetSlug) return;
 
     if (typeof onNavigate === "function") {
       onNavigate(targetSlug);
@@ -457,4 +454,3 @@ function RelatedTools({
 }
 
 export default RelatedTools;
-    
