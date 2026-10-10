@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 import { SEO_METADATA } from "@/lib/seo-metadata";
 import ToolClient from "./tool-client";
+import AffiliateSlot from "@/components/affiliate-slot";
 import Link from "next/link";
 
 export const dynamicParams = false;
@@ -137,7 +138,11 @@ export default async function ToolPage({ params, searchParams }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       
+      {/* Componente principal de la herramienta */}
       <ToolClient slug={tool.slug} />
+
+      {/* Ranura modular de afiliación (se mantiene oculta si no hay oferta activa) */}
+      <AffiliateSlot offer={meta.affiliateOffer} />
 
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
         <h2 className="text-lg font-semibold text-zinc-200 mb-3">
@@ -205,5 +210,5 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-}
-
+              }
+            
