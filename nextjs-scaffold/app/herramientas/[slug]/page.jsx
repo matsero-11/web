@@ -5,7 +5,8 @@ import ToolClient from "./tool-client";
 import AffiliateSlot from "@/components/affiliate-slot";
 import Link from "next/link";
 
-export const dynamicParams = false;
+// Se permite la resolución dinámica de parámetros para evitar errores 404 estrictos en renderizado
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return ALL_TOOLS.map((tool) => ({
@@ -210,4 +211,5 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-}
+            }
+      
