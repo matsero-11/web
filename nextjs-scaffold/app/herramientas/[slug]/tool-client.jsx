@@ -6,6 +6,7 @@ import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { ALL_TOOLS } from "@/lib/tools-registry";
+import ReportExporter from "@/components/ReportExporter";
 
 // Componente de Captura Inteligente y Cero Errores (100% Nativo en Cliente)
 function QuickSmartCapture({ onValueExtracted }) {
@@ -213,6 +214,12 @@ function ToolClientContent({ slug }) {
   const searchParams = useSearchParams();
   const [extractedValue, setExtractedValue] = useState(null);
 
+  const activeToolLabel = useMemo(() => {
+    if (!slug) return "Simulación Financiera";
+    const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
+    return found ? found.label : "Simulación Financiera";
+  }, [slug]);
+
   const resolvedToolId = useMemo(() => {
     if (!slug) return null;
     if (TOOL_COMPONENTS[slug]) return slug;
@@ -334,6 +341,9 @@ function ToolClientContent({ slug }) {
         onSelect={handleNavigate}
         onToolClick={handleNavigate}
       />
+
+      {/* 3. Generador de Informe Prémium (Disponible automáticamente para todas las herramientas) */}
+      <ReportExporter toolName={activeToolLabel} />
     </div>
   );
 }
@@ -377,5 +387,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-                    }
-          
+        }
+      
