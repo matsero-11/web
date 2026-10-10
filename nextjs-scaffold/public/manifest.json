@@ -1,16 +1,19 @@
 {
   "id": "/",
-  "name": "MetaBox — Herramientas de ahorro y planificación",
+  "name": "MetaBox — Herramientas Financieras Privadas",
   "short_name": "MetaBox",
-  "description": "Herramientas interactivas gratuitas de ahorro, presupuesto y planificación económica personal.",
+  "description": "Suite de herramientas interactivas de ahorro, presupuestos y finanzas personales 100% privadas en tu navegador.",
   "lang": "es",
   "dir": "ltr",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#080F11",
   "theme_color": "#080F11",
   "orientation": "portrait-primary",
+  "categories": ["finance", "utilities", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon-96x96.png",
@@ -22,7 +25,7 @@
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/web-app-manifest-512x512.png",
@@ -30,5 +33,15 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Reto de Ahorro",
+      "short_name": "Ahorro",
+      "description": "Accede directamente a tus retos de ahorro",
+      "url": "/?tool=reto-ahorro",
+      "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    }
   ]
 }
+
