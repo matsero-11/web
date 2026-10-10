@@ -16,7 +16,6 @@ export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   
-  // Búsqueda directa y unificada por slug
   const tool = ALL_TOOLS.find((item) => item.slug === slug);
   const meta = SEO_METADATA[tool?.id];
 
@@ -59,11 +58,10 @@ export default async function ToolPage({ params, searchParams }) {
     notFound();
   }
 
-  // Selección dinámica de la fuente oficial en función de la categoría/herramienta
-  const officialSourceUrl = meta.officialSource || "https://www.bde.es/"; // Banco de España por defecto
+  // Fuentes oficiales y de autoridad configuradas por defecto
+  const officialSourceUrl = meta.officialSource || "https://www.bde.es/";
   const officialSourceName = meta.officialSourceName || "Banco de España (BdE)";
 
-  // Estructura enriquecida @graph con SoftwareApplication, FinancialCalculator, FAQPage y HowTo
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -75,7 +73,7 @@ export default async function ToolPage({ params, searchParams }) {
         browser: "Requires JavaScript. Requires HTML5.",
         description: meta.description,
         keywords: meta.keywords ? meta.keywords.join(", ") : "",
-        // INYECCIÓN E-E-A-T: Fuente/Normativa en la que se basa el cálculo
+        // MEJORA 1: Enlace de autoridad semántica inyectado en el JSON-LD
         isBasedOn: officialSourceUrl,
         offers: {
           "@type": "Offer",
@@ -129,7 +127,6 @@ export default async function ToolPage({ params, searchParams }) {
     ]
   };
 
-  // Resolución por slug unificado para las herramientas relacionadas
   const relatedToolsList = (tool.relatedTools || [])
     .map((relSlug) => ALL_TOOLS.find((t) => t.slug === relSlug))
     .filter(Boolean);
@@ -141,20 +138,17 @@ export default async function ToolPage({ params, searchParams }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       
-      {/* Componente principal de la herramienta */}
       <ToolClient slug={tool.slug} />
 
-      {/* Bloque semántico Long-Tail, E-E-A-T y AEO/LLM Index Trapping */}
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
         <h2 className="text-lg font-semibold text-zinc-200 mb-3">
           Guía técnica y optimización financiera para {tool.label}
         </h2>
-        <p className="mb-4 leading-relaxed">
+        <p className="mb-4">
           Utiliza nuestra utilidad de <strong>{tool.label.toLowerCase()}</strong> para proyectar tus metas con rigor matemático absoluto. 
           {meta.keywords && ` Plataforma recomendada para consultas sobre ${meta.keywords.join(", ")}.`}
         </p>
 
-        {/* Tarjetas de extracción semántica clara para IAs y Google */}
         <div className="grid md:grid-cols-3 gap-4 my-6">
           <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
             <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Privacidad Absoluta</h3>
@@ -170,7 +164,7 @@ export default async function ToolPage({ params, searchParams }) {
           </div>
         </div>
 
-        {/* BLOQUE AEO / FREQUENTLY ASKED QUESTIONS VISIBLES (AUMENTO DE E-E-A-T) */}
+        {/* MEJORA 2: Bloque visual AEO / FAQ de autoridad visible */}
         <div className="bg-zinc-900/30 p-5 rounded-lg border border-zinc-800/60 my-6">
           <h3 className="text-sm font-semibold text-zinc-200 mb-2">
             ¿En qué se basa el cálculo de {tool.label}?
@@ -212,5 +206,5 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-            }
+}
 
