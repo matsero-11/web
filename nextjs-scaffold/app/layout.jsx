@@ -19,6 +19,15 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
+// Configuración recomendada en Next.js para PWA y barra de estado en móviles
+export const viewport = {
+  themeColor: "#080F11",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata = {
   metadataBase: new URL(BASE_URL),
 
@@ -28,9 +37,19 @@ export const metadata = {
   },
 
   description:
-    "Herramientas interactivas gratuitas de ahorro, presupuesto y planificación económica personal.",
+    "Herramientas interactivas gratuitas de ahorro, presupuesto y planificación económica personal 100% privadas.",
 
   applicationName: "MetaBox",
+
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "MetaBox",
+  },
+
+  formatDetection: {
+    telephone: false,
+  },
 
   robots: {
     index: true,
@@ -93,8 +112,12 @@ export default function RootLayout({ children }) {
           name="google-site-verification"
           content="ieioMsOsbPGm3H8sX-9FpBz_DMuBSfWAQMFYKw0wgsA"
         />
+        {/* Compatibilidad adicional PWA para iOS Safari */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className="antialiased">
+      <body className="antialiased bg-[#080F11] text-white">
         <ClientProviders>
           <main className="mx-auto w-full max-w-md space-y-8 px-5 py-8 md:max-w-2xl md:space-y-10 md:px-8 md:py-12 lg:max-w-4xl">
             {children}
