@@ -58,10 +58,10 @@ export default async function ToolPage({ params, searchParams }) {
     notFound();
   }
 
-  // Fuentes oficiales y de autoridad configuradas por defecto
   const officialSourceUrl = meta.officialSource || "https://www.bde.es/";
   const officialSourceName = meta.officialSourceName || "Banco de España (BdE)";
 
+  // Estructura enriquecida @graph con SoftwareApplication, FAQPage y HowTo
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -73,7 +73,6 @@ export default async function ToolPage({ params, searchParams }) {
         browser: "Requires JavaScript. Requires HTML5.",
         description: meta.description,
         keywords: meta.keywords ? meta.keywords.join(", ") : "",
-        // MEJORA 1: Enlace de autoridad semántica inyectado en el JSON-LD
         isBasedOn: officialSourceUrl,
         offers: {
           "@type": "Offer",
@@ -164,7 +163,7 @@ export default async function ToolPage({ params, searchParams }) {
           </div>
         </div>
 
-        {/* MEJORA 2: Bloque visual AEO / FAQ de autoridad visible */}
+        {/* Bloque visual AEO / E-E-A-T con la fuente oficial */}
         <div className="bg-zinc-900/30 p-5 rounded-lg border border-zinc-800/60 my-6">
           <h3 className="text-sm font-semibold text-zinc-200 mb-2">
             ¿En qué se basa el cálculo de {tool.label}?
