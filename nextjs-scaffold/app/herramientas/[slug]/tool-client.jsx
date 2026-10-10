@@ -101,12 +101,42 @@ function ToolClientContent({ slug }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Resolución segura: mapeamos el slug largo recibido de la URL al id corto de la herramienta
+  // Mapeo seguro entre identificadores largos / slugs y las claves de TOOL_COMPONENTS
   const resolvedToolId = useMemo(() => {
     if (!slug) return null;
+
+    // Si coincide directamente con una clave de TOOL_COMPONENTS (ej. 'savings', 'trip')
     if (TOOL_COMPONENTS[slug]) return slug;
+
+    // Buscamos el registro global de la herramienta por slug o id
     const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
-    return found ? found.id : null;
+    if (!found) return null;
+
+    // Mapeo directo de los IDs globales a las claves del objeto TOOL_COMPONENTS
+    const mapping = {
+      "calculadora-objetivo-ahorro": "savings",
+      "presupuesto-mensual-categorias": "budget",
+      "fondo-de-emergencia": "emergency",
+      "interes-compuesto-aportaciones": "interest",
+      "reto-de-ahorro-semanal": "challenge",
+      "ahorro-para-un-viaje": "trip",
+      "gasto-diario-a-mensual-anual": "daily",
+      "comparador-escenarios-ahorro": "comparator",
+      "regla-50-30-20-calculadora": "rule502030",
+      "porcentaje-de-ahorro": "percent",
+      "ahorro-compra-grande-coche-vivienda": "bigpurchase",
+      "ahorro-por-redondeo": "roundup",
+      "planificador-ahorro-anual": "annual",
+      "calculadora-cuota-prestamo": "loan",
+      "reparto-gastos-en-grupo": "groupsplit",
+      "presupuesto-diario-de-viaje": "tripdaily",
+      "ahorro-para-navidad": "holiday",
+      "conversor-de-moneda-viajes": "currency",
+      "calculadora-de-propina": "tip",
+      "cuanto-necesito-ganar-ingreso-minimo": "targetincome",
+    };
+
+    return mapping[found.id] || mapping[found.slug] || found.id;
   }, [slug]);
 
   const initialParams = useMemo(() => {
@@ -200,5 +230,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-                                                                            }
-    
+                     }
+
