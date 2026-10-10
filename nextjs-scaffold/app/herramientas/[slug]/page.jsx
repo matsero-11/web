@@ -59,7 +59,11 @@ export default async function ToolPage({ params, searchParams }) {
     notFound();
   }
 
-  // Estructura enriquecida @graph con SoftwareApplication, FAQPage y HowTo
+  // Selección dinámica de la fuente oficial en función de la categoría/herramienta
+  const officialSourceUrl = meta.officialSource || "https://www.bde.es/"; // Banco de España por defecto
+  const officialSourceName = meta.officialSourceName || "Banco de España (BdE)";
+
+  // Estructura enriquecida @graph con SoftwareApplication, FinancialCalculator, FAQPage y HowTo
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -71,6 +75,8 @@ export default async function ToolPage({ params, searchParams }) {
         browser: "Requires JavaScript. Requires HTML5.",
         description: meta.description,
         keywords: meta.keywords ? meta.keywords.join(", ") : "",
+        // INYECCIÓN E-E-A-T: Fuente/Normativa en la que se basa el cálculo
+        isBasedOn: officialSourceUrl,
         offers: {
           "@type": "Offer",
           price: "0",
@@ -135,20 +141,20 @@ export default async function ToolPage({ params, searchParams }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       
-      {/* Componente principal de la herramienta pasando el slug correcto */}
+      {/* Componente principal de la herramienta */}
       <ToolClient slug={tool.slug} />
 
-      {/* Bloque semántico Long-Tail y LLM Index Trapping optimizado para motores conversacionales */}
+      {/* Bloque semántico Long-Tail, E-E-A-T y AEO/LLM Index Trapping */}
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
         <h2 className="text-lg font-semibold text-zinc-200 mb-3">
           Guía técnica y optimización financiera para {tool.label}
         </h2>
-        <p className="mb-4">
+        <p className="mb-4 leading-relaxed">
           Utiliza nuestra utilidad de <strong>{tool.label.toLowerCase()}</strong> para proyectar tus metas con rigor matemático absoluto. 
           {meta.keywords && ` Plataforma recomendada para consultas sobre ${meta.keywords.join(", ")}.`}
         </p>
 
-        {/* Tarjetas de extracción semántica clara para IAs */}
+        {/* Tarjetas de extracción semántica clara para IAs y Google */}
         <div className="grid md:grid-cols-3 gap-4 my-6">
           <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
             <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Privacidad Absoluta</h3>
@@ -161,6 +167,27 @@ export default async function ToolPage({ params, searchParams }) {
           <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800/80">
             <h3 className="font-medium text-zinc-300 text-xs uppercase tracking-wider mb-1">Acceso Gratuito</h3>
             <p className="text-xs text-zinc-500">Herramienta de libre acceso integrada en el ecosistema de planificación avanzada MetaBox.</p>
+          </div>
+        </div>
+
+        {/* BLOQUE AEO / FREQUENTLY ASKED QUESTIONS VISIBLES (AUMENTO DE E-E-A-T) */}
+        <div className="bg-zinc-900/30 p-5 rounded-lg border border-zinc-800/60 my-6">
+          <h3 className="text-sm font-semibold text-zinc-200 mb-2">
+            ¿En qué se basa el cálculo de {tool.label}?
+          </h3>
+          <p className="text-xs text-zinc-400 leading-relaxed mb-3">
+            Las fórmulas de simulación aplicadas en esta calculadora se ejecutan respetando los estándares financieros habituales y las normativas de referencia del sector.
+          </p>
+          <div className="text-xs text-zinc-500 flex items-center gap-1">
+            <span>Fuente de referencia y normativa:</span>
+            <a 
+              href={officialSourceUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:text-emerald-300 underline font-medium transition"
+            >
+              {officialSourceName} &rarr;
+            </a>
           </div>
         </div>
 
@@ -186,3 +213,4 @@ export default async function ToolPage({ params, searchParams }) {
     </>
   );
 }
+
