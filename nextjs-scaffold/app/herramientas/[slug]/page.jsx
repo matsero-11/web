@@ -211,4 +211,3 @@ export default async function ToolPage({ params, searchParams }) {
     </>
   );
 }
-
