@@ -15,6 +15,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  
+  // Búsqueda directa y unificada por slug
   const tool = ALL_TOOLS.find((item) => item.slug === slug);
   const meta = SEO_METADATA[tool?.id];
 
@@ -57,7 +59,7 @@ export default async function ToolPage({ params, searchParams }) {
     notFound();
   }
 
-  // Monstruo 1 & 4 (SGE + LLM Index Trapping): Estructura enriquecida @graph con SoftwareApplication, FAQPage y HowTo
+  // Estructura enriquecida @graph con SoftwareApplication, FAQPage y HowTo
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -121,8 +123,9 @@ export default async function ToolPage({ params, searchParams }) {
     ]
   };
 
+  // Resolución por slug unificado para las herramientas relacionadas
   const relatedToolsList = (tool.relatedTools || [])
-    .map((relId) => ALL_TOOLS.find((t) => t.id === relId))
+    .map((relSlug) => ALL_TOOLS.find((t) => t.slug === relSlug))
     .filter(Boolean);
 
   return (
@@ -169,7 +172,7 @@ export default async function ToolPage({ params, searchParams }) {
             <div className="flex flex-wrap gap-2">
               {relatedToolsList.map((relTool) => (
                 <Link
-                  key={relTool.id}
+                  key={relTool.slug}
                   href={`/herramientas/${relTool.slug}`}
                   className="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-md border border-zinc-800 transition text-xs"
                 >
