@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Download } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
+import FinancialStreak from "./FinancialStreak";
 
 function ToolHeader({ title, subtitle, onBack }) {
   const [canInstall, setCanInstall] = useState(false);
@@ -63,27 +64,32 @@ function ToolHeader({ title, subtitle, onBack }) {
           <ArrowLeft size={15} /> Volver
         </button>
 
-        {canInstall && (
-          <button
-            onClick={handleInstallClick}
-            style={{
-              ...fontBody,
-              display: "flex",
-              alignItems: "center",
-              gap: "0.35rem",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: `1px solid ${T.lime}`,
-              borderRadius: "0.6rem",
-              padding: "0.35rem 0.75rem",
-              color: T.lime,
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <Download size={13} /> Instalar App
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          {/* Widget de Racha con la Llama Verde */}
+          <FinancialStreak />
+
+          {canInstall && (
+            <button
+              onClick={handleInstallClick}
+              style={{
+                ...fontBody,
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: `1px solid ${T.lime}`,
+                borderRadius: "0.6rem",
+                padding: "0.35rem 0.75rem",
+                color: T.lime,
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Download size={13} /> Instalar App
+            </button>
+          )}
+        </div>
       </div>
 
       <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2 }}>{title}</h1>
