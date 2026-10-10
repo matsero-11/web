@@ -5,7 +5,7 @@ import ToolClient from "./tool-client";
 import AffiliateSlot from "@/components/affiliate-slot";
 import Link from "next/link";
 
-// Se permite la resolución dinámica de parámetros para evitar errores 404 estrictos en renderizado
+// Se permite la resolución dinámica de parámetros
 export const dynamicParams = true;
 
 export function generateStaticParams() {
@@ -19,11 +19,13 @@ export async function generateMetadata({ params, searchParams }) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   
   const tool = ALL_TOOLS.find((item) => item.slug === slug);
-  const meta = SEO_METADATA[tool?.id];
+  if (!tool) return {};
 
-  if (!meta || !tool) {
-    return {};
-  }
+  const meta = SEO_METADATA[tool.id] || {
+    title: tool.label,
+    description: tool.desc,
+    keywords: tool.tags || [],
+  };
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
 
@@ -54,11 +56,20 @@ export async function generateMetadata({ params, searchParams }) {
 export default async function ToolPage({ params, searchParams }) {
   const { slug } = await params;
   const tool = ALL_TOOLS.find((item) => item.slug === slug);
-  const meta = SEO_METADATA[tool?.id];
 
-  if (!tool || !meta) {
+  if (!tool) {
     notFound();
   }
+
+  // Si no hay metadatos específicos, generamos unos por defecto para evitar el 404
+  const meta = SEO_METADATA[tool.id] || {
+    title: tool.label,
+    description: tool.desc,
+    keywords: tool.tags || [],
+    affiliateOffer: null,
+    officialSource: "https://www.bde.es/",
+    officialSourceName: "Banco de España (BdE)",
+  };
 
   const officialSourceUrl = meta.officialSource || "https://www.bde.es/";
   const officialSourceName = meta.officialSourceName || "Banco de España (BdE)";
@@ -211,5 +222,5 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-            }
-      
+              }
+            
