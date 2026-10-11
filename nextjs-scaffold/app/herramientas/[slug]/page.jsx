@@ -61,7 +61,7 @@ export default async function ToolPage({ params, searchParams }) {
     notFound();
   }
 
-  // Si no hay metadatos específicos, generamos unos por defecto para evitar el 404
+  // Si no hay metadatos específicos, generamos unos por defecto
   const meta = SEO_METADATA[tool.id] || {
     title: tool.label,
     description: tool.desc,
@@ -73,6 +73,9 @@ export default async function ToolPage({ params, searchParams }) {
 
   const officialSourceUrl = meta.officialSource || "https://www.bde.es/";
   const officialSourceName = meta.officialSourceName || "Banco de España (BdE)";
+
+  // FAQ limitadas a máximo 3 para optimizar legibilidad de motores de búsqueda
+  const topKeywords = (meta.keywords || []).slice(0, 3);
 
   // Estructura enriquecida @graph con SoftwareApplication, FAQPage y HowTo
   const jsonLd = {
@@ -104,14 +107,14 @@ export default async function ToolPage({ params, searchParams }) {
               text: `${meta.description} Diseñado para ofrecer cálculos financieros precisos, instantáneos y con total privacidad local en MetaBox.`
             }
           },
-          ...(meta.keywords ? meta.keywords.map((kw) => ({
+          ...topKeywords.map((kw) => ({
             "@type": "Question",
             name: `¿Cómo calcular y planificar ${kw} de forma óptima?`,
             acceptedAnswer: {
               "@type": "Answer",
               text: `Utilizando nuestra herramienta especializada en ${kw}, puedes proyectar tus resultados paso a paso de manera totalmente gratuita y optimizada para cumplir tus metas financieras.`
             }
-          })) : [])
+          }))
         ]
       },
       {
@@ -153,7 +156,7 @@ export default async function ToolPage({ params, searchParams }) {
       {/* Componente principal de la herramienta */}
       <ToolClient slug={tool.slug} />
 
-      {/* Ranura modular de afiliación (se mantiene oculta si no hay oferta activa) */}
+      {/* Ranura modular de afiliación */}
       <AffiliateSlot offer={meta.affiliateOffer} />
 
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
@@ -193,7 +196,7 @@ export default async function ToolPage({ params, searchParams }) {
             <a 
               href={officialSourceUrl} 
               target="_blank" 
-              rel="noopener noreferrer"
+              rel="noopener noreferrer nofollow"
               className="text-emerald-400 hover:text-emerald-300 underline font-medium transition"
             >
               {officialSourceName} &rarr;
@@ -222,5 +225,4 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-              }
-            
+            }
