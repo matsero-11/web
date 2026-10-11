@@ -6,81 +6,29 @@ import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { ALL_TOOLS } from "@/lib/tools-registry";
-import { FileDown, Copy, Download, Check, ShieldCheck } from "lucide-react";
+import { FileDown, ShieldCheck } from "lucide-react";
 
-// Componente de Exportación Limpio con 3 Botones Integrados
+// Componente de Exportación Limpio: Únicamente el botón PDF Ejecutivo Verde Esmeralda
 function PremiumExportBar({ toolName }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    const textToCopy = `Resumen Financiero - ${toolName}\nGenerado con MetaBox (${window.location.href})`;
-    navigator.clipboard.writeText(textToCopy);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleExportCSV = () => {
-    const csvContent =
-      "data:text/csv;charset=utf-8,Parametro,Valor\nHerramienta," +
-      toolName +
-      "\nFecha," +
-      new Date().toLocaleDateString();
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `metabox_${toolName.toLowerCase().replace(/\s+/g, "_")}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleGeneratePDF = () => {
-    window.print();
+    if (typeof window !== "undefined") {
+      window.print();
+    }
   };
 
   return (
-    <div className="flex flex-col gap-3 mt-8 w-full max-w-2xl mx-auto px-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full">
-        {/* 1. Copiar Resumen */}
-        <button
-          onClick={handleCopy}
-          type="button"
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-emerald-400" />
-          ) : (
-            <Copy className="w-4 h-4 text-slate-400" />
-          )}
-          <span>{copied ? "¡Copiado!" : "Copiar resumen"}</span>
-        </button>
+    <div className="flex flex-col gap-2.5 mt-10 w-full max-w-xl mx-auto px-4 no-print">
+      <button
+        onClick={handleGeneratePDF}
+        type="button"
+        className="flex items-center justify-center gap-2.5 w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] cursor-pointer"
+      >
+        <FileDown className="w-4 h-4 stroke-[2.5]" />
+        <span>Generar Informe PDF Ejecutivo</span>
+      </button>
 
-        {/* 2. Exportar CSV */}
-        <button
-          onClick={handleExportCSV}
-          type="button"
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
-        >
-          <Download className="w-4 h-4 text-slate-400" />
-          <span>Exportar CSV</span>
-        </button>
-
-        {/* 3. Único Botón Verde para PDF */}
-        <button
-          onClick={handleGeneratePDF}
-          type="button"
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs shadow-md shadow-emerald-500/20 transition-all active:scale-[0.98] cursor-pointer"
-        >
-          <FileDown className="w-4 h-4 stroke-[2.5]" />
-          <span>Generar PDF</span>
-        </button>
-      </div>
-
-      <div className="flex items-center gap-1.5 justify-center text-[11px] text-slate-500 mt-1">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+      <div className="flex items-center gap-1.5 justify-center text-[12px] font-medium text-emerald-400 mt-1">
+        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
         <span>Procesamiento 100% privado en tu navegador</span>
       </div>
     </div>
@@ -463,5 +411,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-  }
-        
+          }
+    
