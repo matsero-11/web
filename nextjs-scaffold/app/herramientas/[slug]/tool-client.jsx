@@ -6,15 +6,84 @@ import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { ALL_TOOLS } from "@/lib/tools-registry";
-import ReportExporter from "@/components/ReportExporter";
+import { FileDown, Copy, Download, Check, ShieldCheck } from "lucide-react";
+
+// Componente de Exportación Limpio con 3 Botones Integrados
+function PremiumExportBar({ toolName }: { toolName: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    const textToCopy = `Resumen Financiero - ${toolName}\nGenerado con MetaBox (${window.location.href})`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportCSV = () => {
+    const csvContent = "data:text/csv;charset=utf-8,Parametro,Valor\nHerramienta," + toolName + "\nFecha," + new Date().toLocaleDateString();
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `metabox_${toolName.toLowerCase().replace(/\s+/g, "_")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleGeneratePDF = () => {
+    // Dispara la descarga limpia utilizando la función nativa de impresión calibrada
+    window.print();
+  };
+
+  return (
+    <div className="flex flex-col gap-3 mt-8 w-full max-w-2xl mx-auto px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full">
+        {/* 1. Copiar Resumen */}
+        <button
+          onClick={handleCopy}
+          type="button"
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
+        >
+          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+          <span>{copied ? "¡Copiado!" : "Copiar resumen"}</span>
+        </button>
+
+        {/* 2. Exportar CSV */}
+        <button
+          onClick={handleExportCSV}
+          type="button"
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
+        >
+          <Download className="w-4 h-4 text-slate-400" />
+          <span>Exportar CSV</span>
+        </button>
+
+        {/* 3. Único Botón Verde para PDF */}
+        <button
+          onClick={handleGeneratePDF}
+          type="button"
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs shadow-md shadow-emerald-500/20 transition-all active:scale-[0.98] cursor-pointer"
+        >
+          <FileDown className="w-4 h-4 stroke-[2.5]" />
+          <span>Generar PDF</span>
+        </button>
+      </div>
+
+      <div className="flex items-center gap-1.5 justify-center text-[11px] text-slate-500 mt-1">
+        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+        <span>Procesamiento 100% privado en tu navegador</span>
+      </div>
+    </div>
+  );
+}
 
 // Componente de Captura Inteligente y Cero Errores (100% Nativo en Cliente)
-function QuickSmartCapture({ onValueExtracted }) {
+function QuickSmartCapture({ onValueExtracted }: { onValueExtracted: (val: number) => void }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -28,14 +97,16 @@ function QuickSmartCapture({ onValueExtracted }) {
         try {
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          if (ctx) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+          }
 
           setTimeout(() => {
             setLoading(false);
             setStatus("¡Captura cargada con éxito! Revisa o ajusta el valor.");
-            onValueExtracted(1500); 
+            onValueExtracted(1500);
           }, 600);
         } catch (err) {
           console.error(err);
@@ -43,7 +114,7 @@ function QuickSmartCapture({ onValueExtracted }) {
           setStatus("Error al procesar la imagen localmente.");
         }
       };
-      img.src = event.target.result;
+      img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -65,7 +136,7 @@ function QuickSmartCapture({ onValueExtracted }) {
       }}
     >
       <div>
-        <div style={{ display: "flex", items: "center", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span style={{ fontSize: "1.1rem" }}>⚡</span>
           <span style={{ fontWeight: 600, color: T.text || "#fff", fontSize: "0.95rem" }}>
             Autocompletar con Captura o Nómina
@@ -136,7 +207,7 @@ function ToolLoading() {
   );
 }
 
-function ToolNotFound({ onBack }) {
+function ToolNotFound({ onBack }: { onBack: () => void }) {
   return (
     <main
       aria-labelledby="tool-not-found-title"
@@ -170,8 +241,7 @@ function ToolNotFound({ onBack }) {
           margin: 0,
         }}
       >
-        El enlace que has abierto no corresponde a una herramienta disponible
-        en MetaBox.
+        El enlace que has abierto no corresponde a una herramienta disponible en MetaBox.
       </p>
 
       <Button onClick={onBack} fullWidth={false}>
@@ -181,7 +251,7 @@ function ToolNotFound({ onBack }) {
   );
 }
 
-const TOOL_COMPONENTS = {
+const TOOL_COMPONENTS: Record<string, any> = {
   savings: dynamic(() => import("@/components/tools/savings-goal-tool"), { loading: () => <ToolLoading />, ssr: false }),
   emergency: dynamic(() => import("@/components/tools/emergency-fund-tool"), { loading: () => <ToolLoading />, ssr: false }),
   budget: dynamic(() => import("@/components/tools/budget-tool"), { loading: () => <ToolLoading />, ssr: false }),
@@ -204,11 +274,11 @@ const TOOL_COMPONENTS = {
   targetincome: dynamic(() => import("@/components/tools/target-income-tool"), { loading: () => <ToolLoading />, ssr: false }),
 };
 
-function ToolClientContent({ slug }) {
+function ToolClientContent({ slug }: { slug: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [extractedValue, setExtractedValue] = useState(null);
+  const [extractedValue, setExtractedValue] = useState<number | null>(null);
 
   const activeToolLabel = useMemo(() => {
     if (!slug) return "Simulación Financiera";
@@ -223,7 +293,7 @@ function ToolClientContent({ slug }) {
     const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
     if (!found) return null;
 
-    const mapping = {
+    const mapping: Record<string, string> = {
       "calculadora-objetivo-ahorro": "savings",
       "presupuesto-mensual-categorias": "budget",
       "fondo-de-emergencia": "emergency",
@@ -250,7 +320,7 @@ function ToolClientContent({ slug }) {
   }, [slug]);
 
   const initialParams = useMemo(() => {
-    const params = {};
+    const params: Record<string, any> = {};
     if (searchParams) {
       searchParams.forEach((value, key) => {
         params[key] = value;
@@ -265,13 +335,13 @@ function ToolClientContent({ slug }) {
   }, [searchParams, extractedValue]);
 
   const handleStateChange = useCallback(
-    (newState) => {
+    (newState: any) => {
       if (!newState || typeof newState !== "object") return;
       const params = new URLSearchParams(searchParams?.toString() || "");
 
       Object.entries(newState).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== "") {
-          params.set(key, value);
+          params.set(key, String(value));
         } else {
           params.delete(key);
         }
@@ -287,7 +357,7 @@ function ToolClientContent({ slug }) {
   );
 
   const handleValueExtracted = useCallback(
-    (val) => {
+    (val: number) => {
       setExtractedValue(val);
       handleStateChange({
         ingreso: val,
@@ -304,7 +374,7 @@ function ToolClientContent({ slug }) {
     return <ToolNotFound onBack={() => router.push("/")} />;
   }
 
-  const handleNavigate = (val) => {
+  const handleNavigate = (val: any) => {
     const targetId =
       typeof val === "object" && val !== null
         ? val.id || val.slug || val.key
@@ -338,16 +408,18 @@ function ToolClientContent({ slug }) {
         onToolClick={handleNavigate}
       />
 
-      <ReportExporter toolName={activeToolLabel} />
+      {/* Reemplazamos el visor antiguo por la botonera de 3 botones limpios */}
+      <PremiumExportBar toolName={activeToolLabel} />
     </div>
   );
 }
 
-export default function ToolClient({ slug }) {
+export default function ToolClient({ slug }: { slug: string }) {
   const router = useRouter();
 
-  const handleGlobalClick = (e) => {
-    const el = e.target.closest("a, [data-tool-id], [data-slug], [data-id]");
+  const handleGlobalClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const el = target.closest("a, [data-tool-id], [data-slug], [data-id]");
     if (!el) return;
 
     let targetId =
@@ -382,5 +454,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-                      }
-
+            }
+    
