@@ -35,7 +35,7 @@ function PremiumExportBar({ toolName }) {
   );
 }
 
-// Componente de Captura Inteligente y Cero Errores (100% Nativo en Cliente)
+// Componente de Captura Inteligente con clase no-print para evitar su impresión
 function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,6 +79,7 @@ function QuickSmartCapture({ onValueExtracted }) {
 
   return (
     <div
+      className="no-print"
       style={{
         padding: "1rem 1.25rem",
         borderRadius: "14px",
@@ -411,5 +412,4 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-          }
-    
+    }
