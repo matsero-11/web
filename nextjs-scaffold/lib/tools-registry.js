@@ -58,6 +58,13 @@ const ALL_TOOLS = [
       "interes-compuesto-aportaciones",
       "ahorro-compra-grande-coche-vivienda",
     ],
+    affiliateProduct: {
+      name: "Cuenta Remunerada Ahorro",
+      provider: "Trade Republic",
+      highlight: "Rentabiliza tu meta con hasta un 3,75% TAE",
+      link: "https://example.com/affiliate-trade-republic", // Tu enlace de afiliado real
+      ctaText: "Ver Cuenta Remunerada",
+    },
   },
   {
     id: "presupuesto-mensual-categorias",
@@ -74,6 +81,13 @@ const ALL_TOOLS = [
       "gasto-diario-a-mensual-anual",
       "porcentaje-de-ahorro",
     ],
+    affiliateProduct: {
+      name: "Cuenta Subcuentas/Sueldos",
+      provider: "N26 / Revolut",
+      highlight: "Separa automáticamente tus gastos por subcuentas privadas",
+      link: "https://example.com/affiliate-n26",
+      ctaText: "Probar Cuenta Inteligente",
+    },
   },
   {
     id: "fondo-de-emergencia",
@@ -90,6 +104,13 @@ const ALL_TOOLS = [
       "presupuesto-mensual-categorias",
       "cuanto-necesito-ganar-ingreso-minimo",
     ],
+    affiliateProduct: {
+      name: "Cuenta de Fondo Segura",
+      provider: "MyInvestor / Sabadell",
+      highlight: "Guarda tu fondo con liquidez total y rentabilidad mensual",
+      link: "https://example.com/affiliate-fondo-seguro",
+      ctaText: "Dónde guardar tu Fondo",
+    },
   },
   {
     id: "interes-compuesto-aportaciones",
@@ -106,6 +127,13 @@ const ALL_TOOLS = [
       "comparador-escenarios-ahorro",
       "planificador-ahorro-anual",
     ],
+    affiliateProduct: {
+      name: "Broker Inversión Automatizada",
+      provider: "Indexa Capital / Scalable",
+      highlight: "Invierte en fondos indexados globales con bajas comisiones",
+      link: "https://example.com/affiliate-indexados",
+      ctaText: "Empezar a Invertir",
+    },
   },
   {
     id: "reto-de-ahorro-semanal",
@@ -137,6 +165,13 @@ const ALL_TOOLS = [
       "conversor-de-moneda-viajes",
       "calculadora-objetivo-ahorro",
     ],
+    affiliateProduct: {
+      name: "Tarjeta Sin Comisiones en El Extranjero",
+      provider: "Revolut Travel",
+      highlight: "Paga y cambia divisas sin comisiones bancarias durante tus viajes",
+      link: "https://example.com/affiliate-revolut-viajes",
+      ctaText: "Tarjeta Gratis para Viajar",
+    },
   },
   {
     id: "gasto-diario-a-mensual-anual",
@@ -395,4 +430,4 @@ const CATEGORIES = [
 ];
 
 export { ALL_TOOLS, CATEGORIES };
-           
+    
