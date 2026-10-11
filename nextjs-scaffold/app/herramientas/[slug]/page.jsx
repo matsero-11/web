@@ -159,7 +159,8 @@ export default async function ToolPage({ params, searchParams }) {
       {/* Ranura modular de afiliación */}
       <AffiliateSlot offer={meta.affiliateOffer} />
 
-      <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm">
+      {/* SECCIÓN SEO: Se mantiene visible para la web y Google, pero oculta automáticamente (no-print) al generar el PDF */}
+      <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm no-print">
         <h2 className="text-lg font-semibold text-zinc-200 mb-3">
           Guía técnica y optimización financiera para {tool.label}
         </h2>
@@ -225,4 +226,4 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-            }
+}
