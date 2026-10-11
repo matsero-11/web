@@ -8,7 +8,7 @@ import { useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 import { FileDown, ShieldCheck } from "lucide-react";
 
-// Componente de Exportación Limpio: Únicamente el botón PDF Ejecutivo Verde Esmeralda
+// Componente de Exportación Limpio: Botón PDF Ejecutivo Verde Esmeralda (Oculto en el PDF generado)
 function PremiumExportBar({ toolName }) {
   const handleGeneratePDF = () => {
     if (typeof window !== "undefined") {
@@ -412,4 +412,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-    }
+                   }
+  
