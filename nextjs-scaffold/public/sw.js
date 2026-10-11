@@ -1,6 +1,6 @@
-const CACHE_NAME = "metabox-v2";
+const CACHE_NAME = "metabox-v3";
 
-// Archivos clave para el funcionamiento sin conexión (Offline App Shell)
+// Archivos clave para el funcionamiento sin conexión
 const PRECACHE_ASSETS = [
   "/",
   "/manifest.json",
@@ -10,11 +10,18 @@ const PRECACHE_ASSETS = [
   "/web-app-manifest-512x512.png"
 ];
 
-// Instalar el Service Worker y precargar recursos básicos
+// Instalar el Service Worker precargando recursos de forma segura (sin bloquear la instalación)
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
+      // Usamos Promise.allSettled o fetch individual para evitar que un fallo 404 rompa la PWA
+      return Promise.all(
+        PRECACHE_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => {
+            console.warn(`[PWA SW] No se pudo precachear ${asset}:`, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -38,7 +45,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  // Solo interceptar peticiones GET dentro de nuestro origen (ignora extensiones o scripts de terceros)
+  // Solo interceptar peticiones GET dentro de nuestro propio dominio
   if (request.method !== "GET" || !request.url.startsWith(self.location.origin)) {
     return;
   }
@@ -46,20 +53,17 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(request).then((cachedResponse) => {
-        // Petición de red en segundo plano para refrescar la caché
         const fetchPromise = fetch(request)
           .then((networkResponse) => {
-            if (networkResponse.status === 200) {
+            if (networkResponse && networkResponse.status === 200) {
               cache.put(request, networkResponse.clone());
             }
             return networkResponse;
           })
           .catch(() => {
-            // Si la red falla y no hay caché, muestra la página principal precargada
             return cachedResponse || cache.match("/");
           });
 
-        // Devolver respuesta cacheada inmediatamente si existe, si no esperar a la red
         return cachedResponse || fetchPromise;
       });
     })
