@@ -112,4 +112,3 @@ function ToolHeader({ title, subtitle, onBack }) {
 }
 
 export default ToolHeader;
-
