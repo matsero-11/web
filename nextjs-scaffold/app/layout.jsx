@@ -19,7 +19,6 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
-// Configuración de Viewport recomendada para PWA
 export const viewport = {
   themeColor: "#080F11",
   width: "device-width",
@@ -106,14 +105,8 @@ export default function RootLayout({ children }) {
           name="google-site-verification"
           content="ieioMsOsbPGm3H8sX-9FpBz_DMuBSfWAQMFYKw0wgsA"
         />
-        {/* Enlace explícito al manifest para máxima compatibilidad Android/PWA */}
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
-        
-        {/* Compatibilidad adicional PWA */}
+        {/* Compatibilidad adicional para PWA en navegadores móviles específicos */}
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="antialiased bg-[#080F11] text-white">
         <ClientProviders>
