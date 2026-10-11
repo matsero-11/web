@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { T, fontBody } from "@/lib/design-tokens";
 
 export default function FinancialStreak() {
   const [streakDays, setStreakDays] = useState(0);
@@ -61,32 +62,56 @@ export default function FinancialStreak() {
     }
   }, []);
 
+  const emeraldColor = T?.emerald || "#10B981";
+
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-medium text-zinc-300 shadow-sm backdrop-blur-sm select-none">
-      {/* Icono de Llama Verde Estilizado en SVG */}
+    <div
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/30 border border-emerald-500/30 text-xs font-medium select-none"
+      style={{
+        ...fontBody,
+        backgroundColor: "rgba(16, 185, 129, 0.08)",
+        borderColor: "rgba(16, 185, 129, 0.25)",
+        backdropFilter: "blur(4px)",
+      }}
+    >
+      {/* Icono de Llama Verde Pequeña */}
       <div className="relative flex items-center justify-center">
         <svg
-          className={`w-4 h-4 transition-transform duration-300 ${
-            isActiveToday ? "text-emerald-400 scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-zinc-600"
+          className={`w-3.5 h-3.5 transition-transform duration-300 ${
+            isActiveToday ? "scale-110" : "opacity-40"
           }`}
+          style={{
+            color: emeraldColor,
+            filter: isActiveToday ? "drop-shadow(0px 0px 5px rgba(16, 185, 129, 0.6))" : "none",
+          }}
           fill="currentColor"
           viewBox="0 0 24 24"
         >
           <path d="M12 23c-4.97 0-9-3.58-9-8 0-4.19 3.03-7.6 6.54-9.36.37-.19.82.02.92.42.33 1.34 1.13 2.5 2.19 3.29C13.56 7.37 15.11 5 15.11 2c0-.46.47-.79.91-.63C19.26 2.65 21 6.28 21 10c0 7.18-4.03 13-9 13zm0-2c3.87 0 7-4.66 7-11 0-1.89-.62-3.8-1.57-5.2-.67 2.62-2.48 4.79-4.82 5.92-.38.18-.83-.02-.93-.43-.33-1.34-1.12-2.5-2.18-3.29C8.3 10.23 7 12.44 7 15c0 3.31 2.24 6 5 6z" />
         </svg>
         {isActiveToday && (
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          <span
+            className="absolute -top-0.5 -right-0.5 w-1 h-1 rounded-full animate-ping"
+            style={{ backgroundColor: emeraldColor }}
+          />
         )}
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <span className="font-bold text-emerald-400 tracking-tight">
+      <div className="flex items-center gap-1">
+        <span
+          className="font-bold tracking-tight text-[0.78rem]"
+          style={{ color: emeraldColor }}
+        >
           {streakDays} {streakDays === 1 ? "día" : "días"}
         </span>
-        <span className="text-[11px] text-zinc-400 font-normal">
-          de racha financiera
+        <span
+          className="text-[0.75rem] font-normal"
+          style={{ color: T?.textMuted || "#a1a1aa" }}
+        >
+          de racha
         </span>
       </div>
     </div>
   );
 }
+
