@@ -25,7 +25,7 @@ function AdSlot({
 
   return (
     <aside
-      className={className}
+      className={`no-print ${className}`}
       aria-label={label}
       data-ad-slot={slot || undefined}
       data-ad-position={position}
