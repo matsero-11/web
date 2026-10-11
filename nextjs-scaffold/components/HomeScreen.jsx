@@ -9,11 +9,13 @@ import { GUIDES } from "@/lib/guides-data";
 import { Search, RotateCcw, ArrowRight, BookOpen, Lock } from "lucide-react";
 
 function HomeContent() {
-  const [q, setQ] = useState(""), [cat, setCat] = useState(null), [g, setG] = useState(null), [inf, setInf] = useState(null);
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState(null);
+  const [g, setG] = useState(null);
+  const [inf, setInf] = useState(null);
   const [total] = usePersistentState("metabox_total_calc", 125420);
 
   const top = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
   const curG = GUIDES.find(x => x.id === g);
   const feat = ALL_TOOLS.find(x => x.id === "savings") || ALL_TOOLS[0];
   const smart = q.length > 2 ? ALL_TOOLS.find(x => x.id === (q.toLowerCase().includes("inver") ? "interest" : "savings")) : null;
@@ -22,79 +24,57 @@ function HomeContent() {
     const matchQ = !q || x.label.toLowerCase().includes(q.toLowerCase()) || x.desc.toLowerCase().includes(q.toLowerCase());
     if (!cat) return matchQ;
     const tc = (x.category || "").toLowerCase(), tt = `${x.label} ${x.desc} ${x.id}`.toLowerCase();
-    
     const matchCat = 
-      cat === "ahorrar" ? tc.includes("ahorr") || tc.includes("sav") || tt.includes("ahorr") || tt.includes("meta") || tt.includes("fondo") :
-      cat === "organizar" ? tc.includes("organiz") || tc.includes("presup") || tc.includes("budg") || tt.includes("presupuesto") || tt.includes("gasto") :
-      cat === "planificar" ? tc.includes("plan") || tt.includes("plan") || tt.includes("jubil") || tt.includes("hipotec") || tt.includes("prestam") :
-      cat === "crecer" ? tc.includes("crec") || tc.includes("invers") || tc.includes("grow") || tc.includes("invest") || tt.includes("inversión") || tt.includes("interés") :
-      tc.includes(cat) || tc === cat;
-
+      cat === "ahorrar" ? tc.includes("ahorr") || tt.includes("ahorr") || tt.includes("meta") :
+      cat === "organizar" ? tc.includes("organiz") || tt.includes("presupuesto") || tt.includes("gasto") :
+      cat === "planificar" ? tc.includes("plan") || tt.includes("hipoteca") || tt.includes("préstamo") :
+      cat === "crecer" ? tc.includes("crec") || tt.includes("inversión") || tt.includes("interés") : true;
     return matchQ && matchCat;
   });
 
   if (curG) return (
-    <div className="pt-6 pb-28 w-full px-4 max-w-2xl mx-auto">
-      <button onClick={() => setG(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem", display: "inline-flex", alignItems: "center", gap: ".4rem" }}>← Volver</button>
+    <article className="pt-6 pb-28 w-full px-4 max-w-2xl mx-auto">
+      <button onClick={() => setG(null)} aria-label="Volver" style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem" }}>← Volver</button>
       <div className="p-6 md:p-8 rounded-2xl" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
         <div style={{ ...fontBody, color: T.lime, fontSize: ".72rem", fontWeight: 700, textTransform: "uppercase", marginBottom: ".5rem" }}>{curG.badge}</div>
-        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2, marginBottom: ".5rem" }}>{curG.title}</h1>
+        <h2 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2, marginBottom: ".5rem" }}>{curG.title}</h2>
         <p style={{ ...fontBody, color: T.textMuted, fontSize: ".9rem", marginBottom: "1.2rem" }}>{curG.subtitle}</p>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: ".75rem", marginBottom: "1.5rem", borderBottom: `1px solid ${T.border}`, paddingBottom: "1rem" }}>{curG.meta}</div>
-        {curG.summaryBox && <div className="p-4 mb-6 rounded-xl" style={{ background: T.surfaceAlt, borderLeft: `4px solid ${T.lime}` }}><span style={{ ...fontBody, color: T.lime, fontSize: ".75rem", fontWeight: 700, display: "block" }}>{curG.summaryBox.label}</span><p style={{ ...fontBody, color: T.text, fontSize: ".85rem" }}>{curG.summaryBox.text}</p></div>}
-        {curG.tableOfContents && <div className="p-4 mb-6 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}><div style={{ ...fontBody, color: T.text, fontWeight: 700, fontSize: ".85rem", marginBottom: ".5rem" }}>En esta guía</div>{curG.tableOfContents.map(i => <a key={i.id} href={`#${i.id}`} style={{ ...fontBody, color: T.lime, fontSize: ".8rem", display: "block", textDecoration: "none" }}>→ {i.label}</a>)}</div>}
-        <div className="space-y-8">{curG.sections.map(s => (
-          <div key={s.id} id={s.id} className="scroll-mt-20">
-            <h2 style={{ ...fontDisplay, color: T.text, fontSize: "1.2rem", marginBottom: ".5rem" }}>{s.title}</h2>
-            {s.content && <p style={{ ...fontBody, color: T.textMuted, fontSize: ".85rem", lineHeight: 1.6, marginBottom: ".75rem" }}>{s.content}</p>}
-            {s.example && <div className="p-4 rounded-xl my-3" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}><div style={{ ...fontBody, color: "#f59e0b", fontSize: ".78rem", fontWeight: 700 }}>💡 {s.example.title}</div><p style={{ ...fontBody, color: T.textMuted, fontSize: ".82rem" }}>{s.example.text}</p></div>}
-            {s.table && <div className="my-3 space-y-2">{s.table.rows.map((r, idx) => <div key={idx} className="p-3 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>{r.map((c, j) => <div key={j} className="flex justify-between py-1 text-xs" style={{ borderBottom: j < r.length - 1 ? `1px solid ${T.border}` : "none" }}><span style={{ color: T.lime, fontWeight: 700 }}>{s.table.headers[j]}:</span><span style={{ color: T.textMuted }}>{c}</span></div>)}</div>)}</div>}
-            {s.steps && <div className="space-y-3 my-3">{s.steps.map((st, idx) => <div key={idx} className="p-3 rounded-xl flex gap-3" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}><span style={{ color: T.lime, fontWeight: 700 }}>{st.num}</span><div><div style={{ color: T.text, fontWeight: 700, fontSize: ".82rem" }}>{st.title}</div><div style={{ color: T.textMuted, fontSize: ".78rem" }}>{st.desc}</div></div></div>)}</div>}
-            {s.errors && <div className="space-y-3 my-3">{s.errors.map((e, idx) => <div key={idx} className="p-3 rounded-xl" style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)" }}><div style={{ color: "#f87171", fontWeight: 700, fontSize: ".82rem" }}>⚠️ {e.title}</div><div style={{ color: T.textMuted, fontSize: ".78rem" }}>{e.desc}</div></div>)}</div>}
-            {s.faqs && <div className="space-y-3 my-3">{s.faqs.map((f, idx) => <div key={idx} className="p-3 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}><div style={{ color: T.text, fontWeight: 700, fontSize: ".82rem" }}>{f.q}</div><div style={{ color: T.textMuted, fontSize: ".78rem" }}>{f.a}</div></div>)}</div>}
-          </div>
-        ))}</div>
+        <div className="space-y-6 mt-6">
+          {curG.sections.map(s => (
+            <div key={s.id} id={s.id} className="scroll-mt-20">
+              <h3 style={{ ...fontDisplay, color: T.text, fontSize: "1.15rem", marginBottom: ".4rem" }}>{s.title}</h3>
+              {s.content && <p style={{ ...fontBody, color: T.textMuted, fontSize: ".85rem", lineHeight: 1.6 }}>{s.content}</p>}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </article>
   );
 
   if (inf === "about") return (
-    <div className="pt-6 pb-28 w-full px-4 max-w-xl mx-auto">
-      <button onClick={() => setInf(null)} style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem" }}>← Volver al inicio</button>
+    <article className="pt-6 pb-28 w-full px-4 max-w-xl mx-auto">
+      <button onClick={() => setInf(null)} aria-label="Volver" style={{ ...fontBody, background: T.surface, border: `1px solid ${T.border}`, color: T.text, padding: ".5rem 1rem", borderRadius: ".8rem", cursor: "pointer", marginBottom: "1.5rem", fontSize: ".85rem" }}>← Volver al inicio</button>
       <div className="p-6 md:p-8 rounded-2xl space-y-4" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
         <div style={{ color: T.lime, fontSize: ".75rem", fontWeight: 700, textTransform: "uppercase" }}>Manifiesto MetaBox</div>
-        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2 }}>Sobre nosotros y nuestra misión</h1>
-        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".88rem", lineHeight: 1.6 }}>MetaBox nace con una convicción clara: la educación y planificación financiera personal no deben ser complejas, estar ocultas tras muros de pago ni comprometer tu privacidad.</p>
-        
-        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
-          <h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem", marginBottom: ".3rem" }}>🔒 Privacidad radical local</h3>
-          <p style={{ color: T.textMuted, fontSize: ".82rem", lineHeight: 1.5 }}>Todos tus cálculos, datos y simulaciones se procesan localmente en tu propio dispositivo mediante tu navegador. Ningún dato financiero personal sale jamás de tu teléfono.</p>
-        </div>
-
-        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
-          <h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem", marginBottom: ".3rem" }}>⚡️ Simplicidad sin rodeos</h3>
-          <p style={{ color: T.textMuted, fontSize: ".82rem", lineHeight: 1.5 }}>Diseñamos cada herramienta bajo el principio de claridad absoluta. Sin letra pequeña ni complejidad innecesaria: matemáticas transparentes para tomar el control real de tu economía.</p>
-        </div>
-
-        <div className="p-4 rounded-xl" style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}>
-          <h3 style={{ color: T.text, fontWeight: 700, fontSize: ".9rem", marginBottom: ".3rem" }}>🎯 Independencia financiera</h3>
-          <p style={{ color: T.textMuted, fontSize: ".82rem", lineHeight: 1.5 }}>Un espacio pensado por y para tomar decisiones informadas sobre ahorro, inversión y organización personal de forma totalmente gratuita y accesible.</p>
-        </div>
+        <h2 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2 }}>Sobre nosotros y nuestra misión</h2>
+        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".88rem", lineHeight: 1.6 }}>Privacidad radical local y simplicidad absoluta sin muros de pago.</p>
       </div>
-    </div>
+    </article>
   );
 
   return (
     <div className="pt-6 pb-28 w-full px-4 md:px-0">
       <div className="mb-6">
         <div style={{ color: T.lime, fontSize: ".75rem", fontWeight: 600, textTransform: "uppercase" }}>MetaBox</div>
-        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.85rem" }}>Tu dinero, con un plan.</h1>
+        <h2 style={{ ...fontDisplay, color: T.text, fontSize: "1.85rem" }}>Tu dinero, con un plan.</h2>
         <p style={{ ...fontBody, color: T.textMuted, fontSize: ".9rem", marginTop: ".3rem" }}>Calcula y planifica tus finanzas gratis.</p>
       </div>
 
       <div className="relative mb-5">
-        <div style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginBottom: ".3rem" }}><Search size={14} className="inline mr-1 text-lime" /> ¿Qué necesitas calcular?</div>
-        <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder='Ej: "Ahorrar 5.000 €"...' style={{ width: "100%", background: T.surface, border: `1px solid ${q ? T.lime : T.border}`, borderRadius: ".8rem", padding: ".8rem 1rem .8rem 2.4rem", color: T.text, fontSize: ".85rem", outline: "none" }} />
+        <label htmlFor="search-tools" style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginBottom: ".3rem", display: "block" }}>
+          <Search size={14} className="inline mr-1 text-lime" /> ¿Qué necesitas calcular?
+        </label>
+        <input id="search-tools" type="search" value={q} onChange={e => setQ(e.target.value)} placeholder='Ej: "Ahorrar 5.000 €"...' style={{ width: "100%", background: T.surface, border: `1px solid ${q ? T.lime : T.border}`, borderRadius: ".8rem", padding: ".8rem 1rem .8rem 2.4rem", color: T.text, fontSize: ".85rem", outline: "none" }} />
         {smart && (
           <Link href={`/herramientas/${smart.slug}`} className="block mt-2 p-3 rounded-xl flex items-center justify-between no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
             <span style={{ color: T.lime, fontSize: ".8rem", fontWeight: 600 }}>Sugerencia: {smart.label}</span>
@@ -112,13 +92,25 @@ function HomeContent() {
       )}
 
       {!q && (
-        <div className="mb-5 grid grid-cols-2 gap-2">{[{id:"ahorrar",l:"Ahorrar"},{id:"organizar",l:"Organizar"},{id:"planificar",l:"Planificar"},{id:"crecer",l:"Crecer"}].map(c => (
-          <div key={c.id} onClick={() => setCat(cat === c.id ? null : c.id)} className="cursor-pointer p-2.5 rounded-xl" style={{ background: cat === c.id ? T.surfaceAlt : T.surface, border: `1px solid ${cat === c.id ? T.lime : T.border}` }}><span style={{ color: T.lime, fontSize: ".7rem", fontWeight: 700 }}>{c.l}</span></div>
-        ))}</div>
+        <div className="mb-5 grid grid-cols-2 gap-2">
+          {[{id:"ahorrar",l:"Ahorrar"},{id:"organizar",l:"Organizar"},{id:"planificar",l:"Planificar"},{id:"crecer",l:"Crecer"}].map(c => (
+            <div key={c.id} onClick={() => setCat(cat === c.id ? null : c.id)} className="cursor-pointer p-2.5 rounded-xl" style={{ background: cat === c.id ? T.surfaceAlt : T.surface, border: `1px solid ${cat === c.id ? T.lime : T.border}` }}>
+              <span style={{ color: T.lime, fontSize: ".7rem", fontWeight: 700 }}>{c.l}</span>
+            </div>
+          ))}
+        </div>
       )}
 
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-2"><span style={{ color: T.text, fontWeight: 600, fontSize: ".9rem" }}>Herramientas</span>{(cat || q) && <button onClick={() => { setCat(null); setQ(""); }} style={{ background: "none", border: "none", color: T.lime, fontSize: ".75rem", cursor: "pointer" }}><RotateCcw size={11} className="inline mr-1" /> Ver todo</button>}</div>
+        <div className="flex justify-between items-center mb-2">
+          <span style={{ color: T.text, fontWeight: 600, fontSize: ".9rem" }}>Herramientas</span>
+          {(cat || q) && (
+            <button onClick={() => { setCat(null); setQ(""); }} style={{ background: "none", border: "none", color: T.lime, fontSize: ".75rem", cursor: "pointer" }}>
+              <RotateCcw size={11} className="inline mr-1" /> Ver todo
+            </button>
+          )}
+        </div>
+
         {filtered.length === 0 ? (
           <div className="text-center py-8 p-4 rounded-xl" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
             <p style={{ color: T.textMuted, fontSize: ".85rem", marginBottom: ".75rem" }}>No encontramos resultados.</p>
@@ -149,7 +141,10 @@ function HomeContent() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
           {GUIDES.map(gItem => (
             <div key={gItem.id} onClick={() => { setG(gItem.id); top(); }} className="p-3.5 rounded-xl cursor-pointer flex flex-col justify-between" style={{ background: T.surface, border: `1px solid ${T.border}` }}>
-              <div><div style={{ color: T.text, fontWeight: 600, fontSize: ".82rem" }}>{gItem.title}</div><div style={{ color: T.textMuted, fontSize: ".72rem" }} className="line-clamp-2">{gItem.subtitle}</div></div>
+              <div>
+                <div style={{ color: T.text, fontWeight: 600, fontSize: ".82rem" }}>{gItem.title}</div>
+                <div style={{ color: T.textMuted, fontSize: ".72rem" }} className="line-clamp-2">{gItem.subtitle}</div>
+              </div>
               <div style={{ color: T.lime, fontSize: ".72rem", fontWeight: 600, marginTop: ".75rem" }} className="flex items-center gap-1">Leer guía <ArrowRight size={11} /></div>
             </div>
           ))}
@@ -157,9 +152,9 @@ function HomeContent() {
       </div>
 
       <footer style={{ paddingTop: "1.5rem", borderTop: `1px solid ${T.border}` }} className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div><div style={{ color: T.text, fontWeight: 700, fontSize: ".8rem", marginBottom: ".4rem" }}>Herramientas</div><button onClick={() => { setCat("ahorrar"); window.scrollTo({ top: 300, behavior: 'smooth' }); }} style={{ background: "none", border: "none", color: T.textMuted, fontSize: ".72rem", cursor: "pointer", display: "block", textAlign: "left", padding: 0 }}>Ahorro</button></div>
-        <div><div style={{ color: T.text, fontWeight: 700, fontSize: ".8rem", marginBottom: ".4rem" }}>Recursos</div><button onClick={() => { setG("fondo-emergencia"); top(); }} style={{ background: "none", border: "none", color: T.textMuted, fontSize: ".72rem", cursor: "pointer", display: "block", textAlign: "left", padding: 0 }}>Guías</button></div>
-        <div><div style={{ color: T.text, fontWeight: 700, fontSize: ".8rem", marginBottom: ".4rem" }}>Plataforma</div><button onClick={() => { setInf("about"); top(); }} style={{ background: "none", border: "none", color: T.textMuted, fontSize: ".72rem", cursor: "pointer", display: "block", textAlign: "left", padding: 0 }}>Sobre nosotros</button></div>
+        <div><div style={{ color: T.text, fontWeight: 700, fontSize: ".8rem", marginBottom: ".4rem" }}>Herramientas</div><button onClick={() => { setCat("ahorrar"); window.scrollTo({ top: 300, behavior: 'smooth' }); }} style={{ background: "none", border: "none", color: T.textMuted, fontSize: ".72rem", cursor: "pointer", textAlign: "left", padding: 0 }}>Ahorro</button></div>
+        <div><div style={{ color: T.text, fontWeight: 700, fontSize: ".8rem", marginBottom: ".4rem" }}>Recursos</div><button onClick={() => { setG("fondo-emergencia"); top(); }} style={{ background: "none", border: "none", color: T.textMuted, fontSize: ".72rem", cursor: "pointer", textAlign: "left", padding: 0 }}>Guías</button></div>
+        <div><div style={{ color: T.text, fontWeight: 700, fontSize: ".8rem", marginBottom: ".4rem" }}>Plataforma</div><button onClick={() => { setInf("about"); top(); }} style={{ background: "none", border: "none", color: T.textMuted, fontSize: ".72rem", cursor: "pointer", textAlign: "left", padding: 0 }}>Sobre nosotros</button></div>
       </footer>
     </div>
   );
@@ -167,5 +162,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-                     }
+        }
       
