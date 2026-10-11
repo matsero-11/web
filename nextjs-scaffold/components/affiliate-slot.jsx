@@ -5,7 +5,7 @@ export default function AffiliateSlot({ offer }) {
   if (!offer || !offer.active) return null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto my-6 p-4 rounded-xl bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-emerald-950/30 border border-emerald-500/30 text-zinc-200 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all">
+    <div className="w-full max-w-4xl mx-auto my-6 p-4 rounded-xl bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-emerald-950/30 border border-emerald-500/30 text-zinc-200 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all no-print">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
