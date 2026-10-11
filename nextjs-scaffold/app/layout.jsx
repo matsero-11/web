@@ -107,6 +107,19 @@ export default function RootLayout({ children }) {
         />
         {/* Compatibilidad adicional para PWA en navegadores móviles específicos */}
         <meta name="mobile-web-app-capable" content="yes" />
+
+        {/* Captura inmediata e infalible del evento PWA para móviles Android/Chrome */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                window.deferredPWAInstallPrompt = e;
+                window.dispatchEvent(new Event('pwa-installable'));
+              });
+            `,
+          }}
+        />
       </head>
       <body className="antialiased bg-[#080F11] text-white">
         <ClientProviders>
