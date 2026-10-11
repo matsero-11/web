@@ -66,7 +66,7 @@ export default function FinancialStreak() {
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/30 border border-emerald-500/30 text-xs font-medium select-none"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-500/30 text-xs font-medium select-none no-print"
       style={{
         ...fontBody,
         backgroundColor: "rgba(16, 185, 129, 0.08)",
@@ -74,15 +74,15 @@ export default function FinancialStreak() {
         backdropFilter: "blur(4px)",
       }}
     >
-      {/* Icono de Llama Verde Pequeña */}
+      {/* Icono de Llama Verde Súper Pequeña (3 x 3 / 12px) */}
       <div className="relative flex items-center justify-center">
         <svg
-          className={`w-3.5 h-3.5 transition-transform duration-300 ${
+          className={`w-3 h-3 transition-transform duration-300 ${
             isActiveToday ? "scale-110" : "opacity-40"
           }`}
           style={{
             color: emeraldColor,
-            filter: isActiveToday ? "drop-shadow(0px 0px 5px rgba(16, 185, 129, 0.6))" : "none",
+            filter: isActiveToday ? "drop-shadow(0px 0px 4px rgba(16, 185, 129, 0.6))" : "none",
           }}
           fill="currentColor"
           viewBox="0 0 24 24"
@@ -97,17 +97,12 @@ export default function FinancialStreak() {
         )}
       </div>
 
-      <div className="flex items-center gap-1">
-        <span
-          className="font-bold tracking-tight text-[0.78rem]"
-          style={{ color: emeraldColor }}
-        >
+      {/* Frase Unificada 100% en Verde Esmeralda con Espacios Perfectos */}
+      <div className="flex items-center gap-1.5 text-[0.78rem]" style={{ color: emeraldColor }}>
+        <span className="font-bold tracking-tight">
           {streakDays} {streakDays === 1 ? "día" : "días"}
         </span>
-        <span
-          className="text-[0.75rem] font-normal"
-          style={{ color: T?.textMuted || "#a1a1aa" }}
-        >
+        <span className="font-medium">
           de racha
         </span>
       </div>
