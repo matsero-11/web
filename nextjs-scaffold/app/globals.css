@@ -39,7 +39,6 @@
   --radius-xl: 2rem;
 
   /* Variables centralizadas de los sliders */
-
   --slider-track-height: 12px;
   --slider-thumb-size: 26px;
 
@@ -55,7 +54,6 @@
 }
 
 /* Reset */
-
 *,
 *::before,
 *::after {
@@ -141,7 +139,6 @@ img {
 }
 
 /* Scrollbar */
-
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -162,7 +159,6 @@ img {
 }
 
 /* Foco accesible */
-
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -173,7 +169,6 @@ textarea:focus-visible {
 }
 
 /* Formularios */
-
 input,
 select,
 textarea {
@@ -230,7 +225,6 @@ select {
 }
 
 /* Inputs numéricos */
-
 input[type="number"],
 input[data-slider-input] {
   position: relative;
@@ -281,7 +275,6 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /* Sliders */
-
 input[type="range"] {
   --slider-progress: var(--slider-progress-lime);
   --slider-focus: var(--slider-focus-lime);
@@ -327,7 +320,6 @@ input[type="range"]:focus-visible {
 }
 
 /* Chrome, Edge y Safari */
-
 input[type="range"]::-webkit-slider-runnable-track {
   height: var(--slider-track-height);
   border: 0;
@@ -373,7 +365,6 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 }
 
 /* Firefox */
-
 input[type="range"]::-moz-range-track {
   height: var(--slider-track-height);
   border: 0;
@@ -419,7 +410,6 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 }
 
 /* Variantes de color */
-
 input[type="range"].slider-lime {
   --slider-progress: var(--slider-progress-lime);
   --slider-focus: var(--slider-focus-lime);
@@ -436,7 +426,6 @@ input[type="range"].slider-coral {
 }
 
 /* Animaciones */
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -529,7 +518,6 @@ input[type="range"].slider-coral {
 }
 
 /* Utilidades */
-
 .text-lime {
   color: var(--lime);
 }
@@ -563,7 +551,6 @@ input[type="range"].slider-coral {
 }
 
 /* Reducción de movimiento */
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -582,3 +569,70 @@ input[type="range"].slider-coral {
     transition: none;
   }
 }
+
+/* ==========================================
+   CONFIGURACIÓN DE IMPRESIÓN Y EXPORTACIÓN PDF
+   ========================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 12mm 15mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  nav,
+  header,
+  footer,
+  button,
+  input[type="file"],
+  .no-print,
+  [role="status"] {
+    display: none !important;
+  }
+
+  div, section, article {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .card, section, article, table {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-radius: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  h1, h2, h3, h4, p, span, td, th {
+    color: #0f172a !important;
+  }
+
+  .text-emerald-400, .text-emerald-500, .text-lime {
+    color: #059669 !important;
+    font-weight: 700 !important;
+  }
+
+  body::before {
+    content: "MetaBox — Informe de Simulación Financiera";
+    display: block;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #059669;
+    border-bottom: 2px solid #10b981;
+    padding-bottom: 6px;
+    margin-bottom: 18px;
+  }
+  }
+    
