@@ -6,9 +6,19 @@ export default function robots() {
       {
         userAgent: "*",
         allow: ["/", "/_next/static/", "/_next/image/"],
-        disallow: ["/api/"],
+        disallow: [
+          "/api/",
+          "/*?*", // Evita rastrear URLs con querystrings duplicadas
+        ],
+      },
+      // Bloqueo de crawlers de IA que consumen recursos sin enviar tráfico orgánico
+      {
+        userAgent: ["CCBot", "GPTBot"],
+        disallow: ["/"],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,
+    host: BASE_URL,
   };
 }
+
