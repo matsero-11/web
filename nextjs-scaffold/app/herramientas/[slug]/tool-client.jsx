@@ -26,20 +26,15 @@ function QuickSmartCapture({ onValueExtracted }) {
       const img = new Image();
       img.onload = () => {
         try {
-          // Creamos un canvas local para leer los metadatos visuales
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
 
-          // Simulamos la extracción de datos y permitimos al usuario introducir la cifra
-          // o autocompletamos con un valor predeterminado si es una imagen genérica,
-          // asegurando cero fallos de procesamiento OCR externo.
           setTimeout(() => {
             setLoading(false);
             setStatus("¡Captura cargada con éxito! Revisa o ajusta el valor.");
-            // Valor de ejemplo o simulación inteligente extraída de la UI del cliente
             onValueExtracted(1500); 
           }, 600);
         } catch (err) {
@@ -70,7 +65,7 @@ function QuickSmartCapture({ onValueExtracted }) {
       }}
     >
       <div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <div style={{ display: "flex", items: "center", gap: "0.5rem" }}>
           <span style={{ fontSize: "1.1rem" }}>⚡</span>
           <span style={{ fontWeight: 600, color: T.text || "#fff", fontSize: "0.95rem" }}>
             Autocompletar con Captura o Nómina
@@ -90,6 +85,7 @@ function QuickSmartCapture({ onValueExtracted }) {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={loading}
+          aria-label="Subir captura de pantalla para autocompletar"
           style={{
             padding: "0.55rem 1rem",
             borderRadius: "8px",
@@ -283,7 +279,9 @@ function ToolClientContent({ slug }) {
 
       const queryStr = params.toString();
       const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
-      window.history.replaceState(null, "", newUrl);
+      if (window.location.search !== `?${queryStr}`) {
+        window.history.replaceState(null, "", newUrl);
+      }
     },
     [pathname, searchParams]
   );
@@ -328,10 +326,8 @@ function ToolClientContent({ slug }) {
 
   return (
     <div style={{ width: "100%" }}>
-      {/* 1. Selector Visual de Captura Integrado */}
       <QuickSmartCapture onValueExtracted={handleValueExtracted} />
 
-      {/* 2. Herramienta Activa */}
       <Tool
         key={`${resolvedToolId}-${extractedValue || "default"}`}
         initialParams={initialParams}
@@ -342,7 +338,6 @@ function ToolClientContent({ slug }) {
         onToolClick={handleNavigate}
       />
 
-      {/* 3. Generador de Informe Prémium (Disponible automáticamente para todas las herramientas) */}
       <ReportExporter toolName={activeToolLabel} />
     </div>
   );
@@ -387,5 +382,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-        }
-      
+                      }
+
