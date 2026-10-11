@@ -16,19 +16,27 @@ export const MATRIX_CONFIG = {
   ]
 };
 
-// Función auxiliar para generar todas las combinaciones posibles para Next.js
+// Función auxiliar para generar de forma segura todas las combinaciones posibles para Next.js
 export function generateMatrixPaths(tools) {
   const paths = [];
 
+  if (!Array.isArray(tools)) return paths;
+
   tools.forEach((tool) => {
+    if (!tool || !tool.slug) return;
+
     MATRIX_CONFIG.perfiles.forEach((perfil) => {
       MATRIX_CONFIG.plazos.forEach((plazo) => {
+        const rawSlug = `${tool.slug}-${perfil.slug}-${plazo.slug}`;
+        // Limpiamos dobles guiones por seguridad de URL
+        const cleanSlug = rawSlug.replace(/-+/g, "-");
+
         paths.push({
           toolSlug: tool.slug,
           profileSlug: perfil.slug,
           timeSlug: plazo.slug,
-          // Generamos una ruta única amigable para SEO: /aprende/[tool]/[profile]/[time]
-          seoSlug: `${tool.slug}-${perfil.slug}-${plazo.slug}`
+          // Generamos una ruta única amigable para SEO: /aprende/[tool]-[profile]-[time]
+          seoSlug: cleanSlug
         });
       });
     });
@@ -36,4 +44,3 @@ export function generateMatrixPaths(tools) {
 
   return paths;
 }
-
