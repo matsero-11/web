@@ -19,7 +19,7 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
-// Configuración recomendada en Next.js para PWA y barra de estado en móviles
+// Configuración de Viewport recomendada para PWA
 export const viewport = {
   themeColor: "#080F11",
   width: "device-width",
@@ -86,14 +86,8 @@ export const metadata = {
 
   icons: {
     icon: [
-      {
-        url: "/favicon.ico",
-      },
-      {
-        url: "/favicon-96x96.png",
-        sizes: "96x96",
-        type: "image/png",
-      },
+      { url: "/favicon.ico" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
     ],
     apple: "/web-app-manifest-192x192.png",
   },
@@ -112,7 +106,11 @@ export default function RootLayout({ children }) {
           name="google-site-verification"
           content="ieioMsOsbPGm3H8sX-9FpBz_DMuBSfWAQMFYKw0wgsA"
         />
-        {/* Compatibilidad adicional PWA para iOS Safari */}
+        {/* Enlace explícito al manifest para máxima compatibilidad Android/PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
+        
+        {/* Compatibilidad adicional PWA */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
