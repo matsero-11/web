@@ -4,8 +4,15 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel
 
 export const metadata = {
   title: "MetaBox — Herramientas de Ahorro y Planificación Financiera",
-  description: "Calculadoras y herramientas interactivas gratuitas para optimizar tu presupuesto, ahorro y finanzas personales de forma sencilla.",
-  keywords: ["calculadoras financieras", "herramientas de ahorro", "presupuesto mensual", "interes compuesto", "finanzas personales"],
+  description: "Calculadoras y herramientas interactivas gratuitas para optimizar tu presupuesto, ahorro y finanzas personales de forma sencilla y 100% privada.",
+  keywords: [
+    "calculadoras financieras",
+    "herramientas de ahorro",
+    "presupuesto mensual",
+    "interes compuesto",
+    "finanzas personales",
+    "simulador de ahorro"
+  ],
   alternates: {
     canonical: `${BASE_URL}/`,
   },
@@ -14,21 +21,44 @@ export const metadata = {
     description: "Calculadoras y herramientas interactivas gratuitas para optimizar tu presupuesto, ahorro y finanzas personales de forma sencilla.",
     url: `${BASE_URL}/`,
     type: "website",
+    siteName: "MetaBox",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
 export default function Page() {
+  // Esquema enriquecido WebSite + Organization para posicionamiento de marca
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "MetaBox",
-    url: BASE_URL,
-    description: "Calculadoras y herramientas interactivas gratuitas para optimizar tu presupuesto, ahorro y finanzas personales.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${BASE_URL}/?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+    "@graph": [
+      {
+        "@type": "WebSite",
+        name: "MetaBox",
+        url: BASE_URL,
+        description: "Calculadoras y herramientas interactivas gratuitas para optimizar tu presupuesto, ahorro y finanzas personales.",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${BASE_URL}/?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        name: "MetaBox",
+        url: BASE_URL,
+        logo: `${BASE_URL}/web-app-manifest-512x512.png`,
+        sameAs: [],
+      },
+    ],
   };
 
   return (
@@ -60,3 +90,4 @@ export default function Page() {
     </>
   );
 }
+
