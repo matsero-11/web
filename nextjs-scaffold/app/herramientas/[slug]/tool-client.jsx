@@ -9,7 +9,7 @@ import { ALL_TOOLS } from "@/lib/tools-registry";
 import { FileDown, Copy, Download, Check, ShieldCheck } from "lucide-react";
 
 // Componente de Exportación Limpio con 3 Botones Integrados
-function PremiumExportBar({ toolName }: { toolName: string }) {
+function PremiumExportBar({ toolName }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -20,18 +20,24 @@ function PremiumExportBar({ toolName }: { toolName: string }) {
   };
 
   const handleExportCSV = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Parametro,Valor\nHerramienta," + toolName + "\nFecha," + new Date().toLocaleDateString();
+    const csvContent =
+      "data:text/csv;charset=utf-8,Parametro,Valor\nHerramienta," +
+      toolName +
+      "\nFecha," +
+      new Date().toLocaleDateString();
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `metabox_${toolName.toLowerCase().replace(/\s+/g, "_")}.csv`);
+    link.setAttribute(
+      "download",
+      `metabox_${toolName.toLowerCase().replace(/\s+/g, "_")}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleGeneratePDF = () => {
-    // Dispara la descarga limpia utilizando la función nativa de impresión calibrada
     window.print();
   };
 
@@ -44,7 +50,11 @@ function PremiumExportBar({ toolName }: { toolName: string }) {
           type="button"
           className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
         >
-          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
+          {copied ? (
+            <Check className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <Copy className="w-4 h-4 text-slate-400" />
+          )}
           <span>{copied ? "¡Copiado!" : "Copiar resumen"}</span>
         </button>
 
@@ -78,12 +88,12 @@ function PremiumExportBar({ toolName }: { toolName: string }) {
 }
 
 // Componente de Captura Inteligente y Cero Errores (100% Nativo en Cliente)
-function QuickSmartCapture({ onValueExtracted }: { onValueExtracted: (val: number) => void }) {
+function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -114,7 +124,7 @@ function QuickSmartCapture({ onValueExtracted }: { onValueExtracted: (val: numbe
           setStatus("Error al procesar la imagen localmente.");
         }
       };
-      img.src = event.target?.result as string;
+      img.src = event.target?.result;
     };
     reader.readAsDataURL(file);
   };
@@ -207,7 +217,7 @@ function ToolLoading() {
   );
 }
 
-function ToolNotFound({ onBack }: { onBack: () => void }) {
+function ToolNotFound({ onBack }) {
   return (
     <main
       aria-labelledby="tool-not-found-title"
@@ -251,7 +261,7 @@ function ToolNotFound({ onBack }: { onBack: () => void }) {
   );
 }
 
-const TOOL_COMPONENTS: Record<string, any> = {
+const TOOL_COMPONENTS = {
   savings: dynamic(() => import("@/components/tools/savings-goal-tool"), { loading: () => <ToolLoading />, ssr: false }),
   emergency: dynamic(() => import("@/components/tools/emergency-fund-tool"), { loading: () => <ToolLoading />, ssr: false }),
   budget: dynamic(() => import("@/components/tools/budget-tool"), { loading: () => <ToolLoading />, ssr: false }),
@@ -274,11 +284,11 @@ const TOOL_COMPONENTS: Record<string, any> = {
   targetincome: dynamic(() => import("@/components/tools/target-income-tool"), { loading: () => <ToolLoading />, ssr: false }),
 };
 
-function ToolClientContent({ slug }: { slug: string }) {
+function ToolClientContent({ slug }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [extractedValue, setExtractedValue] = useState<number | null>(null);
+  const [extractedValue, setExtractedValue] = useState(null);
 
   const activeToolLabel = useMemo(() => {
     if (!slug) return "Simulación Financiera";
@@ -293,7 +303,7 @@ function ToolClientContent({ slug }: { slug: string }) {
     const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
     if (!found) return null;
 
-    const mapping: Record<string, string> = {
+    const mapping = {
       "calculadora-objetivo-ahorro": "savings",
       "presupuesto-mensual-categorias": "budget",
       "fondo-de-emergencia": "emergency",
@@ -320,7 +330,7 @@ function ToolClientContent({ slug }: { slug: string }) {
   }, [slug]);
 
   const initialParams = useMemo(() => {
-    const params: Record<string, any> = {};
+    const params = {};
     if (searchParams) {
       searchParams.forEach((value, key) => {
         params[key] = value;
@@ -335,7 +345,7 @@ function ToolClientContent({ slug }: { slug: string }) {
   }, [searchParams, extractedValue]);
 
   const handleStateChange = useCallback(
-    (newState: any) => {
+    (newState) => {
       if (!newState || typeof newState !== "object") return;
       const params = new URLSearchParams(searchParams?.toString() || "");
 
@@ -357,7 +367,7 @@ function ToolClientContent({ slug }: { slug: string }) {
   );
 
   const handleValueExtracted = useCallback(
-    (val: number) => {
+    (val) => {
       setExtractedValue(val);
       handleStateChange({
         ingreso: val,
@@ -374,7 +384,7 @@ function ToolClientContent({ slug }: { slug: string }) {
     return <ToolNotFound onBack={() => router.push("/")} />;
   }
 
-  const handleNavigate = (val: any) => {
+  const handleNavigate = (val) => {
     const targetId =
       typeof val === "object" && val !== null
         ? val.id || val.slug || val.key
@@ -408,17 +418,16 @@ function ToolClientContent({ slug }: { slug: string }) {
         onToolClick={handleNavigate}
       />
 
-      {/* Reemplazamos el visor antiguo por la botonera de 3 botones limpios */}
       <PremiumExportBar toolName={activeToolLabel} />
     </div>
   );
 }
 
-export default function ToolClient({ slug }: { slug: string }) {
+export default function ToolClient({ slug }) {
   const router = useRouter();
 
-  const handleGlobalClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
+  const handleGlobalClick = (e) => {
+    const target = e.target;
     const el = target.closest("a, [data-tool-id], [data-slug], [data-id]");
     if (!el) return;
 
@@ -454,5 +463,5 @@ export default function ToolClient({ slug }: { slug: string }) {
       </Suspense>
     </div>
   );
-            }
-    
+  }
+        
