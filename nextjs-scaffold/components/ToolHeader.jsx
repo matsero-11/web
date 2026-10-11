@@ -8,7 +8,7 @@ function ToolHeader({ title, subtitle, onBack }) {
   const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
-    // Comprobar si hay un evento de instalación diferido capturado por el Service Worker
+    // Comprobar si hay un evento de instalación diferido capturado
     const checkInstallability = () => {
       if (window.deferredPWAInstallPrompt) {
         setCanInstall(true);
@@ -46,11 +46,12 @@ function ToolHeader({ title, subtitle, onBack }) {
           marginBottom: "0.8rem",
         }}
       >
+        {/* Botón Volver */}
         <button
           onClick={onBack}
           style={{
             ...fontBody,
-            color: T.textMuted,
+            color: T.textMuted || "#a1a1aa",
             fontSize: "0.85rem",
             display: "flex",
             alignItems: "center",
@@ -59,13 +60,16 @@ function ToolHeader({ title, subtitle, onBack }) {
             border: "none",
             cursor: "pointer",
             padding: 0,
+            transition: "color 0.2s ease",
           }}
+          onMouseOver={(e) => (e.currentTarget.style.color = T.text || "#f4f4f5")}
+          onMouseOut={(e) => (e.currentTarget.style.color = T.textMuted || "#a1a1aa")}
         >
           <ArrowLeft size={15} /> Volver
         </button>
 
+        {/* Zona derecha: Racha + Botón Instalar */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-          {/* Widget de Racha con la Llama Verde */}
           <FinancialStreak />
 
           {canInstall && (
@@ -76,14 +80,23 @@ function ToolHeader({ title, subtitle, onBack }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "0.35rem",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: `1px solid ${T.lime}`,
+                background: "rgba(16, 185, 129, 0.12)",
+                border: `1px solid ${T.emerald || "#10B981"}`,
                 borderRadius: "0.6rem",
                 padding: "0.35rem 0.75rem",
-                color: T.lime,
+                color: T.emerald || "#10B981",
                 fontSize: "0.78rem",
                 fontWeight: 600,
                 cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = T.emerald || "#10B981";
+                e.currentTarget.style.color = "#000000";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = "rgba(16, 185, 129, 0.12)";
+                e.currentTarget.style.color = T.emerald || "#10B981";
               }}
             >
               <Download size={13} /> Instalar App
@@ -92,8 +105,8 @@ function ToolHeader({ title, subtitle, onBack }) {
         </div>
       </div>
 
-      <h1 style={{ ...fontDisplay, color: T.text, fontSize: "1.6rem", lineHeight: 1.2 }}>{title}</h1>
-      <p style={{ ...fontBody, color: T.textMuted, fontSize: "0.88rem", marginTop: "0.35rem" }}>{subtitle}</p>
+      <h1 style={{ ...fontDisplay, color: T.text || "#f4f4f5", fontSize: "1.6rem", lineHeight: 1.2 }}>{title}</h1>
+      <p style={{ ...fontBody, color: T.textMuted || "#a1a1aa", fontSize: "0.88rem", marginTop: "0.35rem" }}>{subtitle}</p>
     </div>
   );
 }
