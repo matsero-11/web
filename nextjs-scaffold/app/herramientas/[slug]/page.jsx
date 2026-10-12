@@ -15,7 +15,8 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params, searchParams }) {
-  const { slug } = await params;
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   
   const tool = ALL_TOOLS.find((item) => item.slug === slug);
@@ -54,7 +55,10 @@ export async function generateMetadata({ params, searchParams }) {
 }
 
 export default async function ToolPage({ params, searchParams }) {
-  const { slug } = await params;
+  // ✅ CORRECCIÓN CLAVE: Resolver params de forma asíncrona para Next.js 15+
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
+
   const tool = ALL_TOOLS.find((item) => item.slug === slug);
 
   if (!tool) {
@@ -159,7 +163,7 @@ export default async function ToolPage({ params, searchParams }) {
       {/* Ranura modular de afiliación */}
       <AffiliateSlot offer={meta.affiliateOffer} />
 
-      {/* SECCIÓN SEO: Se mantiene visible para la web y Google, pero oculta automáticamente (no-print) al generar el PDF */}
+      {/* SECCIÓN SEO */}
       <section className="max-w-4xl mx-auto px-4 py-8 mt-12 border-t border-zinc-800 text-zinc-400 text-sm no-print">
         <h2 className="text-lg font-semibold text-zinc-200 mb-3">
           Guía técnica y optimización financiera para {tool.label}
@@ -226,4 +230,5 @@ export default async function ToolPage({ params, searchParams }) {
       </section>
     </>
   );
-}
+        }
+
