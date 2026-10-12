@@ -40,11 +40,11 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Interceptor de red compatible con auditorías PWA de Chromium / Brave
+// Interceptor de red ultra compatible y seguro
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  // Ignorar peticiones no-GET, esquemas no-http/https (extensiones de Brave) y rutas internas de Next.js
+  // Filtrar peticiones no-GET, esquemas raros o peticiones internas de Next.js
   if (
     request.method !== "GET" ||
     !request.url.startsWith("http") ||
@@ -54,26 +54,26 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cachedResponse = await cache.match(request);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request)
+          .then((networkResponse) => {
+            if (
+              networkResponse &&
+              networkResponse.status === 200 &&
+              networkResponse.type === "basic"
+            ) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            return cachedResponse || caches.match("/");
+          });
 
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            networkResponse.type === "basic"
-          ) {
-            cache.put(request, networkResponse.clone());
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          return cachedResponse || caches.match("/");
-        });
-
-      return cachedResponse || fetchPromise;
+        return cachedResponse || fetchPromise;
+      });
     })
   );
 });
-
+               
