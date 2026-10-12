@@ -10,11 +10,10 @@ const PRECACHE_ASSETS = [
   "/web-app-manifest-512x512.png"
 ];
 
-// Instalar el Service Worker precargando recursos de forma segura (sin bloquear la instalación)
+// Instalar el Service Worker precargando recursos de forma segura
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Usamos Promise.allSettled o fetch individual para evitar que un fallo 404 rompa la PWA
       return Promise.all(
         PRECACHE_ASSETS.map((asset) =>
           cache.add(asset).catch((err) => {
@@ -41,31 +40,39 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Estrategia Stale-While-Revalidate para máxima velocidad
+// Interceptor de red compatible con auditorías PWA de Chromium / Brave
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  // Solo interceptar peticiones GET dentro de nuestro propio dominio
-  if (request.method !== "GET" || !request.url.startsWith(self.location.origin)) {
+  // Ignorar peticiones no-GET, esquemas no-http/https (extensiones de Brave) y rutas internas de Next.js
+  if (
+    request.method !== "GET" ||
+    !request.url.startsWith("http") ||
+    request.url.includes("/_next/data/")
+  ) {
     return;
   }
 
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          })
-          .catch(() => {
-            return cachedResponse || cache.match("/");
-          });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cachedResponse = await cache.match(request);
 
-        return cachedResponse || fetchPromise;
-      });
+      const fetchPromise = fetch(request)
+        .then((networkResponse) => {
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            networkResponse.type === "basic"
+          ) {
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return cachedResponse || caches.match("/");
+        });
+
+      return cachedResponse || fetchPromise;
     })
   );
 });
