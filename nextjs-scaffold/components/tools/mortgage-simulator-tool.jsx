@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Helmet } from "react-helmet-async";
 import { Clock, TrendingDown, CheckCircle2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
@@ -11,28 +10,13 @@ import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
-const FAQS = [
-  {
-    q: "¿Qué opción me conviene más: pagar antes o pagar menos al mes?",
-    a: "Si buscas ahorrar el máximo dinero posible en intereses a largo plazo, la opción de 'Reducir Plazo' (terminar antes) es matemáticamente superior. Si prefieres estar más tranquilo mes a mes o vas justo a fin de mes, 'Reducir Cuota' bajará tu recibo mensual.",
-  },
-  {
-    q: "¿Qué es la comisión por adelantar dinero?",
-    a: "Es un pequeño porcentaje que el banco te puede cobrar si devuelves parte de tu préstamo antes de tiempo. La ley limita este cobro a entre un 0% y un 0.25% dependiendo de tu contrato.",
-  },
-  {
-    q: "¿Hay un mínimo de dinero para amortizar?",
-    a: "No suele haber mínimo legal. Puedes adelantar desde 1.000 € de tus ahorros en cualquier momento para recortar tu hipoteca.",
-  },
-];
-
 export default function MortgageSimulatorTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
-  const [loanAmount, setLoanAmount] = useState(() => parseFloat(initialParams?.loanAmount) || 180000);
-  const [interestRate, setInterestRate] = useState(() => parseFloat(initialParams?.interestRate) || 2.8);
-  const [remainingYears, setRemainingYears] = useState(() => parseFloat(initialParams?.remainingYears) || 22);
-  const [extraPayment, setExtraPayment] = useState(() => parseFloat(initialParams?.extraPayment) || 10000);
+  const [loanAmount, setLoanAmount] = useState(() => Number(initialParams?.loanAmount) || 180000);
+  const [interestRate, setInterestRate] = useState(() => Number(initialParams?.interestRate) || 2.8);
+  const [remainingYears, setRemainingYears] = useState(() => Number(initialParams?.remainingYears) || 22);
+  const [extraPayment, setExtraPayment] = useState(() => Number(initialParams?.extraPayment) || 10000);
   const [amortizationType, setAmortizationType] = useState(() => initialParams?.amortizationType || "term");
-  const [commissionRate, setCommissionRate] = useState(() => parseFloat(initialParams?.commissionRate) || 0.15);
+  const [commissionRate, setCommissionRate] = useState(() => Number(initialParams?.commissionRate) || 0.15);
 
   useEffect(() => {
     if (extraPayment > loanAmount) {
@@ -49,7 +33,9 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
   const calcMonthly = (p, r, y) => {
     if (p <= 0 || r <= 0 || y <= 0) return 0;
     const mr = r / 100 / 12, tp = y * 12;
-    return (p * mr) / (1 - Math.pow(1 + mr, -tp));
+    const denominator = 1 - Math.pow(1 + mr, -tp);
+    if (denominator <= 0) return 0;
+    return (p * mr) / denominator;
   };
 
   const currentMonthlyPayment = useMemo(() => calcMonthly(loanAmount, interestRate, remainingYears), [loanAmount, interestRate, remainingYears]);
@@ -60,7 +46,8 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
 
   const newTermSimulation = useMemo(() => {
     if (newLoanAmount <= 0 || currentMonthlyPayment <= 0) return { totalMonths: 0, years: "0.0", totalInterest: 0 };
-    const mr = interestRate / 100 / 12, num = 1 - (mr * newLoanAmount) / currentMonthlyPayment;
+    const mr = interestRate / 100 / 12;
+    const num = 1 - (mr * newLoanAmount) / currentMonthlyPayment;
     if (num <= 0) return { totalMonths: 0, years: "0.0", totalInterest: 0 };
     const tm = -Math.log(num) / Math.log(1 + mr);
     return { totalMonths: Math.round(tm), years: (tm / 12).toFixed(1), totalInterest: Math.max(0, (currentMonthlyPayment * tm) - newLoanAmount) };
@@ -73,7 +60,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
 
   const newInterestValue = amortizationType === "term" ? newTermSimulation.totalInterest : newQuotaSimulation.totalInterest;
   const interestSaved = Math.max(0, currentTotalInterest - newInterestValue - commissionCost);
-  const animatedSaved = useAnimatedNumber(interestSaved);
+  const animatedSaved = useAnimatedNumber(isNaN(interestSaved) ? 0 : interestSaved);
 
   const monthsSavedTotal = useMemo(() => {
     if (amortizationType !== "term") return 0;
@@ -87,42 +74,8 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
     { name: "Con tu adelanto", "Dinero prestado": Math.round(newLoanAmount), "Intereses al banco": Math.round(newInterestValue + commissionCost) },
   ];
 
-  const pageTitle = "Simulador de Hipoteca y Amortización: Fácil e Intuitivo | MetaBox";
-  const pageDescription = "Descubre en 2 segundos cuánto dinero te ahorras y cuántos años o cuota te quitas al adelantar dinero en tu hipoteca.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/simulador-amortizacion-hipoteca";
-
   return (
     <div className="w-full flex flex-col gap-8 md:gap-10 pt-4 pb-24 view-enter">
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <link rel="canonical" href={pageUrl} />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "Simulador de Amortización de Hipoteca",
-            url: pageUrl,
-            applicationCategory: "FinanceApplication",
-            operatingSystem: "Any",
-            inLanguage: "es",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-            description: pageDescription,
-          })}
-        </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
-      </Helmet>
-
       <ToolHeader 
         title="Simulador de hipoteca" 
         subtitle="Entiende de forma rápida y transparente qué ganas al adelantar dinero a tu banco." 
@@ -298,5 +251,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-                                       }
-          
+      }
+
