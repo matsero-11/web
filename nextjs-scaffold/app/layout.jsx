@@ -23,8 +23,6 @@ export const viewport = {
   themeColor: "#080F11",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export const metadata = {
@@ -85,13 +83,13 @@ export const metadata = {
 
   icons: {
     icon: [
-      { url: "./favicon.ico" },
-      { url: "./favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.ico" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
     ],
-    apple: "./web-app-manifest-192x192.png",
+    apple: "/web-app-manifest-192x192.png",
   },
 
-  manifest: "./manifest.json",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }) {
