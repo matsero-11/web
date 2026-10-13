@@ -7,9 +7,6 @@ import { Button } from "@/components/ui";
 import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { FileDown, ShieldCheck } from "lucide-react";
 
-// Solo mostramos el detalle técnico del error fuera de producción
-const IS_DEV = process.env.NODE_ENV !== "production";
-
 // Importaciones dinámicas seguras para cada herramienta de la plataforma
 const TOOL_MAP = {
   "calculadora-objetivo-ahorro": dynamic(() => import("@/components/tools/savings-goal-tool"), { ssr: false }),
@@ -37,9 +34,9 @@ const TOOL_MAP = {
 
 /**
  * Error boundary por herramienta: si una herramienta falla, el resto de la
- * página (captura, barra de exportación) sigue funcionando. En producción
- * muestra un mensaje amable; el detalle técnico solo sale en desarrollo.
- * Siempre se registra en consola para poder depurar con source maps.
+ * página (captura, barra de exportación) sigue funcionando. Muestra un mensaje
+ * amable y, plegado, el motivo técnico del fallo (solo el mensaje, sin código).
+ * Además se registra en consola para poder depurar.
  */
 class ToolErrorBoundary extends Component {
   constructor(props) {
@@ -86,34 +83,50 @@ class ToolErrorBoundary extends Component {
           El resto de la plataforma sigue funcionando con normalidad. Puedes reintentar o volver a la home.
         </p>
 
-        {IS_DEV && (
+        <details style={{ maxWidth: "100%", textAlign: "left" }}>
+          <summary style={{ cursor: "pointer", fontSize: "0.75rem", color: T.textMuted || "#9FB3B1", ...fontBody }}>
+            Ver detalles técnicos
+          </summary>
           <pre
             style={{
               maxWidth: "100%",
               overflowX: "auto",
-              textAlign: "left",
               fontSize: "0.7rem",
               lineHeight: 1.5,
               padding: "0.75rem 1rem",
+              marginTop: "0.5rem",
               borderRadius: "10px",
               background: "rgba(0,0,0,0.35)",
               color: "#c5e04a",
-              margin: 0,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}
           >
-            {String(error?.stack || error?.message || error)}
+            {String(error?.message || error)}
           </pre>
-        )}
+        </details>
 
         <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", justifyContent: "center" }}>
           <Button onClick={this.handleRetry} fullWidth={false}>
             Reintentar
           </Button>
-          <Button onClick={this.props.onBack} fullWidth={false} variant="secondary">
+          <button
+            type="button"
+            onClick={this.props.onBack}
+            style={{
+              padding: "0.7rem 1.2rem",
+              borderRadius: "0.8rem",
+              border: `1px solid ${T.border || "rgba(245,242,234,0.2)"}`,
+              background: "transparent",
+              color: T.text || "#F5F2EA",
+              fontSize: "0.9rem",
+              fontWeight: 500,
+              cursor: "pointer",
+              ...fontBody,
+            }}
+          >
             Volver a la home
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -391,5 +404,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-        }
-      
+                         }
+    
