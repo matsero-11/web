@@ -5,10 +5,34 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { useCallback, useMemo, useState, Suspense, useRef } from "react";
-import { ALL_TOOLS } from "@/lib/tools-registry";
 import { FileDown, ShieldCheck } from "lucide-react";
 
-function PremiumExportBar({ toolName }) {
+// Importaciones dinámicas seguras para cada herramienta de la plataforma
+const TOOL_MAP = {
+  "calculadora-objetivo-ahorro": dynamic(() => import("@/components/tools/savings-goal-tool"), { ssr: false }),
+  "presupuesto-mensual-categorias": dynamic(() => import("@/components/tools/budget-tool"), { ssr: false }),
+  "fondo-de-emergencia": dynamic(() => import("@/components/tools/emergency-fund-tool"), { ssr: false }),
+  "interes-compuesto-aportaciones": dynamic(() => import("@/components/tools/compound-interest-tool"), { ssr: false }),
+  "simulador-amortizacion-hipoteca": dynamic(() => import("@/components/tools/mortgage-simulator-tool"), { ssr: false }),
+  "reto-de-ahorro-semanal": dynamic(() => import("@/components/tools/challenge-tool"), { ssr: false }),
+  "ahorro-para-un-viaje": dynamic(() => import("@/components/tools/trip-savings-tool"), { ssr: false }),
+  "gasto-diario-a-mensual-anual": dynamic(() => import("@/components/tools/daily-expense-tool"), { ssr: false }),
+  "comparador-escenarios-ahorro": dynamic(() => import("@/components/tools/scenario-comparator-tool"), { ssr: false }),
+  "regla-50-30-20-calculadora": dynamic(() => import("@/components/tools/rule502030-tool"), { ssr: false }),
+  "porcentaje-de-ahorro": dynamic(() => import("@/components/tools/savings-percent-tool"), { ssr: false }),
+  "ahorro-compra-grande-coche-vivienda": dynamic(() => import("@/components/tools/big-purchase-tool"), { ssr: false }),
+  "ahorro-por-redondeo": dynamic(() => import("@/components/tools/round-up-tool"), { ssr: false }),
+  "planificador-ahorro-anual": dynamic(() => import("@/components/tools/annual-planner-tool"), { ssr: false }),
+  "calculadora-cuota-prestamo": dynamic(() => import("@/components/tools/loan-payment-tool"), { ssr: false }),
+  "reparto-gastos-en-grupo": dynamic(() => import("@/components/tools/group-split-tool"), { ssr: false }),
+  "presupuesto-diario-de-viaje": dynamic(() => import("@/components/tools/trip-daily-budget-tool"), { ssr: false }),
+  "ahorro-para-navidad": dynamic(() => import("@/components/tools/holiday-savings-tool"), { ssr: false }),
+  "conversor-de-moneda-viajes": dynamic(() => import("@/components/tools/currency-converter-tool"), { ssr: false }),
+  "calculadora-de-propina": dynamic(() => import("@/components/tools/tip-calculator-tool"), { ssr: false }),
+  "cuanto-necesito-ganar-ingreso-minimo": dynamic(() => import("@/components/tools/target-income-tool"), { ssr: false }),
+};
+
+function PremiumExportBar() {
   const handleGeneratePDF = () => {
     if (typeof window !== "undefined") {
       window.print();
@@ -61,7 +85,7 @@ function QuickSmartCapture({ onValueExtracted }) {
 
           setTimeout(() => {
             setLoading(false);
-            setStatus("¡Captura cargada con éxito! Revisa o ajusta el valor.");
+            setStatus("¡Captura cargada con éxito!");
             if (typeof onValueExtracted === "function") {
               onValueExtracted(1500);
             }
@@ -69,7 +93,7 @@ function QuickSmartCapture({ onValueExtracted }) {
         } catch (err) {
           console.error(err);
           setLoading(false);
-          setStatus("Error al procesar la imagen localmente.");
+          setStatus("Error al procesar la imagen.");
         }
       };
       img.src = event.target?.result;
@@ -102,20 +126,15 @@ function QuickSmartCapture({ onValueExtracted }) {
           </span>
         </div>
         <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.8rem", color: T.textMuted || "#a1a1aa" }}>
-          Sube una foto de tu banco. Procesamiento 100% privado en tu navegador (0 servidores).
+          Procesamiento 100% privado en tu navegador (0 servidores).
         </p>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        {status && (
-          <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 500 }}>
-            {status}
-          </span>
-        )}
+        {status && <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 500 }}>{status}</span>}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={loading}
-          aria-label="Subir captura de pantalla para autocompletar"
           style={{
             padding: "0.55rem 1rem",
             borderRadius: "8px",
@@ -125,22 +144,11 @@ function QuickSmartCapture({ onValueExtracted }) {
             fontSize: "0.85rem",
             border: "none",
             cursor: loading ? "wait" : "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            transition: "opacity 0.2s",
           }}
         >
           {loading ? "Procesando..." : "📷 Subir Captura"}
         </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          style={{ display: "none" }}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
       </div>
     </div>
   );
@@ -150,14 +158,13 @@ function ToolLoading() {
   return (
     <div
       role="status"
-      aria-live="polite"
       style={{
         minHeight: "60vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: T.textMuted,
-        ...fontBody,
+        color: T.textMuted || "#9FB3B1",
+        fontFamily: "system-ui, sans-serif",
         fontSize: "0.9rem",
       }}
     >
@@ -169,7 +176,6 @@ function ToolLoading() {
 function ToolNotFound({ onBack }) {
   return (
     <main
-      aria-labelledby="tool-not-found-title"
       style={{
         minHeight: "60vh",
         display: "flex",
@@ -178,61 +184,21 @@ function ToolNotFound({ onBack }) {
         justifyContent: "center",
         textAlign: "center",
         gap: "1rem",
+        padding: "2rem",
       }}
     >
-      <h1
-        id="tool-not-found-title"
-        style={{
-          ...fontDisplay,
-          color: T.text,
-          fontSize: "1.7rem",
-          margin: 0,
-        }}
-      >
+      <h1 style={{ color: T.text || "#F5F2EA", fontSize: "1.7rem", margin: 0 }}>
         Herramienta no encontrada
       </h1>
-
-      <p
-        style={{
-          ...fontBody,
-          color: T.textMuted,
-          maxWidth: "28rem",
-          margin: 0,
-        }}
-      >
-        El enlace que has abierto no corresponde a una herramienta disponible en MetaBox.
+      <p style={{ color: T.textMuted || "#9FB3B1", maxWidth: "28rem", margin: 0 }}>
+        El enlace que has abierto no corresponde a una herramienta disponible.
       </p>
-
       <Button onClick={onBack} fullWidth={false}>
-        Volver a MetaBox
+        Volver a la home
       </Button>
     </main>
   );
 }
-
-const TOOL_COMPONENTS = {
-  savings: dynamic(() => import("@/components/tools/savings-goal-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  emergency: dynamic(() => import("@/components/tools/emergency-fund-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  budget: dynamic(() => import("@/components/tools/budget-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  interest: dynamic(() => import("@/components/tools/compound-interest-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  mortgagesimulator: dynamic(() => import("@/components/tools/mortgage-simulator-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  challenge: dynamic(() => import("@/components/tools/challenge-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  trip: dynamic(() => import("@/components/tools/trip-savings-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  daily: dynamic(() => import("@/components/tools/daily-expense-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  comparator: dynamic(() => import("@/components/tools/scenario-comparator-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  rule502030: dynamic(() => import("@/components/tools/rule502030-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  percent: dynamic(() => import("@/components/tools/savings-percent-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  bigpurchase: dynamic(() => import("@/components/tools/big-purchase-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  roundup: dynamic(() => import("@/components/tools/round-up-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  annual: dynamic(() => import("@/components/tools/annual-planner-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  loan: dynamic(() => import("@/components/tools/loan-payment-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  groupsplit: dynamic(() => import("@/components/tools/group-split-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  tripdaily: dynamic(() => import("@/components/tools/trip-daily-budget-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  holiday: dynamic(() => import("@/components/tools/holiday-savings-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  currency: dynamic(() => import("@/components/tools/currency-converter-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  tip: dynamic(() => import("@/components/tools/tip-calculator-tool"), { loading: () => <ToolLoading />, ssr: false }),
-  targetincome: dynamic(() => import("@/components/tools/target-income-tool"), { loading: () => <ToolLoading />, ssr: false }),
-};
 
 function ToolClientContent({ slug }) {
   const router = useRouter();
@@ -240,50 +206,10 @@ function ToolClientContent({ slug }) {
   const searchParams = useSearchParams();
   const [extractedValue, setExtractedValue] = useState(null);
 
-  const activeToolLabel = useMemo(() => {
-    if (!slug) return "Simulación Financiera";
-    const found = Array.isArray(ALL_TOOLS) ? ALL_TOOLS.find((t) => t?.slug === slug || t?.id === slug) : null;
-    return found ? found.label : "Simulación Financiera";
-  }, [slug]);
-
-  const resolvedToolId = useMemo(() => {
+  // Obtener de forma directa el componente según el slug de la URL
+  const ToolComponent = useMemo(() => {
     if (!slug) return null;
-    if (TOOL_COMPONENTS[slug]) return slug;
-
-    const found = Array.isArray(ALL_TOOLS) ? ALL_TOOLS.find((t) => t?.slug === slug || t?.id === slug) : null;
-    if (!found) return null;
-
-    if (TOOL_COMPONENTS[found.id]) return found.id;
-    if (TOOL_COMPONENTS[found.slug]) return found.slug;
-
-    const mapping = {
-      "calculadora-objetivo-ahorro": "savings",
-      "presupuesto-mensual-categorias": "budget",
-      "fondo-de-emergencia": "emergency",
-      "interes-compuesto-aportaciones": "interest",
-      "simulador-amortizacion-hipoteca": "mortgagesimulator",
-      "reto-de-ahorro-semanal": "challenge",
-      "ahorro-para-un-viaje": "trip",
-      "gasto-diario-a-mensual-anual": "daily",
-      "comparador-escenarios-ahorro": "comparator",
-      "regla-50-30-20-calculadora": "rule502030",
-      "porcentaje-de-ahorro": "percent",
-      "ahorro-compra-grande-coche-vivienda": "bigpurchase",
-      "ahorro-por-redondeo": "roundup",
-      "planificador-ahorro-anual": "annual",
-      "calculadora-cuota-prestamo": "loan",
-      "reparto-gastos-en-grupo": "groupsplit",
-      "presupuesto-diario-de-viaje": "tripdaily",
-      "ahorro-para-navidad": "holiday",
-      "conversor-de-moneda-viajes": "currency",
-      "calculadora-de-propina": "tip",
-      "cuanto-necesito-ganar-ingreso-minimo": "targetincome",
-    };
-
-    const mapped = mapping[found.id] || mapping[found.slug];
-    if (mapped && TOOL_COMPONENTS[mapped]) return mapped;
-
-    return null;
+    return TOOL_MAP[slug] || null;
   }, [slug]);
 
   const initialParams = useMemo(() => {
@@ -326,37 +252,27 @@ function ToolClientContent({ slug }) {
   const handleValueExtracted = useCallback(
     (val) => {
       setExtractedValue(val);
-      handleStateChange({
-        ingreso: val,
-        monto: val,
-        montoInicial: val,
-      });
+      handleStateChange({ ingreso: val, monto: val, montoInicial: val });
     },
     [handleStateChange]
   );
 
-  const Tool = resolvedToolId ? TOOL_COMPONENTS[resolvedToolId] : null;
-
-  if (!Tool) {
+  if (!ToolComponent) {
     return <ToolNotFound onBack={() => router.push("/")} />;
   }
 
   const handleNavigate = (val) => {
-    const targetId =
+    const targetSlug =
       typeof val === "object" && val !== null
         ? val.id || val.slug || val.key
         : val;
-    let cleanId =
-      typeof targetId === "string"
-        ? targetId.replace("/herramientas/", "").trim()
+    let cleanSlug =
+      typeof targetSlug === "string"
+        ? targetSlug.replace("/herramientas/", "").trim()
         : null;
 
-    if (cleanId && Array.isArray(ALL_TOOLS)) {
-      const targetTool = ALL_TOOLS.find(
-        (t) => t?.id === cleanId || t?.slug === cleanId
-      );
-      const finalSlug = targetTool ? targetTool.slug : cleanId;
-      router.push(`/herramientas/${finalSlug}`);
+    if (cleanSlug) {
+      router.push(`/herramientas/${cleanSlug}`);
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -367,8 +283,8 @@ function ToolClientContent({ slug }) {
     <div style={{ width: "100%" }}>
       <QuickSmartCapture onValueExtracted={handleValueExtracted} />
 
-      <Tool
-        key={`${resolvedToolId}-${extractedValue || "default"}`}
+      <ToolComponent
+        key={`${slug}-${extractedValue || "default"}`}
         initialParams={initialParams}
         onStateChange={handleStateChange}
         onBack={() => router.back()}
@@ -377,53 +293,16 @@ function ToolClientContent({ slug }) {
         onToolClick={handleNavigate}
       />
 
-      <PremiumExportBar toolName={activeToolLabel} />
+      <PremiumExportBar />
     </div>
   );
 }
 
 export default function ToolClient({ slug }) {
-  const router = useRouter();
-
-  const handleGlobalClick = (e) => {
-    const target = e.target;
-    if (!target || typeof target.closest !== "function") return;
-    const el = target.closest("a, [data-tool-id], [data-slug], [data-id]");
-    if (!el) return;
-
-    let targetId =
-      el.getAttribute("href") ||
-      el.getAttribute("data-tool-id") ||
-      el.getAttribute("data-slug") ||
-      el.getAttribute("data-id");
-    if (!targetId) return;
-
-    if (targetId.includes("/herramientas/")) {
-      targetId = targetId.split("/herramientas/")[1]?.split("/")[0];
-    }
-
-    const cleanId = targetId?.replace(/^\//, "").trim();
-    if (cleanId && Array.isArray(ALL_TOOLS)) {
-      const targetTool = ALL_TOOLS.find(
-        (t) => t?.id === cleanId || t?.slug === cleanId
-      );
-      if (targetTool) {
-        e.preventDefault();
-        e.stopPropagation();
-        router.push(`/herramientas/${targetTool.slug}`);
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      }
-    }
-  };
-
   return (
-    <div onClickCapture={handleGlobalClick}>
-      <Suspense fallback={<ToolLoading />}>
-        <ToolClientContent slug={slug} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<ToolLoading />}>
+      <ToolClientContent slug={slug} />
+    </Suspense>
   );
-    }
-      
+}
+
