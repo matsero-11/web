@@ -34,6 +34,13 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
   const [amortizationType, setAmortizationType] = useState(() => initialParams?.amortizationType || "term");
   const [commissionRate, setCommissionRate] = useState(() => parseFloat(initialParams?.commissionRate) || 0.15);
 
+  // Protección automática: si el capital pendiente baja del adelanto, ajustamos el adelanto
+  useEffect(() => {
+    if (extraPayment > loanAmount) {
+      setExtraPayment(loanAmount);
+    }
+  }, [loanAmount, extraPayment]);
+
   useEffect(() => {
     if (typeof onStateChange === "function") {
       onStateChange({ loanAmount, interestRate, remainingYears, extraPayment, amortizationType, commissionRate });
@@ -123,7 +130,6 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         onBack={onBack} 
       />
 
-      {/* BLOQUE DE RESULTADO */}
       <div className="mb-2">
         <Card glow result style={{ textAlign: "center", paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.88rem", fontWeight: 500 }}>
@@ -132,7 +138,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.6rem", fontWeight: 700, margin: "0.4rem 0" }}>
             {fmtEUR(animatedSaved)}
           </div>
-          <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", marginTop: "0.5rem", px: "1rem" }}>
+          <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", marginTop: "0.5rem" }}>
             {amortizationType === "term" && Number(yearsSavedFormatted) > 0 ? (
               <span>
                 🎉 Te quitas <strong style={{ color: T.lime }}>{yearsSavedFormatted} años</strong> de pagar hipoteca y tu mensualidad sigue fija en <strong>{fmtEUR(currentMonthlyPayment)}/mes</strong>.
@@ -156,7 +162,6 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         />
       </div>
 
-      {/* PASO 1: TU HIPOTECA HOY */}
       <div className="mb-2">
         <Card style={{ paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div className="flex items-center gap-2 mb-5">
@@ -171,7 +176,6 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         </Card>
       </div>
 
-      {/* PASO 2: DINERO EXTRA Y ESTRATEGIA */}
       <div className="mb-2">
         <Card style={{ paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div className="flex items-center gap-2 mb-5">
@@ -242,7 +246,6 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         </Card>
       </div>
 
-      {/* GRÁFICO VISUAL */}
       <div className="mb-2">
         <Card style={{ paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1rem", marginBottom: "0.3rem" }}>
@@ -306,5 +309,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-      }
-        
+                                                                   }
+      
