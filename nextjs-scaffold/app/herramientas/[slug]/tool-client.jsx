@@ -4,8 +4,11 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
-import { useCallback, useMemo, useState, Suspense, useRef } from "react";
+import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { FileDown, ShieldCheck } from "lucide-react";
+
+// Solo mostramos el detalle técnico del error fuera de producción
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 // Importaciones dinámicas seguras para cada herramienta de la plataforma
 const TOOL_MAP = {
@@ -31,6 +34,91 @@ const TOOL_MAP = {
   "calculadora-de-propina": dynamic(() => import("@/components/tools/tip-calculator-tool"), { ssr: false }),
   "cuanto-necesito-ganar-ingreso-minimo": dynamic(() => import("@/components/tools/target-income-tool"), { ssr: false }),
 };
+
+/**
+ * Error boundary por herramienta: si una herramienta falla, el resto de la
+ * página (captura, barra de exportación) sigue funcionando. En producción
+ * muestra un mensaje amable; el detalle técnico solo sale en desarrollo.
+ * Siempre se registra en consola para poder depurar con source maps.
+ */
+class ToolErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("[ToolClient] Fallo en la herramienta:", this.props.slug, error, info?.componentStack);
+  }
+
+  handleRetry = () => {
+    this.setState({ error: null });
+  };
+
+  render() {
+    const { error } = this.state;
+    if (!error) return this.props.children;
+
+    return (
+      <div
+        role="alert"
+        className="no-print"
+        style={{
+          minHeight: "50vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          gap: "0.9rem",
+          padding: "2rem 1rem",
+        }}
+      >
+        <span style={{ fontSize: "0.75rem", color: "#f08a7a", ...fontBody }}>Algo ha fallado</span>
+        <h2 style={{ color: T.text || "#F5F2EA", fontSize: "1.3rem", margin: 0, ...fontDisplay }}>
+          Esta herramienta no ha podido cargarse
+        </h2>
+        <p style={{ color: T.textMuted || "#9FB3B1", fontSize: "0.85rem", maxWidth: "26rem", margin: 0, ...fontBody }}>
+          El resto de la plataforma sigue funcionando con normalidad. Puedes reintentar o volver a la home.
+        </p>
+
+        {IS_DEV && (
+          <pre
+            style={{
+              maxWidth: "100%",
+              overflowX: "auto",
+              textAlign: "left",
+              fontSize: "0.7rem",
+              lineHeight: 1.5,
+              padding: "0.75rem 1rem",
+              borderRadius: "10px",
+              background: "rgba(0,0,0,0.35)",
+              color: "#c5e04a",
+              margin: 0,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {String(error?.stack || error?.message || error)}
+          </pre>
+        )}
+
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", justifyContent: "center" }}>
+          <Button onClick={this.handleRetry} fullWidth={false}>
+            Reintentar
+          </Button>
+          <Button onClick={this.props.onBack} fullWidth={false} variant="secondary">
+            Volver a la home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+}
 
 function PremiumExportBar() {
   const handleGeneratePDF = () => {
@@ -283,15 +371,18 @@ function ToolClientContent({ slug }) {
     <div style={{ width: "100%" }}>
       <QuickSmartCapture onValueExtracted={handleValueExtracted} />
 
-      <ToolComponent
-        key={`${slug}-${extractedValue || "default"}`}
-        initialParams={initialParams}
-        onStateChange={handleStateChange}
-        onBack={() => router.back()}
-        onNavigate={handleNavigate}
-        onSelect={handleNavigate}
-        onToolClick={handleNavigate}
-      />
+      {/* key=slug: al cambiar de herramienta el boundary se reinicia solo */}
+      <ToolErrorBoundary key={slug} slug={slug} onBack={() => router.push("/")}>
+        <ToolComponent
+          key={`${slug}-${extractedValue || "default"}`}
+          initialParams={initialParams}
+          onStateChange={handleStateChange}
+          onBack={() => router.back()}
+          onNavigate={handleNavigate}
+          onSelect={handleNavigate}
+          onToolClick={handleNavigate}
+        />
+      </ToolErrorBoundary>
 
       <PremiumExportBar />
     </div>
@@ -304,5 +395,4 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-}
-
+        }
