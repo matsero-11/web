@@ -248,10 +248,16 @@ function ToolClientContent({ slug }) {
 
   const resolvedToolId = useMemo(() => {
     if (!slug) return null;
+    
+    // 1. Verificamos si el slug coincide directamente con una clave
     if (TOOL_COMPONENTS[slug]) return slug;
 
     const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
     if (!found) return null;
+
+    // 2. Comprobamos si el id o el slug existen en el registro de componentes
+    if (TOOL_COMPONENTS[found.id]) return found.id;
+    if (TOOL_COMPONENTS[found.slug]) return found.slug;
 
     const mapping = {
       "calculadora-objetivo-ahorro": "savings",
@@ -277,7 +283,10 @@ function ToolClientContent({ slug }) {
       "cuanto-necesito-ganar-ingreso-minimo": "targetincome",
     };
 
-    return mapping[found.id] || mapping[found.slug] || found.id;
+    const mapped = mapping[found.id] || mapping[found.slug];
+    if (mapped && TOOL_COMPONENTS[mapped]) return mapped;
+
+    return null;
   }, [slug]);
 
   const initialParams = useMemo(() => {
@@ -414,5 +423,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-        }
+}
 
