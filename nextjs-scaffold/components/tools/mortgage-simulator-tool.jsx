@@ -130,7 +130,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         onBack={onBack} 
       />
 
-      <div className="mb-2">
+      <div className="mb-6">
         <Card glow result style={{ textAlign: "center", paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.88rem", fontWeight: 500 }}>
             Ahorro directo en intereses para tu bolsillo
@@ -152,7 +152,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         </Card>
       </div>
 
-      <div className="mb-2">
+      <div className="mb-6">
         <AdviceBlock
           text={
             amortizationType === "term"
@@ -162,7 +162,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         />
       </div>
 
-      <div className="mb-2">
+      <div className="mb-6">
         <Card style={{ paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div className="flex items-center gap-2 mb-5">
             <span style={{ background: T.lime, color: "#12200A", borderRadius: "50%", width: "24px", height: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8rem", ...fontBody }}>1</span>
@@ -176,7 +176,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         </Card>
       </div>
 
-      <div className="mb-2">
+      <div className="mb-6">
         <Card style={{ paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div className="flex items-center gap-2 mb-5">
             <span style={{ background: T.lime, color: "#12200A", borderRadius: "50%", width: "24px", height: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.8rem", ...fontBody }}>2</span>
@@ -246,7 +246,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         </Card>
       </div>
 
-      <div className="mb-2">
+      <div className="mb-6">
         <Card style={{ paddingTop: "1.6rem", paddingBottom: "1.6rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1rem", marginBottom: "0.3rem" }}>
             El reparto de tu dinero: Lo que pediste vs. Lo que te cobra el banco
@@ -309,5 +309,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-                                                                   }
-      
+                                            }
+                                                                                       
