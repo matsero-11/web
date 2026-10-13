@@ -215,6 +215,7 @@ const TOOL_COMPONENTS = {
   emergency: dynamic(() => import("@/components/tools/emergency-fund-tool"), { loading: () => <ToolLoading />, ssr: false }),
   budget: dynamic(() => import("@/components/tools/budget-tool"), { loading: () => <ToolLoading />, ssr: false }),
   interest: dynamic(() => import("@/components/tools/compound-interest-tool"), { loading: () => <ToolLoading />, ssr: false }),
+  mortgagesimulator: dynamic(() => import("@/components/tools/mortgage-simulator-tool"), { loading: () => <ToolLoading />, ssr: false }),
   challenge: dynamic(() => import("@/components/tools/challenge-tool"), { loading: () => <ToolLoading />, ssr: false }),
   trip: dynamic(() => import("@/components/tools/trip-savings-tool"), { loading: () => <ToolLoading />, ssr: false }),
   daily: dynamic(() => import("@/components/tools/daily-expense-tool"), { loading: () => <ToolLoading />, ssr: false }),
@@ -257,6 +258,7 @@ function ToolClientContent({ slug }) {
       "presupuesto-mensual-categorias": "budget",
       "fondo-de-emergencia": "emergency",
       "interes-compuesto-aportaciones": "interest",
+      "simulador-amortizacion-hipoteca": "mortgagesimulator",
       "reto-de-ahorro-semanal": "challenge",
       "ahorro-para-un-viaje": "trip",
       "gasto-diario-a-mensual-anual": "daily",
@@ -412,5 +414,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-                   }
-  
+        }
+
