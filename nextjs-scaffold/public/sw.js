@@ -1,13 +1,13 @@
-const CACHE_NAME = "metabox-v4";
+const CACHE_NAME = "metabox-v5";
 
-// Archivos clave usando rutas relativas para evitar fallos por subcarpetas
+// Archivos clave usando rutas absolutas desde la raíz
 const PRECACHE_ASSETS = [
-  "./",
-  "./manifest.json",
-  "./favicon.ico",
-  "./favicon-96x96.png",
-  "./web-app-manifest-192x192.png",
-  "./web-app-manifest-512x512.png"
+  "/",
+  "/manifest.json",
+  "/favicon.ico",
+  "/favicon-96x96.png",
+  "/web-app-manifest-192x192.png",
+  "/web-app-manifest-512x512.png"
 ];
 
 // Instalar el Service Worker precargando recursos de forma segura
@@ -68,7 +68,7 @@ self.addEventListener("fetch", (event) => {
             return networkResponse;
           })
           .catch(() => {
-            return cachedResponse || caches.match("./");
+            return cachedResponse || caches.match("/");
           });
 
         return cachedResponse || fetchPromise;
