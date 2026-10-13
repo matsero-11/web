@@ -128,18 +128,14 @@ function PremiumExportBar() {
   };
 
   return (
-    <div className="flex flex-col gap-2.5 mt-10 w-full max-w-xl mx-auto px-4 no-print">
-      <button
-        onClick={handleGeneratePDF}
-        type="button"
-        className="flex items-center justify-center gap-2.5 w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] cursor-pointer"
-      >
-        <FileDown className="w-4 h-4 stroke-[2.5]" />
+    <div className="export-bar no-print">
+      <button onClick={handleGeneratePDF} type="button" className="export-btn">
+        <FileDown strokeWidth={2.5} aria-hidden="true" />
         <span>Generar Informe PDF Ejecutivo</span>
       </button>
 
-      <div className="flex items-center gap-1.5 justify-center text-[12px] font-medium text-emerald-400 mt-1">
-        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+      <div className="export-note">
+        <ShieldCheck aria-hidden="true" />
         <span>Procesamiento 100% privado en tu navegador</span>
       </div>
     </div>
@@ -396,3 +392,4 @@ export default function ToolClient({ slug }) {
     </Suspense>
   );
         }
+      
