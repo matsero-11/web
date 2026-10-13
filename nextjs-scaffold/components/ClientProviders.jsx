@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { HelmetProvider } from "react-helmet-async";
 
 export default function ClientProviders({ children }) {
   useEffect(() => {
@@ -18,6 +17,7 @@ export default function ClientProviders({ children }) {
     };
   }, []);
 
-  return <HelmetProvider>{children}</HelmetProvider>;
+  // Evitamos el bloqueo global eliminando HelmetProvider y usando un contenedor seguro
+  return <>{children}</>;
 }
 
