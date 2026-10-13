@@ -19,6 +19,7 @@ import {
   Globe,
   Utensils,
   Briefcase,
+  Building2,
 } from "lucide-react";
 
 import SavingsTool from "@/components/tools/savings-goal-tool";
@@ -41,6 +42,7 @@ import HolidayTool from "@/components/tools/holiday-savings-tool";
 import CurrencyTool from "@/components/tools/currency-converter-tool";
 import TipTool from "@/components/tools/tip-calculator-tool";
 import TargetIncomeTool from "@/components/tools/target-income-tool";
+import MortgageSimulatorTool from "@/components/tools/mortgage-simulator-tool";
 
 const ALL_TOOLS = [
   {
@@ -62,7 +64,7 @@ const ALL_TOOLS = [
       name: "Cuenta Remunerada Ahorro",
       provider: "Trade Republic",
       highlight: "Rentabiliza tu meta con hasta un 3,75% TAE",
-      link: "https://example.com/affiliate-trade-republic", // Tu enlace de afiliado real
+      link: "https://example.com/affiliate-trade-republic",
       ctaText: "Ver Cuenta Remunerada",
     },
   },
@@ -133,6 +135,29 @@ const ALL_TOOLS = [
       highlight: "Invierte en fondos indexados globales con bajas comisiones",
       link: "https://example.com/affiliate-indexados",
       ctaText: "Empezar a Invertir",
+    },
+  },
+  {
+    id: "simulador-amortizacion-hipoteca",
+    slug: "simulador-amortizacion-hipoteca",
+    label: "Simulador de hipoteca",
+    desc: "Calcula el ahorro al reducir cuota o plazo",
+    icon: Building2,
+    tone: "lime",
+    tags: ["hipoteca", "amortización", "cuota", "plazo", "vivienda", "banco"],
+    component: MortgageSimulatorTool,
+    priority: 1.0,
+    relatedTools: [
+      "calculadora-cuota-prestamo",
+      "ahorro-compra-grande-coche-vivienda",
+      "presupuesto-mensual-categorias",
+    ],
+    affiliateProduct: {
+      name: "Subrogación y Cambio de Hipoteca",
+      provider: "Hipotecas / Bróker Financiero",
+      highlight: "Mejora tu tipo de interés y ahorra comisiones bancarias",
+      link: "https://example.com/affiliate-hipoteca",
+      ctaText: "Estudio de Subrogación",
     },
   },
   {
@@ -247,6 +272,7 @@ const ALL_TOOLS = [
     relatedTools: [
       "calculadora-objetivo-ahorro",
       "calculadora-cuota-prestamo",
+      "simulador-amortizacion-hipoteca",
     ],
   },
   {
@@ -290,6 +316,7 @@ const ALL_TOOLS = [
     component: LoanTool,
     priority: 0.9,
     relatedTools: [
+      "simulador-amortizacion-hipoteca",
       "ahorro-compra-grande-coche-vivienda",
       "presupuesto-mensual-categorias",
     ],
@@ -430,4 +457,4 @@ const CATEGORIES = [
 ];
 
 export { ALL_TOOLS, CATEGORIES };
-    
+  
