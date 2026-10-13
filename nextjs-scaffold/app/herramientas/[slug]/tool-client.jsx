@@ -8,7 +8,6 @@ import { useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 import { FileDown, ShieldCheck } from "lucide-react";
 
-// Componente de Exportación Limpio: Botón PDF Ejecutivo Verde Esmeralda (Oculto en el PDF generado)
 function PremiumExportBar({ toolName }) {
   const handleGeneratePDF = () => {
     if (typeof window !== "undefined") {
@@ -35,7 +34,6 @@ function PremiumExportBar({ toolName }) {
   );
 }
 
-// Componente de Captura Inteligente con clase no-print para evitar su impresión
 function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,7 +62,9 @@ function QuickSmartCapture({ onValueExtracted }) {
           setTimeout(() => {
             setLoading(false);
             setStatus("¡Captura cargada con éxito! Revisa o ajusta el valor.");
-            onValueExtracted(1500);
+            if (typeof onValueExtracted === "function") {
+              onValueExtracted(1500);
+            }
           }, 600);
         } catch (err) {
           console.error(err);
@@ -242,20 +242,17 @@ function ToolClientContent({ slug }) {
 
   const activeToolLabel = useMemo(() => {
     if (!slug) return "Simulación Financiera";
-    const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
+    const found = Array.isArray(ALL_TOOLS) ? ALL_TOOLS.find((t) => t?.slug === slug || t?.id === slug) : null;
     return found ? found.label : "Simulación Financiera";
   }, [slug]);
 
   const resolvedToolId = useMemo(() => {
     if (!slug) return null;
-    
-    // 1. Verificamos si el slug coincide directamente con una clave
     if (TOOL_COMPONENTS[slug]) return slug;
 
-    const found = ALL_TOOLS.find((t) => t.slug === slug || t.id === slug);
+    const found = Array.isArray(ALL_TOOLS) ? ALL_TOOLS.find((t) => t?.slug === slug || t?.id === slug) : null;
     if (!found) return null;
 
-    // 2. Comprobamos si el id o el slug existen en el registro de componentes
     if (TOOL_COMPONENTS[found.id]) return found.id;
     if (TOOL_COMPONENTS[found.slug]) return found.slug;
 
@@ -319,7 +316,7 @@ function ToolClientContent({ slug }) {
 
       const queryStr = params.toString();
       const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
-      if (window.location.search !== `?${queryStr}`) {
+      if (typeof window !== "undefined" && window.location?.search !== `?${queryStr}`) {
         window.history.replaceState(null, "", newUrl);
       }
     },
@@ -354,13 +351,15 @@ function ToolClientContent({ slug }) {
         ? targetId.replace("/herramientas/", "").trim()
         : null;
 
-    if (cleanId) {
+    if (cleanId && Array.isArray(ALL_TOOLS)) {
       const targetTool = ALL_TOOLS.find(
-        (t) => t.id === cleanId || t.slug === cleanId
+        (t) => t?.id === cleanId || t?.slug === cleanId
       );
       const finalSlug = targetTool ? targetTool.slug : cleanId;
       router.push(`/herramientas/${finalSlug}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
   };
 
@@ -388,6 +387,7 @@ export default function ToolClient({ slug }) {
 
   const handleGlobalClick = (e) => {
     const target = e.target;
+    if (!target || typeof target.closest !== "function") return;
     const el = target.closest("a, [data-tool-id], [data-slug], [data-id]");
     if (!el) return;
 
@@ -403,15 +403,17 @@ export default function ToolClient({ slug }) {
     }
 
     const cleanId = targetId?.replace(/^\//, "").trim();
-    if (cleanId) {
+    if (cleanId && Array.isArray(ALL_TOOLS)) {
       const targetTool = ALL_TOOLS.find(
-        (t) => t.id === cleanId || t.slug === cleanId
+        (t) => t?.id === cleanId || t?.slug === cleanId
       );
       if (targetTool) {
         e.preventDefault();
         e.stopPropagation();
         router.push(`/herramientas/${targetTool.slug}`);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
       }
     }
   };
@@ -423,5 +425,5 @@ export default function ToolClient({ slug }) {
       </Suspense>
     </div>
   );
-}
-
+    }
+      
