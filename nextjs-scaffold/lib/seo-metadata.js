@@ -28,6 +28,13 @@ export const SEO_METADATA = {
     keywords: ["interes compuesto aportaciones mensuales", "simulador interes compuesto", "crecimiento inversion a largo plazo"],
     priority: 1.0,
   },
+  "simulador-amortizacion-hipoteca": {
+    title: "Simulador de amortización de hipoteca — calcula tu ahorro al reducir cuota o plazo",
+    description: "Calcula cuántos miles de euros en intereses y cuántos años te ahorras al realizar una amortización anticipada de tu hipoteca. Simulador preciso con cálculo de comisiones bancarias.",
+    schemaType: "FinancialCalculator",
+    keywords: ["simulador de hipoteca", "amortizacion anticipada hipoteca", "reducir cuota o plazo", "calculadora amortizar hipoteca"],
+    priority: 1.0,
+  },
   challenge: {
     title: "Reto de ahorro de 52 semanas (o 26)",
     description: "Sigue tu progreso semana a semana en el reto de ahorro progresivo y marca lo que ya has conseguido.",
@@ -130,7 +137,7 @@ export const SEO_METADATA = {
     title: "Calculadora de propina y reparto de cuenta",
     description: "Calcula la propina y reparte la cuenta entre varias personas al instante.",
     schemaType: "FinancialCalculator",
-    keywords: ["calcular propina restaurante", "repartir cuenta y propina", "dividir factura bar"],
+    keywords: ["calcular propina restaurante", "repartor cuenta y propina", "dividir factura bar"],
     priority: 0.6,
   },
   targetincome: {
