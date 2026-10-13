@@ -118,16 +118,15 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className="antialiased bg-[#080F11] text-white">
+      {/* Fondo, color y tipografía vienen de globals.css */}
+      <body>
         <ClientProviders>
-          <main className="mx-auto w-full max-w-md space-y-8 px-5 py-8 md:max-w-2xl md:space-y-10 md:px-8 md:py-12 lg:max-w-4xl">
-            {children}
-          </main>
+          <main className="app-shell">{children}</main>
 
           <RegisterServiceWorker />
         </ClientProviders>
       </body>
     </html>
   );
-}
+        }
 
