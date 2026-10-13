@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { HelmetProvider } from "react-helmet-async";
 
 export default function ClientProviders({ children }) {
   useEffect(() => {
@@ -17,7 +18,7 @@ export default function ClientProviders({ children }) {
     };
   }, []);
 
-  // Evitamos el bloqueo global eliminando HelmetProvider y usando un contenedor seguro
-  return <>{children}</>;
+  // HelmetProvider es obligatorio mientras algún componente use <Helmet>.
+  // Sin él, Helmet falla con "Cannot read properties of undefined (reading 'add')".
+  return <HelmetProvider>{children}</HelmetProvider>;
 }
-
