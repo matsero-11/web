@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false, // Oculta la tecnología del servidor por seguridad
   compress: true, // Compresión gzip/brotli automática para mejorar velocidad
+  productionBrowserSourceMaps: true, // TEMPORAL: para depurar en Vercel. Quitar cuando se arregle
   images: {
     formats: ['image/avif', 'image/webp'], // Formatos de imagen ultraligeros
     minimumCacheTTL: 60,
@@ -31,4 +32,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-
