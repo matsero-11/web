@@ -10,6 +10,16 @@ import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 
+// Función auxiliar declarada fuera del componente principal para evitar problemas de hoisting/inicialización
+function calculateMonthlyPayment(principal, annualRate, years) {
+  if (principal <= 0 || annualRate <= 0 || years <= 0) return 0;
+  const monthlyRate = annualRate / 100 / 12;
+  const totalPayments = years * 12;
+  const denominator = 1 - Math.pow(1 + monthlyRate, -totalPayments);
+  if (denominator <= 0) return 0;
+  return (principal * monthlyRate) / denominator;
+}
+
 export default function MortgageSimulatorTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [loanAmount, setLoanAmount] = useState(() => Number(initialParams?.loanAmount) || 180000);
   const [interestRate, setInterestRate] = useState(() => Number(initialParams?.interestRate) || 2.8);
@@ -30,15 +40,11 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
     }
   }, [loanAmount, interestRate, remainingYears, extraPayment, amortizationType, commissionRate, onStateChange]);
 
-  const calcMonthly = (p, r, y) => {
-    if (p <= 0 || r <= 0 || y <= 0) return 0;
-    const mr = r / 100 / 12, tp = y * 12;
-    const denominator = 1 - Math.pow(1 + mr, -tp);
-    if (denominator <= 0) return 0;
-    return (p * mr) / denominator;
-  };
-
-  const currentMonthlyPayment = useMemo(() => calcMonthly(loanAmount, interestRate, remainingYears), [loanAmount, interestRate, remainingYears]);
+  const currentMonthlyPayment = useMemo(
+    () => calculateMonthlyPayment(loanAmount, interestRate, remainingYears),
+    [loanAmount, interestRate, remainingYears]
+  );
+  
   const currentTotalInterest = useMemo(() => Math.max(0, (currentMonthlyPayment * remainingYears * 12) - loanAmount), [currentMonthlyPayment, remainingYears, loanAmount]);
   const commissionCost = useMemo(() => (extraPayment * commissionRate) / 100, [extraPayment, commissionRate]);
   const effectiveExtraPayment = Math.max(0, extraPayment - commissionCost);
@@ -54,7 +60,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
   }, [newLoanAmount, currentMonthlyPayment, interestRate]);
 
   const newQuotaSimulation = useMemo(() => {
-    const q = calcMonthly(newLoanAmount, interestRate, remainingYears);
+    const q = calculateMonthlyPayment(newLoanAmount, interestRate, remainingYears);
     return { newQuota: q, totalInterest: Math.max(0, (q * remainingYears * 12) - newLoanAmount) };
   }, [newLoanAmount, interestRate, remainingYears]);
 
@@ -251,5 +257,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-      }
-
+                    }
+                  
