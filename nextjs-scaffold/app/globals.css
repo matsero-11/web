@@ -38,7 +38,6 @@
   --radius-lg: 1.5rem;
   --radius-xl: 2rem;
 
-  /* Variables centralizadas de los sliders */
   --slider-track-height: 12px;
   --slider-thumb-size: 26px;
 
@@ -53,7 +52,6 @@
   --slider-focus-coral: var(--coral-soft);
 }
 
-/* Reset */
 *,
 *::before,
 *::after {
@@ -140,7 +138,6 @@ img {
   color: var(--text);
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -160,7 +157,6 @@ img {
   background: var(--lime-strong);
 }
 
-/* Foco accesible */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -172,41 +168,38 @@ textarea:focus-visible {
 
 /* ==========================================================================
    LAYOUT Y BARRA DE EXPORTACIÓN
-   (sustituyen a las clases estilo Tailwind, que no están instaladas)
    ========================================================================== */
 
-/* Contenedor principal de la app (usado en app/layout.jsx) */
 .app-shell {
   display: flex;
   flex-direction: column;
   gap: 2rem;
   width: 100%;
-  max-width: 28rem;
+  max-width: 1200px; /* Ampliado para ocupar mejor el espacio en pantallas grandes */
   margin: 0 auto;
-  padding: 2rem 1.25rem;
+  padding: 2rem 1.5rem;
 }
 
 @media (min-width: 768px) {
   .app-shell {
     gap: 2.5rem;
-    max-width: 42rem;
-    padding: 3rem 2rem;
+    padding: 3rem 2.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .app-shell {
-    max-width: 56rem;
+    max-width: 1320px;
+    padding: 3rem 3rem;
   }
 }
 
-/* Barra "Generar Informe PDF" (usada en ToolClient.jsx) */
 .export-bar {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
   width: 100%;
-  max-width: 36rem;
+  max-width: 42rem;
   margin: 2.5rem auto 0;
   padding: 0 1rem;
 }
@@ -262,7 +255,6 @@ textarea:focus-visible {
   height: 1rem;
 }
 
-/* Formularios */
 input,
 select,
 textarea {
@@ -318,7 +310,6 @@ select {
   padding-right: 2.75rem;
 }
 
-/* Inputs numéricos */
 input[type="number"],
 input[data-slider-input] {
   position: relative;
@@ -332,43 +323,6 @@ input[data-slider-input] {
   opacity: 1;
 }
 
-input[type="number"]:not(:disabled),
-input[data-slider-input]:not(:disabled) {
-  pointer-events: auto !important;
-  cursor: text;
-}
-
-input[type="number"]:disabled,
-input[data-slider-input]:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-input[type="number"]:focus,
-input[data-slider-input]:focus {
-  border-color: var(--lime) !important;
-  box-shadow: 0 0 0 4px var(--lime-soft) !important;
-  outline: none;
-}
-
-input[type="number"]:focus-visible,
-input[data-slider-input]:focus-visible {
-  outline: 2px solid var(--lime);
-  outline-offset: 3px;
-}
-
-input[type="number"] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  margin: 0;
-  opacity: 0.75;
-}
-
-/* Sliders Web */
 input[type="range"] {
   --slider-progress: var(--slider-progress-lime);
   --slider-focus: var(--slider-focus-lime);
@@ -400,20 +354,6 @@ input[type="range"] {
   touch-action: pan-y;
 }
 
-input[type="range"]:hover,
-input[type="range"]:focus,
-input[type="range"]:active {
-  border: 0;
-  background-color: transparent;
-  box-shadow: none;
-}
-
-input[type="range"]:focus-visible {
-  outline: 2px solid var(--slider-progress);
-  outline-offset: 5px;
-}
-
-/* Chrome, Edge y Safari */
 input[type="range"]::-webkit-slider-runnable-track {
   height: var(--slider-track-height);
   border: 0;
@@ -440,25 +380,8 @@ input[type="range"]::-webkit-slider-thumb {
     0 4px 12px rgba(0, 0, 0, 0.3);
 
   cursor: grab;
-  transition:
-    transform 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
 }
 
-input[type="range"]:active::-webkit-slider-thumb {
-  cursor: grabbing;
-  transform: scale(1.1);
-}
-
-input[type="range"]:focus-visible::-webkit-slider-thumb {
-  box-shadow:
-    0 0 0 2px var(--slider-progress),
-    0 0 0 6px var(--slider-focus),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Firefox */
 input[type="range"]::-moz-range-track {
   height: var(--slider-track-height);
   border: 0;
@@ -485,25 +408,8 @@ input[type="range"]::-moz-range-thumb {
     0 4px 12px rgba(0, 0, 0, 0.3);
 
   cursor: grab;
-  transition:
-    transform 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
 }
 
-input[type="range"]:active::-moz-range-thumb {
-  cursor: grabbing;
-  transform: scale(1.1);
-}
-
-input[type="range"]:focus-visible::-moz-range-thumb {
-  box-shadow:
-    0 0 0 2px var(--slider-progress),
-    0 0 0 6px var(--slider-focus),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Variantes de color */
 input[type="range"].slider-lime {
   --slider-progress: var(--slider-progress-lime);
   --slider-focus: var(--slider-focus-lime);
@@ -519,7 +425,6 @@ input[type="range"].slider-coral {
   --slider-focus: var(--slider-focus-coral);
 }
 
-/* Animaciones */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -532,57 +437,6 @@ input[type="range"].slider-coral {
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes pulseSoft {
-  0%,
-  100% {
-    opacity: 0.65;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.03);
-  }
-}
-
-@keyframes shimmer {
-  from {
-    transform: translateX(-100%);
-  }
-
-  to {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .stagger-item {
   animation: fadeInUp 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -591,27 +445,6 @@ input[type="range"].slider-coral {
   animation: fadeInUp 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.fade-in {
-  animation: fadeIn 300ms ease both;
-}
-
-.scale-in {
-  animation: scaleIn 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.animate-pulse-soft {
-  animation: pulseSoft 2.8s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  animation: shimmer 1.2s ease-in-out infinite;
-}
-
-.animate-spin {
-  animation: spin 800ms linear infinite;
-}
-
-/* Utilidades */
 .text-lime {
   color: var(--lime);
 }
@@ -636,37 +469,6 @@ input[type="range"].slider-coral {
   background: var(--surface-alt);
 }
 
-.border-soft {
-  border-color: var(--border);
-}
-
-.border-strong {
-  border-color: var(--border-strong);
-}
-
-/* Reducción de movimiento */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  input[type="range"]::-webkit-slider-thumb,
-  input[type="range"]::-moz-range-thumb {
-    transition: none;
-  }
-}
-
-/* ==========================================================================
-   INFORME EJECUTIVO DE IMPRESIÓN / EXPORTACIÓN PDF (METABOX - 10/10)
-   ========================================================================== */
 @media print {
   @page {
     size: A4 portrait;
@@ -677,15 +479,9 @@ input[type="range"].slider-coral {
   body {
     background: #ffffff !important;
     color: #0f172a !important;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    font-size: 9.5pt !important;
-    line-height: 1.35 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
+    font-family: system-ui, -apple-system, sans-serif !important;
   }
 
-  /* 1. OCULTACIÓN TOTAL DE WIDGETS, BOTONES, CONTROLES WEB Y NAVEGACIÓN */
   nav,
   header,
   footer,
@@ -694,79 +490,8 @@ input[type="range"].slider-coral {
   input[type="file"],
   select,
   .no-print,
-  [role="status"],
-  [class*="QuickSmartCapture"],
-  [class*="streak"],
-  .financial-streak,
-  aside {
+  [role="status"] {
     display: none !important;
   }
+}
 
-  /* 2. FORZAR ALTO CONTRASTE Y LECTURA PERFECTA EN TODOS LOS TEXTOS */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  span,
-  label,
-  td,
-  th,
-  strong,
-  div {
-    color: #0f172a !important;
-    opacity: 1 !important;
-    text-shadow: none !important;
-  }
-
-  /* Resaltar resultados finales e importes en verde bancario oscuro */
-  .text-emerald-400,
-  .text-emerald-500,
-  .text-lime,
-  .text-emerald-600 {
-    color: #047857 !important;
-    font-weight: 800 !important;
-  }
-
-  /* Formatear campos con valores introducidos por el usuario */
-  input[type="text"],
-  input[type="number"] {
-    border: none !important;
-    background: transparent !important;
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-  }
-
-  /* 3. MEMBRETE CORPORATIVO BANCARIO EN LA PARTE SUPERIOR */
-  body::before {
-    content: "METABOX — INFORME DE PROYECCIÓN FINANCIERA";
-    display: block;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 11pt;
-    font-weight: 800;
-    color: #047857;
-    border-bottom: 2px solid #059669;
-    padding-bottom: 5px;
-    margin-bottom: 16px;
-    letter-spacing: 0.05em;
-  }
-
-  /* 4. TARJETAS Y TABLAS LIMPIAS EN 1 SOLA PÁGINA */
-  .card,
-  section,
-  div[class*="rounded"] {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    padding: 10px 14px !important;
-    margin-bottom: 10px !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-  }
-  
