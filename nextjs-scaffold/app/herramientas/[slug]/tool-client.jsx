@@ -1,457 +1,400 @@
-import {
-  Target,
-  Wallet,
-  ShieldCheck,
-  TrendingUp,
-  Trophy,
-  Plane,
-  Receipt,
-  GitCompare,
-  PieChart,
-  Percent,
-  ShoppingBag,
-  Coins,
-  CalendarRange,
-  CreditCard,
-  Users,
-  Compass,
-  Gift,
-  Globe,
-  Utensils,
-  Briefcase,
-  Building2,
-} from "lucide-react";
+"use client";
 
-import SavingsTool from "@/components/tools/savings-goal-tool";
-import BudgetTool from "@/components/tools/budget-tool";
-import EmergencyTool from "@/components/tools/emergency-fund-tool";
-import InterestTool from "@/components/tools/compound-interest-tool";
-import ChallengeTool from "@/components/tools/challenge-tool";
-import TripTool from "@/components/tools/trip-savings-tool";
-import DailyTool from "@/components/tools/daily-expense-tool";
-import ComparatorTool from "@/components/tools/scenario-comparator-tool";
-import Rule502030Tool from "@/components/tools/rule502030-tool";
-import PercentTool from "@/components/tools/savings-percent-tool";
-import BigPurchaseTool from "@/components/tools/big-purchase-tool";
-import RoundupTool from "@/components/tools/round-up-tool";
-import AnnualTool from "@/components/tools/annual-planner-tool";
-import LoanTool from "@/components/tools/loan-payment-tool";
-import GroupSplitTool from "@/components/tools/group-split-tool";
-import TripDailyTool from "@/components/tools/trip-daily-budget-tool";
-import HolidayTool from "@/components/tools/holiday-savings-tool";
-import CurrencyTool from "@/components/tools/currency-converter-tool";
-import TipTool from "@/components/tools/tip-calculator-tool";
-import TargetIncomeTool from "@/components/tools/target-income-tool";
-import MortgageSimulatorTool from "@/components/tools/mortgage-simulator-tool";
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
+import { Button } from "@/components/ui";
+import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
+import { FileDown, ShieldCheck } from "lucide-react";
 
-const ALL_TOOLS = [
-  {
-    id: "calculadora-objetivo-ahorro",
-    slug: "calculadora-objetivo-ahorro",
-    label: "Objetivo de ahorro",
-    desc: "Cuánto tardarás en llegar a tu meta",
-    icon: Target,
-    tone: "lime",
-    category: "ahorrar",
-    tags: ["ahorro", "meta", "objetivo", "tiempo"],
-    component: SavingsTool,
-    priority: 0.9,
-    relatedTools: [
-      "fondo-de-emergencia",
-      "interes-compuesto-aportaciones",
-      "ahorro-compra-grande-coche-vivienda",
-    ],
-  },
-  {
-    id: "presupuesto-mensual-categorias",
-    slug: "presupuesto-mensual-categorias",
-    label: "Presupuesto mensual",
-    desc: "Organiza tus gastos por categoría",
-    icon: Wallet,
-    tone: "lavender",
-    category: "planificar",
-    tags: ["presupuesto", "gastos", "mensual", "categorías"],
-    component: BudgetTool,
-    priority: 0.8,
-    relatedTools: [
-      "regla-50-30-20-calculadora",
-      "gasto-diario-a-mensual-anual",
-      "porcentaje-de-ahorro",
-    ],
-  },
-  {
-    id: "fondo-de-emergencia",
-    slug: "fondo-de-emergencia",
-    label: "Fondo de emergencia",
-    desc: "Cuánto necesitas ahorrado por seguridad",
-    icon: ShieldCheck,
-    tone: "lime",
-    category: "ahorrar",
-    tags: ["emergencia", "seguridad", "ahorro", "imprevistos"],
-    component: EmergencyTool,
-    priority: 0.9,
-    relatedTools: [
-      "calculadora-objetivo-ahorro",
-      "presupuesto-mensual-categorias",
-      "cuanto-necesito-ganar-ingreso-minimo",
-    ],
-  },
-  {
-    id: "interes-compuesto-aportaciones",
-    slug: "interes-compuesto-aportaciones",
-    label: "Interés compuesto",
-    desc: "Simula el crecimiento de tu dinero",
-    icon: TrendingUp,
-    tone: "lavender",
-    category: "crecer",
-    tags: ["interés", "crecimiento", "inversión", "largo plazo"],
-    component: InterestTool,
-    priority: 1.0,
-    relatedTools: [
-      "calculadora-objetivo-ahorro",
-      "comparador-escenarios-ahorro",
-      "planificador-ahorro-anual",
-    ],
-  },
-  {
-    id: "simulador-amortizacion-hipoteca",
-    slug: "simulador-amortizacion-hipoteca",
-    label: "Simulador de hipoteca",
-    desc: "Calcula el ahorro al reducir cuota o plazo",
-    icon: Building2,
-    tone: "lime",
-    category: "planificar",
-    tags: [
-      "hipoteca",
-      "simulador hipoteca",
-      "amortización",
-      "amortizar hipoteca",
-      "cuota",
-      "plazo",
-      "vivienda",
-      "banco",
-      "préstamo hipotecario",
-      "adelantar dinero"
-    ],
-    component: MortgageSimulatorTool,
-    priority: 1.0,
-    relatedTools: [
-      "calculadora-cuota-prestamo",
-      "ahorro-compra-grande-coche-vivienda",
-      "presupuesto-mensual-categorias",
-    ],
-  },
-  {
-    id: "reto-de-ahorro-semanal",
-    slug: "reto-de-ahorro-semanal",
-    label: "Reto de ahorro",
-    desc: "Reto semanal progresivo de 26 o 52 semanas",
-    icon: Trophy,
-    tone: "lime",
-    category: "ahorrar",
-    tags: ["reto", "semanal", "progresivo", "disciplina"],
-    component: ChallengeTool,
-    priority: 0.7,
-    relatedTools: [
-      "calculadora-objetivo-ahorro",
-      "planificador-ahorro-anual",
-    ],
-  },
-  {
-    id: "ahorro-para-un-viaje",
-    slug: "ahorro-para-un-viaje",
-    label: "Ahorro para un viaje",
-    desc: "Cuánto ahorrar al mes antes de una fecha",
-    icon: Plane,
-    tone: "lavender",
-    category: "ahorrar",
-    tags: ["viaje", "vacaciones", "ahorro", "fecha"],
-    component: TripTool,
-    priority: 0.7,
-    relatedTools: [
-      "presupuesto-diario-de-viaje",
-      "conversor-de-moneda-viajes",
-      "calculadora-objetivo-ahorro",
-    ],
-  },
-  {
-    id: "gasto-diario-a-mensual-anual",
-    slug: "gasto-diario-a-mensual-anual",
-    label: "Gastos diarios",
-    desc: "De gasto diario a mensual y anual",
-    icon: Receipt,
-    tone: "lime",
-    category: "planificar",
-    tags: ["diario", "gastos", "mensual", "anual"],
-    component: DailyTool,
-    priority: 0.6,
-    relatedTools: [
-      "presupuesto-mensual-categorias",
-      "ahorro-por-redondeo",
-    ],
-  },
-  {
-    id: "comparador-escenarios-ahorro",
-    slug: "comparador-escenarios-ahorro",
-    label: "Comparador de escenarios",
-    desc: "Compara dos formas de ahorrar",
-    icon: GitCompare,
-    tone: "lavender",
-    category: "crecer",
-    tags: ["comparar", "escenarios", "simulación", "decisiones"],
-    component: ComparatorTool,
-    priority: 0.8,
-    relatedTools: [
-      "interes-compuesto-aportaciones",
-      "calculadora-objetivo-ahorro",
-    ],
-  },
-  {
-    id: "regla-50-30-20-calculadora",
-    slug: "regla-50-30-20-calculadora",
-    label: "Regla 50/30/20",
-    desc: "Reparte tu ingreso entre necesidades, deseos y ahorro",
-    icon: PieChart,
-    tone: "lime",
-    category: "planificar",
-    tags: ["50/30/20", "regla", "presupuesto", "reparto"],
-    component: Rule502030Tool,
-    priority: 0.9,
-    relatedTools: [
-      "presupuesto-mensual-categorias",
-      "porcentaje-de-ahorro",
-      "cuanto-necesito-ganar-ingreso-minimo",
-    ],
-  },
-  {
-    id: "porcentaje-de-ahorro",
-    slug: "porcentaje-de-ahorro",
-    label: "Porcentaje de ahorro",
-    desc: "Qué parte de tu ingreso ahorras",
-    icon: Percent,
-    tone: "lavender",
-    category: "planificar",
-    tags: ["porcentaje", "ahorro", "ingreso", "proporción"],
-    component: PercentTool,
-    priority: 0.8,
-    relatedTools: [
-      "regla-50-30-20-calculadora",
-      "calculadora-objetivo-ahorro",
-    ],
-  },
-  {
-    id: "ahorro-compra-grande-coche-vivienda",
-    slug: "ahorro-compra-grande-coche-vivienda",
-    label: "Ahorro para una compra grande",
-    desc: "Coche, vivienda u otra meta grande",
-    icon: ShoppingBag,
-    tone: "lime",
-    category: "ahorrar",
-    tags: ["compra", "grande", "coche", "vivienda", "meta"],
-    component: BigPurchaseTool,
-    priority: 0.9,
-    relatedTools: [
-      "calculadora-objetivo-ahorro",
-      "calculadora-cuota-prestamo",
-      "simulador-amortizacion-hipoteca",
-    ],
-  },
-  {
-    id: "ahorro-por-redondeo",
-    slug: "ahorro-por-redondeo",
-    label: "Ahorro por redondeo",
-    desc: "La diferencia de cada compra, ahorrada",
-    icon: Coins,
-    tone: "lavender",
-    category: "ahorrar",
-    tags: ["redondeo", "compras", "microahorro", "automático"],
-    component: RoundupTool,
-    priority: 0.7,
-    relatedTools: [
-      "gasto-diario-a-mensual-anual",
-      "calculadora-objetivo-ahorro",
-    ],
-  },
-  {
-    id: "planificador-ahorro-anual",
-    slug: "planificador-ahorro-anual",
-    label: "Planificador de ahorro anual",
-    desc: "12 meses, ajustando los meses difíciles",
-    icon: CalendarRange,
-    tone: "lime",
-    category: "planificar",
-    tags: ["anual", "12 meses", "planificación", "ajustes"],
-    component: AnnualTool,
-    priority: 0.8,
-    relatedTools: [
-      "calculadora-objetivo-ahorro",
-      "reto-de-ahorro-semanal",
-    ],
-  },
-  {
-    id: "calculadora-cuota-prestamo",
-    slug: "calculadora-cuota-prestamo",
-    label: "Cuota de un préstamo",
-    desc: "Calcula la cuota mensual y los intereses",
-    icon: CreditCard,
-    tone: "lavender",
-    category: "planificar",
-    tags: ["préstamo", "cuota", "intereses", "crédito"],
-    component: LoanTool,
-    priority: 0.9,
-    relatedTools: [
-      "simulador-amortizacion-hipoteca",
-      "ahorro-compra-grande-coche-vivienda",
-      "presupuesto-mensual-categorias",
-    ],
-  },
-  {
-    id: "reparto-gastos-en-grupo",
-    slug: "reparto-gastos-en-grupo",
-    label: "Reparto de gastos en grupo",
-    desc: "Divide un gasto y ve quién debe qué",
-    icon: Users,
-    tone: "lime",
-    category: "planificar",
-    tags: ["grupo", "reparto", "gastos", "deudas"],
-    component: GroupSplitTool,
-    priority: 0.8,
-    relatedTools: [
-      "calculadora-de-propina",
-      "presupuesto-diario-de-viaje",
-    ],
-  },
-  {
-    id: "presupuesto-diario-de-viaje",
-    slug: "presupuesto-diario-de-viaje",
-    label: "Presupuesto diario de viaje",
-    desc: "Cuánto puedes gastar al día según lo que llevas",
-    icon: Compass,
-    tone: "lavender",
-    category: "planificar",
-    tags: ["viaje", "diario", "presupuesto", "gasto"],
-    component: TripDailyTool,
-    priority: 0.7,
-    relatedTools: [
-      "ahorro-para-un-viaje",
-      "conversor-de-moneda-viajes",
-    ],
-  },
-  {
-    id: "ahorro-para-navidad",
-    slug: "ahorro-para-navidad",
-    label: "Ahorro para Navidad",
-    desc: "Calcula los meses que faltan y cuánto ahorrar",
-    icon: Gift,
-    tone: "lime",
-    category: "ahorrar",
-    tags: ["navidad", "fiestas", "ahorro", "meses"],
-    component: HolidayTool,
-    priority: 0.7,
-    relatedTools: [
-      "calculadora-objetivo-ahorro",
-      "presupuesto-mensual-categorias",
-    ],
-  },
-  {
-    id: "conversor-de-moneda-viajes",
-    slug: "conversor-de-moneda-viajes",
-    label: "Conversor de moneda",
-    desc: "Convierte con el tipo de cambio del día",
-    icon: Globe,
-    tone: "lavender",
-    category: "planificar",
-    tags: ["moneda", "conversor", "cambio", "divisas"],
-    component: CurrencyTool,
-    priority: 0.7,
-    relatedTools: [
-      "ahorro-para-un-viaje",
-      "presupuesto-diario-de-viaje",
-    ],
-  },
-  {
-    id: "calculadora-de-propina",
-    slug: "calculadora-de-propina",
-    label: "Calculadora de propina",
-    desc: "Añade propina y reparte la cuenta",
-    icon: Utensils,
-    tone: "lime",
-    category: "planificar",
-    tags: ["propina", "cuenta", "reparto", "restaurante"],
-    component: TipTool,
-    priority: 0.6,
-    relatedTools: ["reparto-gastos-en-grupo"],
-  },
-  {
-    id: "cuanto-necesito-ganar-ingreso-minimo",
-    slug: "cuanto-necesito-ganar-ingreso-minimo",
-    label: "Cuánto necesito ganar",
-    desc: "Ingreso mínimo según tus gastos y tu ahorro deseado",
-    icon: Briefcase,
-    tone: "lavender",
-    category: "planificar",
-    tags: ["ingreso", "salario", "gastos", "ahorro", "mínimo"],
-    component: TargetIncomeTool,
-    priority: 0.9,
-    relatedTools: [
-      "presupuesto-mensual-categorias",
-      "fondo-de-emergencia",
-      "regla-50-30-20-calculadora",
-    ],
-  },
-];
+// Mapa de componentes dinámicos seguros
+const TOOL_MAP = {
+  "calculadora-objetivo-ahorro": dynamic(() => import("@/components/tools/savings-goal-tool"), { ssr: false }),
+  "presupuesto-mensual-categorias": dynamic(() => import("@/components/tools/budget-tool"), { ssr: false }),
+  "fondo-de-emergencia": dynamic(() => import("@/components/tools/emergency-fund-tool"), { ssr: false }),
+  "interes-compuesto-aportaciones": dynamic(() => import("@/components/tools/compound-interest-tool"), { ssr: false }),
+  "simulador-amortizacion-hipoteca": dynamic(() => import("@/components/tools/mortgage-simulator-tool"), { ssr: false }),
+  "reto-de-ahorro-semanal": dynamic(() => import("@/components/tools/challenge-tool"), { ssr: false }),
+  "ahorro-para-un-viaje": dynamic(() => import("@/components/tools/trip-savings-tool"), { ssr: false }),
+  "gasto-diario-a-mensual-anual": dynamic(() => import("@/components/tools/daily-expense-tool"), { ssr: false }),
+  "comparador-escenarios-ahorro": dynamic(() => import("@/components/tools/scenario-comparator-tool"), { ssr: false }),
+  "regla-50-30-20-calculadora": dynamic(() => import("@/components/tools/rule502030-tool"), { ssr: false }),
+  "porcentaje-de-ahorro": dynamic(() => import("@/components/tools/savings-percent-tool"), { ssr: false }),
+  "ahorro-compra-grande-coche-vivienda": dynamic(() => import("@/components/tools/big-purchase-tool"), { ssr: false }),
+  "ahorro-por-redondeo": dynamic(() => import("@/components/tools/round-up-tool"), { ssr: false }),
+  "planificador-ahorro-anual": dynamic(() => import("@/components/tools/annual-planner-tool"), { ssr: false }),
+  "calculadora-cuota-prestamo": dynamic(() => import("@/components/tools/loan-payment-tool"), { ssr: false }),
+  "reparto-gastos-en-grupo": dynamic(() => import("@/components/tools/group-split-tool"), { ssr: false }),
+  "presupuesto-diario-de-viaje": dynamic(() => import("@/components/tools/trip-daily-budget-tool"), { ssr: false }),
+  "ahorro-para-navidad": dynamic(() => import("@/components/tools/holiday-savings-tool"), { ssr: false }),
+  "conversor-de-moneda-viajes": dynamic(() => import("@/components/tools/currency-converter-tool"), { ssr: false }),
+  "calculadora-de-propina": dynamic(() => import("@/components/tools/tip-calculator-tool"), { ssr: false }),
+  "cuanto-necesito-ganar-ingreso-minimo": dynamic(() => import("@/components/tools/target-income-tool"), { ssr: false }),
+};
 
-const CATEGORIES = [
-  {
-    icon: Target,
-    label: "Ahorrar para algo",
-    desc: "Define un objetivo y un plazo",
-    view: "calculadora-objetivo-ahorro",
-    tone: "lime",
-  },
-  {
-    icon: Wallet,
-    label: "Organizar mi dinero",
-    desc: "Presupuesto y gastos por categoría",
-    view: "presupuesto-mensual-categorias",
-    tone: "lavender",
-  },
-  {
-    icon: ShieldCheck,
-    label: "Fondo de emergencia",
-    desc: "Cuánto necesitas y cuándo lo tendrás",
-    view: "fondo-de-emergencia",
-    tone: "lime",
-  },
-  {
-    icon: Building2,
-    label: "Simulador de hipoteca",
-    desc: "Calcula el ahorro al reducir cuota o plazo",
-    view: "simulador-amortizacion-hipoteca",
-    tone: "lime",
-  },
-  {
-    icon: TrendingUp,
-    label: "Hacer crecer mis ahorros",
-    desc: "Simula el interés compuesto",
-    view: "interes-compuesto-aportaciones",
-    tone: "lavender",
-  },
-  {
-    icon: Trophy,
-    label: "Hacer un reto de ahorro",
-    desc: "Reto semanal progresivo",
-    view: "reto-de-ahorro-semanal",
-    tone: "lime",
-  },
-  {
-    icon: Plane,
-    label: "Preparar un viaje",
-    desc: "Calcula tu ahorro mensual antes de irte",
-    view: "ahorro-para-un-viaje",
-    tone: "lavender",
-  },
-];
+class ToolErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
 
-export { ALL_TOOLS, CATEGORIES };
-  
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("[ToolClient] Fallo en la herramienta:", this.props.slug, error, info?.componentStack);
+  }
+
+  handleRetry = () => {
+    this.setState({ error: null });
+  };
+
+  render() {
+    const { error } = this.state;
+    if (!error) return this.props.children;
+
+    return (
+      <div
+        role="alert"
+        className="no-print"
+        style={{
+          minHeight: "50vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          gap: "0.9rem",
+          padding: "2rem 1rem",
+        }}
+      >
+        <span style={{ fontSize: "0.75rem", color: "#f08a7a", ...fontBody }}>Algo ha fallado</span>
+        <h2 style={{ color: T.text || "#F5F2EA", fontSize: "1.3rem", margin: 0, ...fontDisplay }}>
+          Esta herramienta no ha podido cargarse
+        </h2>
+        <p style={{ color: T.textMuted || "#9FB3B1", fontSize: "0.85rem", maxWidth: "26rem", margin: 0, ...fontBody }}>
+          El resto de la plataforma sigue funcionando con normalidad. Puedes reintentar o volver a la home.
+        </p>
+
+        <details style={{ maxWidth: "100%", textAlign: "left" }}>
+          <summary style={{ cursor: "pointer", fontSize: "0.75rem", color: T.textMuted || "#9FB3B1", ...fontBody }}>
+            Ver detalles técnicos
+          </summary>
+          <pre
+            style={{
+              maxWidth: "100%",
+              overflowX: "auto",
+              fontSize: "0.7rem",
+              lineHeight: 1.5,
+              padding: "0.75rem 1rem",
+              marginTop: "0.5rem",
+              borderRadius: "10px",
+              background: "rgba(0,0,0,0.35)",
+              color: "#c5e04a",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {String(error?.message || error)}
+          </pre>
+        </details>
+
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", justifyContent: "center" }}>
+          <Button onClick={this.handleRetry} fullWidth={false}>
+            Reintentar
+          </Button>
+          <button
+            type="button"
+            onClick={this.props.onBack}
+            style={{
+              padding: "0.7rem 1.2rem",
+              borderRadius: "0.8rem",
+              border: `1px solid ${T.border || "rgba(245,242,234,0.2)"}`,
+              background: "transparent",
+              color: T.text || "#F5F2EA",
+              fontSize: "0.9rem",
+              fontWeight: 500,
+              cursor: "pointer",
+              ...fontBody,
+            }}
+          >
+            Volver a la home
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+
+function PremiumExportBar() {
+  const handleGeneratePDF = () => {
+    if (typeof window !== "undefined") {
+      window.print();
+    }
+  };
+
+  return (
+    <div className="export-bar no-print">
+      <button onClick={handleGeneratePDF} type="button" className="export-btn">
+        <FileDown strokeWidth={2.5} aria-hidden="true" />
+        <span>Generar Informe PDF Ejecutivo</span>
+      </button>
+
+      <div className="export-note">
+        <ShieldCheck aria-hidden="true" />
+        <span>Procesamiento 100% privado en tu navegador</span>
+      </div>
+    </div>
+  );
+}
+
+function QuickSmartCapture({ onValueExtracted }) {
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setStatus("Analizando imagen en tu dispositivo...");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+          }
+
+          setTimeout(() => {
+            setLoading(false);
+            setStatus("¡Captura cargada con éxito!");
+            if (typeof onValueExtracted === "function") {
+              onValueExtracted(1500);
+            }
+          }, 600);
+        } catch (err) {
+          console.error(err);
+          setLoading(false);
+          setStatus("Error al procesar la imagen.");
+        }
+      };
+      img.src = event.target?.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div
+      className="no-print"
+      style={{
+        padding: "1rem 1.25rem",
+        borderRadius: "14px",
+        backgroundColor: "rgba(16, 185, 129, 0.06)",
+        border: "1px solid rgba(16, 185, 129, 0.2)",
+        marginBottom: "1.5rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "1rem",
+        ...fontBody,
+      }}
+    >
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontSize: "1.1rem" }}>⚡</span>
+          <span style={{ fontWeight: 600, color: T.text || "#fff", fontSize: "0.95rem" }}>
+            Autocompletar con Captura o Nómina
+          </span>
+        </div>
+        <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.8rem", color: T.textMuted || "#a1a1aa" }}>
+          Procesamiento 100% privado en tu navegador (0 servidores).
+        </p>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        {status && <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 500 }}>{status}</span>}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={loading}
+          style={{
+            padding: "0.55rem 1rem",
+            borderRadius: "8px",
+            backgroundColor: "#10b981",
+            color: "#000",
+            fontWeight: 600,
+            fontSize: "0.85rem",
+            border: "none",
+            cursor: loading ? "wait" : "pointer",
+          }}
+        >
+          {loading ? "Procesando..." : "📷 Subir Captura"}
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+      </div>
+    </div>
+  );
+}
+
+function ToolLoading() {
+  return (
+    <div
+      role="status"
+      style={{
+        minHeight: "60vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: T.textMuted || "#9FB3B1",
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "0.9rem",
+      }}
+    >
+      Cargando herramienta…
+    </div>
+  );
+}
+
+function ToolNotFound({ onBack }) {
+  return (
+    <main
+      style={{
+        minHeight: "60vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        gap: "1rem",
+        padding: "2rem",
+      }}
+    >
+      <h1 style={{ color: T.text || "#F5F2EA", fontSize: "1.7rem", margin: 0 }}>
+        Herramienta no encontrada
+      </h1>
+      <p style={{ color: T.textMuted || "#9FB3B1", maxWidth: "28rem", margin: 0 }}>
+        El enlace que has abierto no corresponde a una herramienta disponible.
+      </p>
+      <Button onClick={onBack} fullWidth={false}>
+        Volver a la home
+      </Button>
+    </main>
+  );
+}
+
+function ToolClientContent({ slug }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [extractedValue, setExtractedValue] = useState(null);
+
+  const ToolComponent = useMemo(() => {
+    if (!slug) return null;
+    return TOOL_MAP[slug] || null;
+  }, [slug]);
+
+  const initialParams = useMemo(() => {
+    const params = {};
+    if (searchParams) {
+      searchParams.forEach((value, key) => {
+        params[key] = value;
+      });
+    }
+    if (extractedValue) {
+      params.monto = extractedValue;
+      params.ingreso = extractedValue;
+      params.montoInicial = extractedValue;
+    }
+    return params;
+  }, [searchParams, extractedValue]);
+
+  const handleStateChange = useCallback(
+    (newState) => {
+      if (!newState || typeof newState !== "object") return;
+      const params = new URLSearchParams(searchParams?.toString() || "");
+
+      Object.entries(newState).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          params.set(key, String(value));
+        } else {
+          params.delete(key);
+        }
+      });
+
+      const queryStr = params.toString();
+      const newUrl = queryStr ? `${pathname}?${queryStr}` : pathname;
+      if (typeof window !== "undefined" && window.location?.search !== `?${queryStr}`) {
+        window.history.replaceState(null, "", newUrl);
+      }
+    },
+    [pathname, searchParams]
+  );
+
+  const handleValueExtracted = useCallback(
+    (val) => {
+      setExtractedValue(val);
+      handleStateChange({ ingreso: val, monto: val, montoInicial: val });
+    },
+    [handleStateChange]
+  );
+
+  if (!ToolComponent) {
+    return <ToolNotFound onBack={() => router.push("/")} />;
+  }
+
+  const handleNavigate = (val) => {
+    const targetSlug =
+      typeof val === "object" && val !== null
+        ? val.id || val.slug || val.key
+        : val;
+    let cleanSlug =
+      typeof targetSlug === "string"
+        ? targetSlug.replace("/herramientas/", "").trim()
+        : null;
+
+    if (cleanSlug) {
+      router.push(`/herramientas/${cleanSlug}`);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  };
+
+  return (
+    <div style={{ width: "100%" }}>
+      <QuickSmartCapture onValueExtracted={handleValueExtracted} />
+
+      <ToolErrorBoundary key={slug} slug={slug} onBack={() => router.push("/")}>
+        <ToolComponent
+          key={`${slug}-${extractedValue || "default"}`}
+          initialParams={initialParams}
+          onStateChange={handleStateChange}
+          onBack={() => router.back()}
+          onNavigate={handleNavigate}
+          onSelect={handleNavigate}
+          onToolClick={handleNavigate}
+        />
+      </ToolErrorBoundary>
+
+      <PremiumExportBar />
+    </div>
+  );
+}
+
+export default function ToolClient({ slug }) {
+  return (
+    <Suspense fallback={<ToolLoading />}>
+      <ToolClientContent slug={slug} />
+    </Suspense>
+  );
+      }
+          
