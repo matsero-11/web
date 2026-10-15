@@ -113,24 +113,24 @@ function HomeContent() {
 
   return (
     <div className="pt-6 pb-28 w-full px-4 md:px-0 max-w-4xl mx-auto">
-      {/* Cabecera superior: Racha y Botón Instalar separados y limpios */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+      {/* Cabecera superior unificada y fluida */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem", gap: "1rem" }}>
         <FinancialStreak />
         {!isStandalone && (
-          <button onClick={handleInstallClick} style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.6rem", padding: "0.4rem 0.75rem", color: T.text, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>
+          <button onClick={handleInstallClick} style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.6rem", padding: "0.4rem 0.75rem", color: T.text, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}>
             <Download size={13} color={T.lime} /> Instalar
           </button>
         )}
       </div>
 
-      {/* Títulos principales */}
+      {/* Título unificado y limpio (Cero duplicidades) */}
       <div className="mb-6 text-center md:text-left">
         <div style={{ color: T.lime, fontSize: ".75rem", fontWeight: 600, textTransform: "uppercase" }}>MetaBox</div>
-        <h2 style={{ ...fontDisplay, color: T.text, fontSize: "2rem", marginTop: "0.2rem" }}>Tu dinero, con un plan.</h2>
-        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".95rem", marginTop: ".3rem" }}>Calcula y planifica tus finanzas gratis.</p>
+        <h1 style={{ ...fontDisplay, color: T.text, fontSize: "clamp(1.8rem, 4vw, 2.3rem)", lineHeight: 1.15, marginTop: "0.2rem" }}>Tu dinero, con un plan.</h1>
+        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".95rem", marginTop: ".3rem" }}>Calculadoras interactivas gratuitas y privadas para tus finanzas.</p>
       </div>
 
-      {/* Buscador limpio con el icono de la lupa integrado en el contenedor */}
+      {/* Buscador optimizado para móviles */}
       <div className="relative mb-6">
         <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
           <Search size={16} color={T.textMuted} style={{ position: "absolute", left: "1rem", pointerEvents: "none" }} />
@@ -138,7 +138,7 @@ function HomeContent() {
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder='¿Qué necesitas calcular? Ej: "Ahorrar 5.000 €"...'
+            placeholder='¿Qué necesitas calcular? Ej: 5.000 €...'
             style={{
               width: "100%",
               background: T.surface,
@@ -170,7 +170,7 @@ function HomeContent() {
       {!q && (
         <div className="mb-5 grid grid-cols-2 md:grid-cols-4 gap-2">
           {[{ id: "ahorrar", l: "Ahorrar" }, { id: "organizar", l: "Organizar" }, { id: "planificar", l: "Planificar" }, { id: "crecer", l: "Crecer" }].map((c) => (
-            <div key={c.id} onClick={() => setCat(cat === c.id ? null : c.id)} className="cursor-pointer p-2.5 rounded-xl text-center" style={{ background: cat === c.id ? T.surfaceAlt : T.surface, border: `1px solid ${cat === c.id ? T.lime : T.border}` }}>
+            <div key={c.id} onClick={() => setCat(cat === c.id ? null : c.id)} className="cursor-pointer p-2.5 rounded-xl text-center transition-all" style={{ background: cat === c.id ? T.surfaceAlt : T.surface, border: `1px solid ${cat === c.id ? T.lime : T.border}` }}>
               <span style={{ color: T.lime, fontSize: ".75rem", fontWeight: 700 }}>{c.l}</span>
             </div>
           ))}
@@ -263,5 +263,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-    }
-      
+                           }
+        
