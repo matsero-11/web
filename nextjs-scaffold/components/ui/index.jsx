@@ -121,7 +121,7 @@ function Card({ children, onClick, disabled, style, glow, result }) {
 
 /**
  * SliderControl — input numérico decimal + slider sincronizados y ultra fluidos.
- * Actualizado globalmente para admitir decimales precisos y evitar atascos táctiles.
+ * Actualizado automáticamente para admitir 1.000.000 en hipotecas/grandes compras y 200.000 por defecto.
  */
 function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, accent = "lime" }) {
   const color = accent === "lavender" ? T.lavender : T.lime;
@@ -136,9 +136,20 @@ function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, ac
     }
   }, [safeValue, isEditing]);
 
-  const effectiveMax = Math.min(HARD_MAX, max);
-  const dynamicMax = Math.max(effectiveMax, Math.min(safeValue * 1.5, HARD_MAX));
-  const pct = dynamicMax > min ? ((safeValue - min) / (dynamicMax - min)) * 100 : 0;
+  // Lógica centralizada para los techos máximos
+  const isBigAsset = label && (
+    label.toLowerCase().includes("hipoteca") || 
+    label.toLowerCase().includes("préstamo") || 
+    label.toLowerCase().includes("vivienda") ||
+    label.toLowerCase().includes("coche") ||
+    label.toLowerCase().includes("inversión")
+  );
+
+  const defaultHardMax = isBigAsset ? 1000000 : HARD_MAX;
+  const effectiveMax = Math.min(defaultHardMax, max ?? defaultHardMax);
+
+  const dynamicMax = Math.max(effectiveMax, Math.min(safeValue * 1.5, effectiveMax));
+  const pct = dynamicMax > min ? Math.min(Math.max(((safeValue - min) / (dynamicMax - min)) * 100, 0), 100) : 0;
 
   const commitText = (rawText) => {
     const text = rawText.trim();
@@ -157,7 +168,7 @@ function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, ac
       return;
     }
 
-    const clamped = Math.min(Math.max(min, num), HARD_MAX);
+    const clamped = Math.min(Math.max(min, num), effectiveMax);
     onChange(clamped);
     setInputText(String(clamped));
   };
@@ -322,4 +333,4 @@ function AdviceBlock({ text, children, icon: Icon, tone = "lime" }) {
 }
 
 export { Button, Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock };
-      
+            
