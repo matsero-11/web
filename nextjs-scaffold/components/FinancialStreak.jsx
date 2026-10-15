@@ -25,7 +25,6 @@ export default function FinancialStreak() {
         const diffDays = Math.round((current - last) / (1000 * 60 * 60 * 24));
 
         if (diffDays === 1) {
-          // Día consecutivo
           const newCount = streakInfo.streakCount + 1;
           const updated = {
             lastDate: today,
@@ -36,7 +35,6 @@ export default function FinancialStreak() {
           setStreakDays(newCount);
           setIsActiveToday(true);
         } else if (diffDays > 1) {
-          // Se rompió la racha, reiniciamos a 1
           const updated = {
             lastDate: today,
             streakCount: 1,
@@ -46,7 +44,6 @@ export default function FinancialStreak() {
           setStreakDays(1);
           setIsActiveToday(true);
         } else {
-          // Primera interacción limpia
           const updated = {
             lastDate: today,
             streakCount: 1,
@@ -66,7 +63,7 @@ export default function FinancialStreak() {
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-500/30 text-xs font-medium select-none no-print"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium select-none no-print"
       style={{
         ...fontBody,
         backgroundColor: "rgba(16, 185, 129, 0.08)",
@@ -74,7 +71,6 @@ export default function FinancialStreak() {
         backdropFilter: "blur(4px)",
       }}
     >
-      {/* Icono de Llama Verde Súper Pequeña (3 x 3 / 12px) */}
       <div className="relative flex items-center justify-center">
         <svg
           className={`w-3 h-3 transition-transform duration-300 ${
@@ -97,10 +93,9 @@ export default function FinancialStreak() {
         )}
       </div>
 
-      {/* Frase Unificada 100% en Verde Esmeralda con Espacios Perfectos */}
       <div className="flex items-center gap-1.5 text-[0.78rem]" style={{ color: emeraldColor }}>
         <span className="font-bold tracking-tight">
-          {streakDays} {streakDays === 1 ? "día" : "días"}
+          {streakDays}&nbsp;{streakDays === 1 ? "día" : "días"}
         </span>
         <span className="font-medium">
           de racha
@@ -108,5 +103,5 @@ export default function FinancialStreak() {
       </div>
     </div>
   );
-}
+      }
 
