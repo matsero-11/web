@@ -6,6 +6,8 @@ import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
 import { FileDown, ShieldCheck } from "lucide-react";
+import RelatedTools from "@/components/RelatedTools";
+import { ALL_TOOLS } from "@/lib/tools-registry";
 
 // Mapa de componentes dinámicos seguros
 const TOOL_MAP = {
@@ -336,6 +338,11 @@ function ToolClientContent({ slug }) {
     return TOOL_MAP[slug] || null;
   }, [slug]);
 
+  const currentToolData = useMemo(() => {
+    if (!slug) return null;
+    return ALL_TOOLS.find((t) => t.id === slug) || null;
+  }, [slug]);
+
   const initialParams = useMemo(() => {
     const params = {};
     if (searchParams) {
@@ -419,6 +426,14 @@ function ToolClientContent({ slug }) {
         />
       </ToolErrorBoundary>
 
+      {/* Sección de herramientas relacionadas colocada antes de la guía técnica */}
+      <RelatedTools
+        ids={currentToolData?.relatedTools || []}
+        primaryId={slug}
+        onNavigate={handleNavigate}
+        title="Otras herramientas que te pueden gustar"
+      />
+
       <section
         style={{
           maxWidth: "56rem",
@@ -449,5 +464,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-          }
-      
+        }
+        
