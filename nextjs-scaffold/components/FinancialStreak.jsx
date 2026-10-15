@@ -59,9 +59,7 @@ export default function FinancialStreak() {
     }
   }, []);
 
-  // Sincronizamos exactamente con el verde corporativo de la plataforma (T.lime)
   const brandGreen = T?.lime || "#a3e635";
-
   const streakText = `${streakDays} ${streakDays === 1 ? "día" : "días"} de racha`;
 
   return (
@@ -69,16 +67,20 @@ export default function FinancialStreak() {
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full select-none no-print"
       style={{
         ...fontBody,
-        backgroundColor: "transparent", // Sin fondo forzado para que adopte el fondo natural de la web
+        backgroundColor: "transparent",
         border: `1px solid ${T?.border || "rgba(255,255,255,0.1)"}`,
       }}
     >
       <div className="relative flex items-center justify-center">
         <svg
-          className={`w-3.5 h-3.5 transition-transform duration-300 ${
-            isActiveToday ? "scale-110" : "opacity-40"
+          className={`transition-transform duration-300 ${
+            isActiveToday ? "scale-105" : "opacity-40"
           }`}
           style={{
+            width: "14px",
+            height: "14px",
+            minWidth: "14px",
+            minHeight: "14px",
             color: brandGreen,
             filter: isActiveToday ? `drop-shadow(0px 0px 4px ${brandGreen}66)` : "none",
           }}
@@ -100,5 +102,5 @@ export default function FinancialStreak() {
       </div>
     </div>
   );
-                               }
+}
 
