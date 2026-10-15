@@ -7,6 +7,7 @@ import { ALL_TOOLS } from "@/lib/tools-registry";
 import { usePersistentState } from "@/lib/persistence";
 import { GUIDES } from "@/lib/guides-data";
 import { Search, RotateCcw, ArrowRight, BookOpen, Lock, Download, X, Smartphone } from "lucide-react";
+import FinancialStreak from "@/components/FinancialStreak";
 
 function HomeContent() {
   const [q, setQ] = useState("");
@@ -111,25 +112,45 @@ function HomeContent() {
   );
 
   return (
-    <div className="pt-6 pb-28 w-full px-4 md:px-0">
-      <div className="mb-6 flex justify-between items-start">
-        <div>
-          <div style={{ color: T.lime, fontSize: ".75rem", fontWeight: 600, textTransform: "uppercase" }}>MetaBox</div>
-          <h2 style={{ ...fontDisplay, color: T.text, fontSize: "1.85rem" }}>Tu dinero, con un plan.</h2>
-          <p style={{ ...fontBody, color: T.textMuted, fontSize: ".9rem", marginTop: ".3rem" }}>Calcula y planifica tus finanzas gratis.</p>
-        </div>
+    <div className="pt-6 pb-28 w-full px-4 md:px-0 max-w-4xl mx-auto">
+      {/* Cabecera superior: Racha y Botón Instalar separados y limpios */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+        <FinancialStreak />
         {!isStandalone && (
-          <button onClick={handleInstallClick} style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: "rgba(16, 185, 129, 0.12)", border: `1px solid ${T.lime || "#10B981"}`, borderRadius: "0.6rem", padding: "0.4rem 0.75rem", color: T.lime || "#10B981", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-            <Download size={13} /> Instalar
+          <button onClick={handleInstallClick} style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.6rem", padding: "0.4rem 0.75rem", color: T.text, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>
+            <Download size={13} color={T.lime} /> Instalar
           </button>
         )}
       </div>
 
-      <div className="relative mb-5">
-        <label htmlFor="search-tools" style={{ color: T.text, fontWeight: 600, fontSize: ".85rem", marginBottom: ".3rem", display: "block" }}>
-          <Search size={14} className="inline mr-1 text-lime" /> ¿Qué necesitas calcular?
-        </label>
-        <input id="search-tools" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder='Ej: "Ahorrar 5.000 €"...' style={{ width: "100%", background: T.surface, border: `1px solid ${q ? T.lime : T.border}`, borderRadius: ".8rem", padding: ".8rem 1rem .8rem 2.4rem", color: T.text, fontSize: ".85rem", outline: "none" }} />
+      {/* Títulos principales */}
+      <div className="mb-6 text-center md:text-left">
+        <div style={{ color: T.lime, fontSize: ".75rem", fontWeight: 600, textTransform: "uppercase" }}>MetaBox</div>
+        <h2 style={{ ...fontDisplay, color: T.text, fontSize: "2rem", marginTop: "0.2rem" }}>Tu dinero, con un plan.</h2>
+        <p style={{ ...fontBody, color: T.textMuted, fontSize: ".95rem", marginTop: ".3rem" }}>Calcula y planifica tus finanzas gratis.</p>
+      </div>
+
+      {/* Buscador limpio con el icono de la lupa integrado en el contenedor */}
+      <div className="relative mb-6">
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          <Search size={16} color={T.textMuted} style={{ position: "absolute", left: "1rem", pointerEvents: "none" }} />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder='¿Qué necesitas calcular? Ej: "Ahorrar 5.000 €"...'
+            style={{
+              width: "100%",
+              background: T.surface,
+              border: `1px solid ${q ? T.lime : T.border}`,
+              borderRadius: ".9rem",
+              padding: ".85rem 1rem .85rem 2.8rem",
+              color: T.text,
+              fontSize: ".9rem",
+              outline: "none",
+            }}
+          />
+        </div>
         {smart && (
           <Link href={`/herramientas/${smart.slug}`} className="block mt-2 p-3 rounded-xl flex items-center justify-between no-underline" style={{ background: T.surface, border: `1px solid ${T.lime}` }}>
             <span style={{ color: T.lime, fontSize: ".8rem", fontWeight: 600 }}>Sugerencia: {smart.label}</span>
@@ -147,10 +168,10 @@ function HomeContent() {
       )}
 
       {!q && (
-        <div className="mb-5 grid grid-cols-2 gap-2">
+        <div className="mb-5 grid grid-cols-2 md:grid-cols-4 gap-2">
           {[{ id: "ahorrar", l: "Ahorrar" }, { id: "organizar", l: "Organizar" }, { id: "planificar", l: "Planificar" }, { id: "crecer", l: "Crecer" }].map((c) => (
-            <div key={c.id} onClick={() => setCat(cat === c.id ? null : c.id)} className="cursor-pointer p-2.5 rounded-xl" style={{ background: cat === c.id ? T.surfaceAlt : T.surface, border: `1px solid ${cat === c.id ? T.lime : T.border}` }}>
-              <span style={{ color: T.lime, fontSize: ".7rem", fontWeight: 700 }}>{c.l}</span>
+            <div key={c.id} onClick={() => setCat(cat === c.id ? null : c.id)} className="cursor-pointer p-2.5 rounded-xl text-center" style={{ background: cat === c.id ? T.surfaceAlt : T.surface, border: `1px solid ${cat === c.id ? T.lime : T.border}` }}>
+              <span style={{ color: T.lime, fontSize: ".75rem", fontWeight: 700 }}>{c.l}</span>
             </div>
           ))}
         </div>
@@ -242,5 +263,5 @@ function HomeContent() {
 
 export default function HomeScreen() {
   return <Suspense fallback={<div className="pt-8 pb-28 w-full text-center" style={{ color: "#888", fontSize: ".85rem" }}>Cargando...</div>}><HomeContent /></Suspense>;
-          }
+    }
       
