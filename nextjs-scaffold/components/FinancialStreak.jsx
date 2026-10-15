@@ -61,6 +61,9 @@ export default function FinancialStreak() {
 
   const emeraldColor = T?.emerald || "#10B981";
 
+  // Texto unificado y calculado directamente para evitar espacios rotos
+  const streakText = `${streakDays} ${streakDays === 1 ? "día" : "días"} de racha`;
+
   return (
     <div
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium select-none no-print"
@@ -93,15 +96,10 @@ export default function FinancialStreak() {
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 text-[0.78rem]" style={{ color: emeraldColor }}>
-        <span className="font-bold tracking-tight">
-          {streakDays}&nbsp;{streakDays === 1 ? "día" : "días"}
-        </span>
-        <span className="font-medium">
-          de racha
-        </span>
+      <div className="text-[0.78rem] font-medium" style={{ color: emeraldColor }}>
+        {streakText}
       </div>
     </div>
   );
-      }
+}
 
