@@ -388,11 +388,7 @@ function ToolClientContent({ slug }) {
     [handleStateChange]
   );
 
-  if (!ToolComponent) {
-    return <ToolNotFound onBack={() => router.push("/")} />;
-  }
-
-  const handleNavigate = (val) => {
+  const handleNavigate = useCallback((val) => {
     const targetSlug =
       typeof val === "object" && val !== null
         ? val.id || val.slug || val.key
@@ -408,7 +404,11 @@ function ToolClientContent({ slug }) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
-  };
+  }, [router]);
+
+  if (!ToolComponent) {
+    return <ToolNotFound onBack={() => router.push("/")} />;
+  }
 
   return (
     <div style={{ width: "100%" }}>
@@ -426,7 +426,6 @@ function ToolClientContent({ slug }) {
         />
       </ToolErrorBoundary>
 
-      {/* Sección de herramientas relacionadas colocada antes de la guía técnica */}
       <RelatedTools
         ids={currentToolData?.relatedTools || []}
         primaryId={slug}
@@ -464,5 +463,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-        }
-        
+                  }
+              
