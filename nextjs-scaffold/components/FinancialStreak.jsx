@@ -59,29 +59,28 @@ export default function FinancialStreak() {
     }
   }, []);
 
-  const emeraldColor = T?.emerald || "#10B981";
+  // Sincronizamos exactamente con el verde corporativo de la plataforma (T.lime)
+  const brandGreen = T?.lime || "#a3e635";
 
-  // Texto unificado y calculado directamente para evitar espacios rotos
   const streakText = `${streakDays} ${streakDays === 1 ? "día" : "días"} de racha`;
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium select-none no-print"
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full select-none no-print"
       style={{
         ...fontBody,
-        backgroundColor: "rgba(16, 185, 129, 0.08)",
-        borderColor: "rgba(16, 185, 129, 0.25)",
-        backdropFilter: "blur(4px)",
+        backgroundColor: "transparent", // Sin fondo forzado para que adopte el fondo natural de la web
+        border: `1px solid ${T?.border || "rgba(255,255,255,0.1)"}`,
       }}
     >
       <div className="relative flex items-center justify-center">
         <svg
-          className={`w-3 h-3 transition-transform duration-300 ${
+          className={`w-3.5 h-3.5 transition-transform duration-300 ${
             isActiveToday ? "scale-110" : "opacity-40"
           }`}
           style={{
-            color: emeraldColor,
-            filter: isActiveToday ? "drop-shadow(0px 0px 4px rgba(16, 185, 129, 0.6))" : "none",
+            color: brandGreen,
+            filter: isActiveToday ? `drop-shadow(0px 0px 4px ${brandGreen}66)` : "none",
           }}
           fill="currentColor"
           viewBox="0 0 24 24"
@@ -91,15 +90,15 @@ export default function FinancialStreak() {
         {isActiveToday && (
           <span
             className="absolute -top-0.5 -right-0.5 w-1 h-1 rounded-full animate-ping"
-            style={{ backgroundColor: emeraldColor }}
+            style={{ backgroundColor: brandGreen }}
           />
         )}
       </div>
 
-      <div className="text-[0.78rem] font-medium" style={{ color: emeraldColor }}>
+      <div className="text-[0.8rem] font-medium tracking-tight" style={{ color: brandGreen }}>
         {streakText}
       </div>
     </div>
   );
-}
+    }
 
