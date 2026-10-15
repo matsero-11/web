@@ -100,5 +100,5 @@ export default function FinancialStreak() {
       </div>
     </div>
   );
-    }
+                               }
 
