@@ -454,4 +454,4 @@ const CATEGORIES = [
 ];
 
 export { ALL_TOOLS, CATEGORIES };
-           
+
