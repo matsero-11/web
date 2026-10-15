@@ -70,15 +70,15 @@ class ToolErrorBoundary extends Component {
         }}
       >
         <span style={{ fontSize: "0.75rem", color: "#f08a7a", ...fontBody }}>Algo ha fallado</span>
-        <h2 style={{ color: T.text || "#F5F2EA", fontSize: "1.3rem", margin: 0, ...fontDisplay }}>
+        <h2 style={{ color: T.text, fontSize: "1.3rem", margin: 0, ...fontDisplay }}>
           Esta herramienta no ha podido cargarse
         </h2>
-        <p style={{ color: T.textMuted || "#9FB3B1", fontSize: "0.85rem", maxWidth: "26rem", margin: 0, ...fontBody }}>
+        <p style={{ color: T.textMuted, fontSize: "0.85rem", maxWidth: "26rem", margin: 0, ...fontBody }}>
           El resto de la plataforma sigue funcionando con normalidad. Puedes reintentar o volver a la home.
         </p>
 
         <details style={{ maxWidth: "100%", textAlign: "left" }}>
-          <summary style={{ cursor: "pointer", fontSize: "0.75rem", color: T.textMuted || "#9FB3B1", ...fontBody }}>
+          <summary style={{ cursor: "pointer", fontSize: "0.75rem", color: T.textMuted, ...fontBody }}>
             Ver detalles técnicos
           </summary>
           <pre
@@ -90,8 +90,8 @@ class ToolErrorBoundary extends Component {
               padding: "0.75rem 1rem",
               marginTop: "0.5rem",
               borderRadius: "10px",
-              background: "rgba(0,0,0,0.35)",
-              color: "#c5e04a",
+              background: T.surfaceAlt,
+              color: T.lime,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}
@@ -110,9 +110,9 @@ class ToolErrorBoundary extends Component {
             style={{
               padding: "0.7rem 1.2rem",
               borderRadius: "0.8rem",
-              border: `1px solid ${T.border || "rgba(245,242,234,0.2)"}`,
+              border: `1px solid ${T.border}`,
               background: "transparent",
-              color: T.text || "#F5F2EA",
+              color: T.text,
               fontSize: "0.9rem",
               fontWeight: 500,
               cursor: "pointer",
@@ -135,14 +135,46 @@ function PremiumExportBar() {
   };
 
   return (
-    <div className="export-bar no-print">
-      <button onClick={handleGeneratePDF} type="button" className="export-btn">
-        <FileDown strokeWidth={2.5} aria-hidden="true" />
+    <div
+      className="export-bar no-print"
+      style={{
+        marginTop: "2.5rem",
+        padding: "1.25rem",
+        borderRadius: "1.1rem",
+        background: T.surface,
+        border: `1px solid ${T.border}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "1rem",
+        ...fontBody,
+      }}
+    >
+      <button
+        onClick={handleGeneratePDF}
+        type="button"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          background: T.lime,
+          color: "#12200A",
+          border: "none",
+          padding: "0.75rem 1.2rem",
+          borderRadius: "0.8rem",
+          fontWeight: 600,
+          fontSize: "0.9rem",
+          cursor: "pointer",
+          ...fontDisplay,
+        }}
+      >
+        <FileDown size={18} strokeWidth={2.5} aria-hidden="true" />
         <span>Generar Informe PDF Ejecutivo</span>
       </button>
 
-      <div className="export-note">
-        <ShieldCheck aria-hidden="true" />
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: T.textMuted, fontSize: "0.85rem" }}>
+        <ShieldCheck size={18} color={T.lime} aria-hidden="true" />
         <span>Procesamiento 100% privado en tu navegador</span>
       </div>
     </div>
@@ -197,9 +229,9 @@ function QuickSmartCapture({ onValueExtracted }) {
       className="no-print"
       style={{
         padding: "1rem 1.25rem",
-        borderRadius: "14px",
-        backgroundColor: "rgba(16, 185, 129, 0.06)",
-        border: "1px solid rgba(16, 185, 129, 0.2)",
+        borderRadius: "1.1rem",
+        backgroundColor: T.limeSoft,
+        border: `1px solid ${T.border}`,
         marginBottom: "1.5rem",
         display: "flex",
         alignItems: "center",
@@ -212,29 +244,31 @@ function QuickSmartCapture({ onValueExtracted }) {
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span style={{ fontSize: "1.1rem" }}>⚡</span>
-          <span style={{ fontWeight: 600, color: T.text || "#fff", fontSize: "0.95rem" }}>
+          <span style={{ fontWeight: 600, color: T.text, fontSize: "0.95rem", ...fontDisplay }}>
             Autocompletar con Captura o Nómina
           </span>
         </div>
-        <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.8rem", color: T.textMuted || "#a1a1aa" }}>
+        <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.8rem", color: T.textMuted }}>
           Procesamiento 100% privado en tu navegador (0 servidores).
         </p>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        {status && <span style={{ fontSize: "0.8rem", color: "#10b981", fontWeight: 500 }}>{status}</span>}
+        {status && <span style={{ fontSize: "0.8rem", color: T.lime, fontWeight: 500 }}>{status}</span>}
         <button
+          type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={loading}
           style={{
             padding: "0.55rem 1rem",
-            borderRadius: "8px",
-            backgroundColor: "#10b981",
-            color: "#000",
+            borderRadius: "0.8rem",
+            backgroundColor: T.lime,
+            color: "#12200A",
             fontWeight: 600,
             fontSize: "0.85rem",
             border: "none",
             cursor: loading ? "wait" : "pointer",
+            ...fontDisplay,
           }}
         >
           {loading ? "Procesando..." : "📷 Subir Captura"}
@@ -254,7 +288,7 @@ function ToolLoading() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: T.textMuted || "#9FB3B1",
+        color: T.textMuted,
         fontFamily: "system-ui, sans-serif",
         fontSize: "0.9rem",
       }}
@@ -278,10 +312,10 @@ function ToolNotFound({ onBack }) {
         padding: "2rem",
       }}
     >
-      <h1 style={{ color: T.text || "#F5F2EA", fontSize: "1.7rem", margin: 0 }}>
+      <h1 style={{ color: T.text, fontSize: "1.7rem", margin: 0, ...fontDisplay }}>
         Herramienta no encontrada
       </h1>
-      <p style={{ color: T.textMuted || "#9FB3B1", maxWidth: "28rem", margin: 0 }}>
+      <p style={{ color: T.textMuted, maxWidth: "28rem", margin: 0, ...fontBody }}>
         El enlace que has abierto no corresponde a una herramienta disponible.
       </p>
       <Button onClick={onBack} fullWidth={false}>
@@ -385,6 +419,25 @@ function ToolClientContent({ slug }) {
         />
       </ToolErrorBoundary>
 
+      <section
+        style={{
+          maxWidth: "56rem",
+          margin: "3rem auto 0",
+          padding: "2rem 1rem",
+          borderTop: `1px solid ${T.border}`,
+          color: T.textMuted,
+          fontSize: "0.85rem",
+          ...fontBody,
+        }}
+      >
+        <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: T.text, marginBottom: "0.75rem", ...fontDisplay }}>
+          Guía técnica y optimización financiera
+        </h2>
+        <p style={{ marginBottom: "1rem", lineHeight: 1.5 }}>
+          Calcula y proyecta tus metas financieras con rigor matemático asegurando la privacidad local de tus datos.
+        </p>
+      </section>
+
       <PremiumExportBar />
     </div>
   );
@@ -396,5 +449,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-      }
-          
+          }
+      
