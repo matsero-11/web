@@ -3,7 +3,10 @@ import HomeScreen from "@/components/HomeScreen";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
 
 export const metadata = {
-  title: "MetaBox — Herramientas de Ahorro y Planificación Financiera",
+  // "absolute" evita que el layout añada otra vez "| MetaBox" al final del título
+  title: {
+    absolute: "MetaBox — Herramientas de Ahorro y Planificación Financiera",
+  },
   description: "Calculadoras y herramientas interactivas gratuitas para optimizar tu presupuesto, ahorro y finanzas personales de forma sencilla y 100% privada.",
   keywords: [
     "calculadoras financieras",
@@ -67,18 +70,26 @@ export default function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
-      <div className="space-y-6">
-        <header className="space-y-2">
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <header style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           <h1
-            className="text-2xl font-bold tracking-tight md:text-3xl"
-            style={{ color: "var(--text)" }}
+            style={{
+              color: "var(--text)",
+              fontSize: "clamp(1.5rem, 1.15rem + 1.2vw, 1.875rem)",
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
+            }}
           >
             Herramientas de Ahorro y Planificación Financiera
           </h1>
           <p
-            className="text-sm md:text-base"
-            style={{ color: "var(--textMuted)" }}
+            style={{
+              color: "var(--text-muted)",
+              fontSize: "clamp(0.875rem, 0.8rem + 0.3vw, 1rem)",
+              lineHeight: 1.55,
+            }}
           >
             Calculadoras interactivas gratuitas diseñadas para tomar el control
             absoluto de tus finanzas personales, presupuestos y metas de ahorro.
