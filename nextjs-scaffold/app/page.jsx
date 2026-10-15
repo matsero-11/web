@@ -3,7 +3,6 @@ import HomeScreen from "@/components/HomeScreen";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://metabox-web.vercel.app";
 
 export const metadata = {
-  // "absolute" evita que el layout añada otra vez "| MetaBox" al final del título
   title: {
     absolute: "MetaBox — Herramientas de Ahorro y Planificación Financiera",
   },
@@ -39,7 +38,6 @@ export const metadata = {
 };
 
 export default function Page() {
-  // Esquema enriquecido WebSite + Organization para posicionamiento de marca
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -71,15 +69,16 @@ export default function Page() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        <header style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      {/* Contenedor principal con espaciado optimizado */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", width: "100%", maxWidth: "56rem", margin: "0 auto" }}>
+        <header style={{ display: "flex", flexDirection: "column", gap: "0.4rem", padding: "0 1rem" }}>
           <h1
             style={{
               color: "var(--text)",
-              fontSize: "clamp(1.5rem, 1.15rem + 1.2vw, 1.875rem)",
+              fontSize: "clamp(1.4rem, 3.5vw, 1.85rem)",
               fontWeight: 700,
               letterSpacing: "-0.01em",
-              lineHeight: 1.2,
+              lineHeight: 1.25,
             }}
           >
             Herramientas de Ahorro y Planificación Financiera
@@ -87,8 +86,8 @@ export default function Page() {
           <p
             style={{
               color: "var(--text-muted)",
-              fontSize: "clamp(0.875rem, 0.8rem + 0.3vw, 1rem)",
-              lineHeight: 1.55,
+              fontSize: "clamp(0.85rem, 2vw, 0.95rem)",
+              lineHeight: 1.5,
             }}
           >
             Calculadoras interactivas gratuitas diseñadas para tomar el control
@@ -100,5 +99,5 @@ export default function Page() {
       </div>
     </>
   );
-}
+            }
 
