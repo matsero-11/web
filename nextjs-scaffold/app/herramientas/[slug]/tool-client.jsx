@@ -412,45 +412,52 @@ function ToolClientContent({ slug }) {
 
   return (
     <div style={{ width: "100%" }}>
-      <QuickSmartCapture onValueExtracted={handleValueExtracted} />
+      
+      {/* CONTENEDOR EXCLUSIVO PARA IMPRESIÓN (Solo esto saldrá en el PDF de cualquier herramienta) */}
+      <div id="metabox-printable-tool-container">
+        <QuickSmartCapture onValueExtracted={handleValueExtracted} />
 
-      <ToolErrorBoundary key={slug} slug={slug} onBack={() => router.push("/")}>
-        <ToolComponent
-          key={`${slug}-${extractedValue || "default"}`}
-          initialParams={initialParams}
-          onStateChange={handleStateChange}
-          onBack={() => router.back()}
+        <ToolErrorBoundary key={slug} slug={slug} onBack={() => router.push("/")}>
+          <ToolComponent
+            key={`${slug}-${extractedValue || "default"}`}
+            initialParams={initialParams}
+            onStateChange={handleStateChange}
+            onBack={() => router.back()}
+            onNavigate={handleNavigate}
+            onSelect={handleNavigate}
+            onToolClick={handleNavigate}
+          />
+        </ToolErrorBoundary>
+      </div>
+
+      {/* SECCIONES OCULTAS AUTOMÁTICAMENTE AL IMPRIMIR */}
+      <div className="no-print">
+        <RelatedTools
+          ids={currentToolData?.relatedTools || []}
+          primaryId={slug}
           onNavigate={handleNavigate}
-          onSelect={handleNavigate}
-          onToolClick={handleNavigate}
+          title="Otras herramientas que te pueden gustar"
         />
-      </ToolErrorBoundary>
 
-      <RelatedTools
-        ids={currentToolData?.relatedTools || []}
-        primaryId={slug}
-        onNavigate={handleNavigate}
-        title="Otras herramientas que te pueden gustar"
-      />
-
-      <section
-        style={{
-          maxWidth: "56rem",
-          margin: "3rem auto 0",
-          padding: "2rem 1rem",
-          borderTop: `1px solid ${T.border}`,
-          color: T.textMuted,
-          fontSize: "0.85rem",
-          ...fontBody,
-        }}
-      >
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: T.text, marginBottom: "0.75rem", ...fontDisplay }}>
-          Guía técnica y optimización financiera
-        </h2>
-        <p style={{ marginBottom: "1rem", lineHeight: 1.5 }}>
-          Calcula y proyecta tus metas financieras con rigor matemático asegurando la privacidad local de tus datos.
-        </p>
-      </section>
+        <section
+          style={{
+            maxWidth: "56rem",
+            margin: "3rem auto 0",
+            padding: "2rem 1rem",
+            borderTop: `1px solid ${T.border}`,
+            color: T.textMuted,
+            fontSize: "0.85rem",
+            ...fontBody,
+          }}
+        >
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: T.text, marginBottom: "0.75rem", ...fontDisplay }}>
+            Guía técnica y optimización financiera
+          </h2>
+          <p style={{ marginBottom: "1rem", lineHeight: 1.5 }}>
+            Calcula y proyecta tus metas financieras con rigor matemático asegurando la privacidad local de tus datos.
+          </p>
+        </section>
+      </div>
 
       <PremiumExportBar />
     </div>
@@ -463,5 +470,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-                  }
-              
+        }
+        
