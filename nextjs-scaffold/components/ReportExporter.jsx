@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
-export default function ReportExporter({ toolName = "Simulación Financiera", summaryData = null, analysisText = "" }) {
+export default function ReportExporter({ 
+  toolName = "Simulación Financiera Ejecutiva", 
+  summaryData = null, 
+  analysisText = "" 
+}) {
   const [showModal, setShowModal] = useState(false);
 
   const handlePrintPDF = () => {
@@ -15,12 +19,12 @@ export default function ReportExporter({ toolName = "Simulación Financiera", su
       <div className="my-6 flex justify-end no-print">
         <button
           onClick={() => setShowModal(true)}
-          className="group relative inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-400 hover:text-emerald-300 font-semibold text-xs tracking-wide transition-all shadow-lg hover:shadow-emerald-500/10 active:scale-95"
+          className="group relative inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[#0e1b1d] hover:bg-[#121e21] border border-[#c4de4e]/40 hover:border-[#c4de4e] text-[#c4de4e] font-bold text-xs tracking-wider uppercase transition-all shadow-xl hover:shadow-[#c4de4e]/20 active:scale-95"
         >
-          <span className="text-base leading-none">📄</span>
-          <span>Generar Informe Corporativo (PDF)</span>
-          <span className="ml-1 text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
-            100% Privado
+          <span className="text-base leading-none">📊</span>
+          <span>Generar Informe Ejecutivo (PDF)</span>
+          <span className="ml-1.5 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#c4de4e]/15 text-[#c4de4e]">
+            100% Pro
           </span>
         </button>
       </div>
@@ -28,107 +32,130 @@ export default function ReportExporter({ toolName = "Simulación Financiera", su
       {/* Modal / Vista Previa del Informe */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md no-print animate-fadeIn">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-200 shadow-2xl p-6 sm:p-8">
+          <div className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-[#080f11] border border-[#f5f2ea]/15 text-[#f5f2ea] shadow-2xl p-6 sm:p-10">
             
             {/* Header del Modal */}
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
+            <div className="flex items-center justify-between border-b border-[#f5f2ea]/10 pb-4 mb-6">
               <div>
-                <span className="text-xs font-semibold text-emerald-400 tracking-wider uppercase">
-                  Vista Previa del Documento
+                <span className="text-[11px] font-bold text-[#c4de4e] tracking-widest uppercase">
+                  Vista Previa Corporativa
                 </span>
-                <h3 className="text-lg font-bold text-zinc-100">
-                  Informe Ejecutivo — {toolName}
+                <h3 className="text-lg font-bold text-[#f5f2ea]">
+                  Reporte Financiero — {toolName}
                 </h3>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 text-zinc-400 hover:text-zinc-100 rounded-lg bg-zinc-900 hover:bg-zinc-800 transition"
+                className="p-2 text-[#9fb3b1] hover:text-[#f5f2ea] rounded-xl bg-[#121e21] hover:bg-[#1c2c30] transition"
               >
                 ✕
               </button>
             </div>
 
-            {/* CUERPO DEL INFORME (Formato corporativo limpio para PDF) */}
-            <div id="metabox-report-content" className="printable-report space-y-6 p-6 sm:p-8 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100">
+            {/* CUERPO DEL INFORME (DISEÑO 10/10 IDÉNTICO A METABOX) */}
+            <div 
+              id="metabox-report-content" 
+              className="printable-report space-y-6 p-6 sm:p-8 rounded-2xl bg-[#080f11] border border-[#f5f2ea]/15 text-[#f5f2ea]"
+            >
               
-              {/* Header Corporativo de Marca */}
-              <div className="flex items-center justify-between border-b border-zinc-800 pb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400 text-base">
-                    M
+              {/* 1. CABECERA DE MARCA OFICIAL */}
+              <div className="flex items-center justify-between border-b border-[#f5f2ea]/15 pb-6">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-[#c4de4e]/15 border border-[#c4de4e]/40 flex items-center justify-center font-bold text-[#c4de4e] text-xl shadow-inner">
+                    🛡️
                   </div>
                   <div>
-                    <span className="font-bold text-lg text-zinc-100 tracking-tight block">
-                      Meta<span className="text-emerald-400">Box</span>
+                    <span className="font-extrabold text-xl text-[#f5f2ea] tracking-tight block font-serif">
+                      METABOX
                     </span>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
-                      Inteligencia Financiera Privada
+                    <span className="text-[10px] text-[#9fb3b1] uppercase tracking-widest font-semibold block">
+                      REPORTE FINANCIERO EJECUTIVO
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] uppercase tracking-widest px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold inline-block mb-1">
-                    Certificado Local
-                  </span>
-                  <div className="text-xs text-zinc-400">
-                    {new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}
+                  <div className="flex items-center gap-1.5 justify-end text-xs text-[#9fb3b1] font-medium bg-[#121e21] px-3 py-1 rounded-lg border border-[#f5f2ea]/10">
+                    <span>📅</span>
+                    <span>{new Date().toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "numeric" })}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Título de la Herramienta */}
-              <div>
-                <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
+              {/* 2. SLOGAN Y DESCRIPCIÓN */}
+              <div className="space-y-1.5">
+                <h2 className="text-2xl font-bold text-[#f5f2ea] tracking-tight font-serif">
                   {toolName}
                 </h2>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Reporte financiero generado de forma local. Los datos no han abandonado su dispositivo.
+                <p className="text-xs text-[#9fb3b1] leading-relaxed">
+                  Este informe muestra los resultados analíticos generados de forma local, seguros y privados para tu estrategia financiera.
                 </p>
               </div>
 
-              {/* Bloque de Métricas / Resumen Opcional */}
+              {/* 3. BLOQUE DE MÉTRICAS / CUADRÍCULA DE RESULTADOS */}
               {summaryData && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-zinc-950 border border-zinc-800">
-                  {Object.entries(summaryData).map(([key, value]) => (
-                    <div key={key} className="space-y-0.5">
-                      <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium block">{key}</span>
-                      <span className="text-sm font-bold text-emerald-400 block">{value}</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-[#121e21] border border-[#f5f2ea]/10">
+                  {Object.entries(summaryData).map(([key, value], idx) => (
+                    <div key={key} className="p-3 rounded-xl bg-[#080f11]/60 border border-[#f5f2ea]/5 space-y-1">
+                      <span className="text-[10px] uppercase tracking-widest text-[#9fb3b1] font-bold block">
+                        {key}
+                      </span>
+                      <span className="text-base sm:text-lg font-extrabold text-[#c4de4e] block">
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Informe / Análisis Dinámico según el resultado */}
-              <div className="p-5 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-2">
-                <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <span>📊</span> Análisis y Conclusión del Resultado
+              {/* 4. ANÁLISIS ESTRATÉGICO */}
+              <div className="p-5 rounded-2xl bg-[#121e21] border border-[#f5f2ea]/10 space-y-2">
+                <h4 className="text-xs font-bold text-[#c4de4e] uppercase tracking-wider flex items-center gap-2">
+                  <span>💡</span> Análisis y Recomendación de Impacto
                 </h4>
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  {analysisText || "El presupuesto se encuentra dentro de los márgenes óptimos de distribución. Mantener un control rigurosos de los gastos fijos garantiza una mayor capacidad de ahorro a mediano plazo."}
+                <p className="text-xs text-[#f5f2ea]/90 leading-relaxed font-normal">
+                  {analysisText || "La planificación actual se encuentra alineada con los estándares óptimos de estabilidad. Mantener la constancia reforzará tu solidez a mediano plazo."}
                 </p>
               </div>
 
-              {/* Pie de página corporativo oficial */}
-              <div className="border-t border-zinc-800 pt-4 flex items-center justify-between text-[11px] text-zinc-500 font-medium">
-                <span>MetaBox Suite © {new Date().getFullYear()}</span>
-                <span>Documento Confidencial</span>
+              {/* 5. SECCIÓN DE VALORES / RECORDATORIO DE MARCA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3.5 rounded-xl bg-[#121e21]/60 border border-[#f5f2ea]/5 flex items-start gap-3">
+                  <span className="text-base text-[#c4de4e]">🔒</span>
+                  <div>
+                    <h5 className="text-xs font-bold text-[#f5f2ea]">Privacidad Garantizada</h5>
+                    <p className="text-[11px] text-[#9fb3b1]">Tus datos nunca abandonan tu dispositivo.</p>
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#121e21]/60 border border-[#f5f2ea]/5 flex items-start gap-3">
+                  <span className="text-base text-[#c4de4e]">📈</span>
+                  <div>
+                    <h5 className="text-xs font-bold text-[#f5f2ea]">Proyección Constante</h5>
+                    <p className="text-[11px] text-[#9fb3b1]">Diseñado para optimizar tus decisiones.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. PIE DE PÁGINA OFICIAL METABOX */}
+              <div className="border-t border-[#f5f2ea]/10 pt-4 flex items-center justify-between text-[11px] text-[#9fb3b1] font-medium">
+                <span className="font-bold text-[#f5f2ea]">METABOX — <span className="text-[#c4de4e]">Tu futuro, en tus manos</span></span>
+                <span>Pequeños pasos, grandes resultados</span>
               </div>
             </div>
 
             {/* Botones de Acción */}
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-zinc-800">
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#f5f2ea]/10">
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-medium text-xs transition"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#121e21] hover:bg-[#1c2c30] text-[#f5f2ea] font-medium text-xs transition"
               >
                 Cerrar
               </button>
               <button
                 onClick={handlePrintPDF}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#c4de4e] hover:bg-[#a9c936] text-[#080f11] font-bold text-xs transition shadow-lg shadow-[#c4de4e]/20 flex items-center justify-center gap-2"
               >
                 <span>🖨️</span>
-                <span>Guardar como PDF / Imprimir</span>
+                <span>Guardar PDF / Imprimir</span>
               </button>
             </div>
 
@@ -136,9 +163,14 @@ export default function ReportExporter({ toolName = "Simulación Financiera", su
         </div>
       )}
 
-      {/* Reglas de impresión estrictas para aislar únicamente el informe corporativo */}
+      {/* REGLAS DE IMPRESIÓN ESTRICTAS (FORZANDO ESTÉTICA OSCURA PREMIUM O BLANCO EJECUTIVO) */}
       <style jsx global>{`
         @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+
           body * {
             visibility: hidden !important;
           }
@@ -159,18 +191,29 @@ export default function ReportExporter({ toolName = "Simulación Financiera", su
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
+            max-height: 275mm !important;
             margin: 0 !important;
-            padding: 20px !important;
-            background-color: #09090b !important;
-            color: #f4f4f5 !important;
-            border: none !important;
-            border-radius: 0 !important;
+            padding: 16px !important;
+            background-color: #080f11 !important;
+            color: #f5f2ea !important;
+            border: 1px solid rgba(245, 242, 234, 0.15) !important;
+            border-radius: 1rem !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            box-shadow: none !important;
+          }
+
+          #metabox-report-content div {
+            background-color: #121e21 !important;
+            border-color: rgba(245, 242, 234, 0.1) !important;
+          }
+
+          #metabox-report-content .text-[#c4de4e] {
+            color: #c4de4e !important;
           }
         }
       `}</style>
     </>
   );
-              }
-
+            }
+              
