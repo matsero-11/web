@@ -34,6 +34,52 @@ const TOOL_MAP = {
   "cuanto-necesito-ganar-ingreso-minimo": dynamic(() => import("@/components/tools/target-income-tool"), { ssr: false }),
 };
 
+function ToolLoading() {
+  return (
+    <div
+      role="status"
+      style={{
+        minHeight: "60vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: T.textMuted,
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "0.9rem",
+      }}
+    >
+      Cargando herramienta…
+    </div>
+  );
+}
+
+function ToolNotFound({ onBack }) {
+  return (
+    <main
+      style={{
+        minHeight: "60vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        gap: "1rem",
+        padding: "2rem",
+      }}
+    >
+      <h1 style={{ color: T.text, fontSize: "1.7rem", margin: 0, ...fontDisplay }}>
+        Herramienta no encontrada
+      </h1>
+      <p style={{ color: T.textMuted, maxWidth: "28rem", margin: 0, ...fontBody }}>
+        El enlace que has abierto no corresponde a una herramienta disponible.
+      </p>
+      <Button onClick={onBack} fullWidth={false}>
+        Volver a la home
+      </Button>
+    </main>
+  );
+}
+
 class ToolErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -281,52 +327,6 @@ function QuickSmartCapture({ onValueExtracted }) {
   );
 }
 
-function ToolLoading() {
-  return (
-    <div
-      role="status"
-      style={{
-        minHeight: "60vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: T.textMuted,
-        fontFamily: "system-ui, sans-serif",
-        fontSize: "0.9rem",
-      }}
-    >
-      Cargando herramienta…
-    </div>
-  );
-}
-
-function ToolNotFound({ onBack }) {
-  return (
-    <main
-      style={{
-        minHeight: "60vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        gap: "1rem",
-        padding: "2rem",
-      }}
-    >
-      <h1 style={{ color: T.text, fontSize: "1.7rem", margin: 0, ...fontDisplay }}>
-        Herramienta no encontrada
-      </h1>
-      <p style={{ color: T.textMuted, maxWidth: "28rem", margin: 0, ...fontBody }}>
-        El enlace que has abierto no corresponde a una herramienta disponible.
-      </p>
-      <Button onClick={onBack} fullWidth={false}>
-        Volver a la home
-      </Button>
-    </main>
-  );
-}
-
 function ToolClientContent({ slug }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -413,7 +413,7 @@ function ToolClientContent({ slug }) {
   return (
     <div style={{ width: "100%" }}>
       
-      {/* CONTENEDOR EXCLUSIVO PARA IMPRESIÓN (Solo esto saldrá en el PDF de cualquier herramienta) */}
+      {/* CONTENEDOR EXCLUSIVO PARA IMPRESIÓN (Aislado para el PDF) */}
       <div id="metabox-printable-tool-container">
         <QuickSmartCapture onValueExtracted={handleValueExtracted} />
 
@@ -470,5 +470,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-        }
-        
+                    }
+            
