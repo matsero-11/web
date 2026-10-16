@@ -478,6 +478,27 @@ input[type="range"].slider-coral {
     margin: 15mm 18mm 15mm 18mm;
   }
 
+  :root {
+    --bg: #ffffff;
+    --surface: #f8fafc;
+    --surface-alt: #eef2f6;
+    --surface-raised: #ffffff;
+    --text: #111827;
+    --text-muted: #334155;
+    --text-subtle: #64748b;
+    --lime: #166534;
+    --lime-strong: #166534;
+    --lime-soft: #e7f5ec;
+    --lavender: #5b21b6;
+    --lavender-strong: #4c1d95;
+    --lavender-soft: #f1edfd;
+    --coral: #b91c1c;
+    --coral-strong: #991b1b;
+    --coral-soft: #fdecec;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+  }
+
   html,
   body {
     background: #ffffff !important;
@@ -555,9 +576,36 @@ input[type="range"].slider-coral {
     font-weight: 700 !important;
   }
 
+  /* Transformación de campos numéricos e inputs en texto fijo elegante */
+  #metabox-printable-tool-container input {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  /* Prevención de cortes de página incómodos en bloques clave */
+  #metabox-printable-tool-container section,
+  #metabox-printable-tool-container > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   canvas, svg {
     max-width: 100% !important;
     page-break-inside: avoid !important;
   }
+
+  .print-only {
+    display: block !important;
+  }
 }
+
+.print-only {
+  display: none;
+    }
 
