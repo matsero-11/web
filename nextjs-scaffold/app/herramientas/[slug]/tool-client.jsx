@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
-import { FileDown, ShieldCheck, Wallet, Shield, Target, Clock, AlertCircle } from "lucide-react";
+import { FileDown, ShieldCheck, Wallet, Shield, Target, Clock, Lightbulb, TrendingUp } from "lucide-react";
 import RelatedTools from "@/components/RelatedTools";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 
@@ -85,7 +85,13 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
     year: "numeric"
   }).replace(".", "");
 
-  const metricsEntries = summaryData ? Object.entries(summaryData) : [];
+  const cleanEntries = useMemo(() => {
+    if (!summaryData) return [];
+    return Object.entries(summaryData).filter(([key, val]) => {
+      const valStr = String(val);
+      return !valStr.startsWith("[{") && !valStr.startsWith("{");
+    });
+  }, [summaryData]);
 
   return (
     <>
@@ -100,162 +106,130 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
         </div>
       </div>
 
-      {/* DOCUMENTO IMPRESO NATIVO CON CALIDAD 10/10 DE MAQUETA */}
+      {/* PLANTILLA A4 CON FONDO 100% BLANCO PURO Y DISEÑO BLINDADO */}
       <div 
         id="metabox-report-content" 
-        style={{ display: "none", fontFamily: "'Georgia', serif" }}
+        style={{ display: "none", fontFamily: "'Georgia', serif", backgroundColor: "#ffffff", color: "#111c1f", padding: "16px" }}
       >
-        {/* CABECERA CORPORATIVA */}
-        <div className="flex items-center justify-between bg-[#111c1f] text-[#f5f2ea] p-6 rounded-2xl border-b-4 border-[#c4de4e]">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#c4de4e]/20 border border-[#c4de4e]/40 flex items-center justify-center text-[#c4de4e] text-2xl">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#111c1f", color: "#f5f2ea", padding: "14px 18px", borderRadius: "10px", borderBottom: "3px solid #c4de4e" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "6px", backgroundColor: "rgba(196, 222, 78, 0.2)", border: "1px solid rgba(196, 222, 78, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#c4de4e", fontSize: "14px" }}>
               🛡️
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold tracking-widest uppercase font-serif text-[#f5f2ea]">
+              <h1 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "1px", margin: 0, textTransform: "uppercase" }}>
                 METABOX
               </h1>
-              <span className="text-[10px] text-[#c4de4e] uppercase tracking-widest font-bold block font-sans">
+              <span style={{ fontSize: "8px", color: "#c4de4e", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, display: "block" }}>
                 REPORTE FINANCIERO EJECUTIVO
               </span>
             </div>
           </div>
-          <div className="text-right font-sans">
-            <div className="inline-flex items-center gap-2 text-xs text-[#f5f2ea] font-medium bg-[#1a292c] px-3.5 py-1.5 rounded-xl border border-[#f5f2ea]/10">
-              <span>📅</span>
-              <span>Fecha del reporte: <strong>{currentDateFormatted}</strong></span>
+          <div style={{ textAlign: "right", fontFamily: "sans-serif" }}>
+            <div style={{ fontSize: "9px", color: "#f5f2ea", backgroundColor: "#1a292c", padding: "3px 8px", borderRadius: "6px", border: "1px solid rgba(245, 242, 234, 0.1)" }}>
+              📅 <strong>{currentDateFormatted}</strong>
             </div>
           </div>
         </div>
 
-        {/* TITULAR Y DESCRIPCIÓN */}
-        <div className="space-y-1 pt-4 border-b border-[#111c1f]/10 pb-4">
-          <span className="text-[10px] font-bold text-[#5c7a1e] uppercase tracking-widest font-sans block">
-            — {toolName ? toolName.toUpperCase() : "FONDO DE EMERGENCIA"} —
+        <div style={{ marginTop: "10px", marginBottom: "10px", borderBottom: "1px solid #e5e7eb", paddingBottom: "8px" }}>
+          <span style={{ fontSize: "8px", fontWeight: 700, color: "#5c7a1e", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "sans-serif", display: "block" }}>
+            — {toolName ? toolName.toUpperCase() : "SIMULACIÓN FINANCIERA"} —
           </span>
-          <h2 className="text-3xl font-extrabold text-[#111c1f] leading-tight">
-            Fondo de emergencia
+          <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#111c1f", margin: "2px 0 2px 0", lineHeight: 1.1 }}>
+            Estabilidad hoy, <span style={{ fontStyle: "italic", fontWeight: 400, color: "#9e7d3b" }}>tranquilidad mañana.</span>
           </h2>
-          <p className="text-xs text-[#526365] font-sans leading-relaxed max-w-2xl">
-            Cuánto necesitas ahorrar para estar cubierto ante un imprevisto.
+          <p style={{ fontSize: "9px", color: "#4b5563", fontFamily: "sans-serif", margin: 0, lineHeight: 1.2 }}>
+            Informe proyectado con rigor matemático para asegurar tu cobertura ante imprevistos.
           </p>
         </div>
 
-        {/* MÉTRICAS CLAVE EN TARJETAS INDEPENDIENTES */}
-        <div className="grid grid-cols-3 gap-4 my-4 font-sans">
-          <div className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/10 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-[#9e7d3b]">
-              <Wallet size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">Gastos esenciales mensuales</span>
-            </div>
-            <span className="text-2xl font-extrabold text-[#111c1f] mt-2">
-              {metricsEntries[0]?.[1] || "€ 1.100"}
-            </span>
-          </div>
-          <div className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/10 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-[#9e7d3b]">
-              <Shield size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">Cobertura deseada</span>
-            </div>
-            <span className="text-2xl font-extrabold text-[#111c1f] mt-2">
-              {metricsEntries[1]?.[1] || "6 meses"}
-            </span>
-          </div>
-          <div className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/10 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-[#9e7d3b]">
-              <Target size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">Objetivo total</span>
-            </div>
-            <span className="text-2xl font-extrabold text-[#111c1f] mt-2">
-              {metricsEntries[2]?.[1] || "€ 6.600,00"}
-            </span>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "10px", fontFamily: "sans-serif" }}>
+          {cleanEntries.length > 0 ? (
+            cleanEntries.slice(0, 3).map(([key, value]) => (
+              <div key={key} style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "8px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", display: "block", marginBottom: "2px" }}>
+                  {key}
+                </span>
+                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>
+                  {String(value)}
+                </span>
+              </div>
+            ))
+          ) : (
+            <>
+              <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", display: "block" }}>GASTO MENSUAL</span>
+                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>€ 1.100</span>
+              </div>
+              <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", display: "block" }}>COBERTURA</span>
+                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>6 meses</span>
+              </div>
+              <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", display: "block" }}>OBJETIVO TOTAL</span>
+                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>€ 6.600</span>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* TIEMPO PARA EL OBJETIVO Y BARRA DE PROGRESO */}
-        <div className="p-5 rounded-2xl bg-[#f9f8f4] border border-[#111c1f]/10 my-4 font-sans text-center space-y-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#526365] block">
+        <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "10px", fontFamily: "sans-serif", textAlign: "center" }}>
+          <span style={{ fontSize: "8px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", display: "block", marginBottom: "2px" }}>
             TIEMPO PARA EL OBJETIVO
           </span>
-          <div className="text-4xl font-black text-[#111c1f]">
-            49 <span className="text-lg font-normal">meses</span>
+          <div style={{ fontSize: "24px", fontWeight: 900, color: "#0f172a", marginBottom: "4px" }}>
+            49 <span style={{ fontSize: "11px", fontWeight: 400, color: "#4b5563" }}>meses</span>
           </div>
           
-          <div className="w-full bg-[#e2decb] h-2.5 rounded-full overflow-hidden max-w-lg mx-auto">
-            <div className="bg-[#4b6321] h-full rounded-full" style={{ width: "12%" }}></div>
+          <div style={{ width: "100%", backgroundColor: "#e2e8f0", height: "5px", borderRadius: "3px", overflow: "hidden", maxWidth: "300px", margin: "0 auto 3px auto" }}>
+            <div style={{ backgroundColor: "#4b6321", height: "100%", width: "12%" }}></div>
           </div>
-          <span className="text-xs font-bold text-[#526365] block">12% conseguido</span>
-
-          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[#111c1f]/10 text-left max-w-md mx-auto">
-            <div>
-              <span className="text-[10px] text-[#526365] block">Ya has ahorrado</span>
-              <span className="text-base font-bold text-[#111c1f]">€ 800</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-[#526365] block">Aportación mensual</span>
-              <span className="text-base font-bold text-[#111c1f]">€ 120</span>
-            </div>
-          </div>
+          <span style={{ fontSize: "9px", fontWeight: 700, color: "#4b5563", display: "block" }}>12% conseguido</span>
         </div>
-                 {/* GRÁFICO VISUAL DE PROYECCIÓN DE AHORRO (SVG) */}
-        <div className="p-5 rounded-2xl bg-[#f9f8f4] border border-[#111c1f]/10 my-4 font-sans">
-          <h4 className="text-xs font-bold text-[#111c1f] uppercase tracking-wider mb-1">Proyección de ahorro</h4>
-          <p className="text-[10px] text-[#526365] mb-3">Evolución estimada de tu fondo de emergencia con la aportación actual.</p>
+              <div style={{ padding: "8px 12px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "10px", fontFamily: "sans-serif" }}>
+          <h4 style={{ fontSize: "9px", fontWeight: 700, color: "#0f172a", textTransform: "uppercase", margin: "0 0 2px 0" }}>Proyección de ahorro</h4>
+          <p style={{ fontSize: "8px", color: "#64748b", margin: "0 0 4px 0" }}>Evolución estimada con la aportación actual.</p>
 
-          <div className="relative w-full h-32">
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 400 100" preserveAspectRatio="none">
+          <div style={{ width: "100%", height: "45px" }}>
+            <svg style={{ width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 400 50" preserveAspectRatio="none">
               <defs>
-                <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5c7a1e" stopOpacity="0.3" />
+                <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5c7a1e" stopOpacity="0.25" />
                   <stop offset="100%" stopColor="#5c7a1e" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
-              <line x1="0" y1="20" x2="400" y2="20" stroke="#111c1f" strokeOpacity="0.1" strokeDasharray="2" />
-              <line x1="0" y1="50" x2="400" y2="50" stroke="#111c1f" strokeOpacity="0.1" strokeDasharray="2" />
-              <line x1="0" y1="80" x2="400" y2="80" stroke="#111c1f" strokeOpacity="0.1" strokeDasharray="2" />
+              <line x1="0" y1="12" x2="400" y2="12" stroke="#0f172a" strokeOpacity="0.06" strokeDasharray="2" />
+              <line x1="0" y1="30" x2="400" y2="30" stroke="#0f172a" strokeOpacity="0.06" strokeDasharray="2" />
 
-              <polygon points="0,90 80,75 160,60 240,45 320,30 400,15 400,90 0,90" fill="url(#grad)" />
-              <polyline points="0,90 80,75 160,60 240,45 320,30 400,15" fill="none" stroke="#5c7a1e" strokeWidth="2.5" />
-
-              <circle cx="0" cy="90" r="3" fill="#5c7a1e" />
-              <circle cx="80" cy="75" r="3" fill="#5c7a1e" />
-              <circle cx="160" cy="60" r="3" fill="#5c7a1e" />
-              <circle cx="240" cy="45" r="3" fill="#5c7a1e" />
-              <circle cx="320" cy="30" r="3" fill="#5c7a1e" />
-              <circle cx="400" cy="15" r="3" fill="#5c7a1e" />
+              <polygon points="0,42 100,35 200,26 300,16 400,8 400,45 0,45" fill="url(#grad2)" />
+              <polyline points="0,42 100,35 200,26 300,16 400,8" fill="none" stroke="#5c7a1e" strokeWidth="2" />
             </svg>
           </div>
-          <div className="flex justify-between text-[9px] text-[#526365] mt-1 pt-1 border-t border-[#111c1f]/5">
-            <span>0</span>
-            <span>12</span>
-            <span>24</span>
-            <span>36</span>
-            <span>48</span>
-            <span>Meses</span>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "7px", color: "#64748b", marginTop: "2px" }}>
+            <span>Mes 0</span><span>Mes 12</span><span>Mes 24</span><span>Mes 36</span><span>Mes 48</span>
           </div>
         </div>
 
-        {/* ALERTA Y RECOMENDACIÓN DE IMPACTO */}
-        <div className="p-4 rounded-xl bg-[#1d2b2e] text-[#f5f2ea] flex items-center gap-4 my-4 font-sans">
-          <div className="w-10 h-10 rounded-full border border-[#f5f2ea]/30 flex items-center justify-center shrink-0 text-lg">
+        <div style={{ padding: "8px 12px", borderRadius: "8px", backgroundColor: "#111c1f", color: "#f5f2ea", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontFamily: "sans-serif" }}>
+          <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "1px solid rgba(245, 242, 234, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", flexShrink: 0 }}>
             !
           </div>
-          <div className="text-xs">
-            <strong className="block text-[#c4de4e] mb-0.5">Al ritmo actual tardarás más de 2 años en completarlo.</strong>
-            <span>Si es posible, prioriza este fondo antes que metas menos urgentes.</span>
+          <div style={{ fontSize: "9px" }}>
+            <strong style={{ color: "#c4de4e", display: "block", marginBottom: "1px" }}>Prioriza tus metas financieras principales.</strong>
+            <span style={{ color: "#9fb3b1" }}>Es la base para una vida financiera sana y libre de deudas.</span>
           </div>
         </div>
 
-        {/* PIE DE PÁGINA INFORMATIVO */}
-        <div className="pt-3 border-t border-[#111c1f]/10 text-[10px] text-[#526365] font-sans flex items-center gap-2">
-          <span className="p-1 rounded-full bg-[#111c1f]/10 text-[#111c1f]">ℹ</span>
-          <span>Un fondo de emergencia es un dinero separado para cubrir gastos inesperados, como problemas de salud, reparaciones o pérdida de ingresos.</span>
+        <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "7px", color: "#64748b", fontFamily: "sans-serif" }}>
+          <span><strong>METABOX</strong> — Tu futuro, en tus manos</span>
+          <span style={{ fontStyle: "italic", color: "#9e7d3b" }}>Pequeños pasos, grandes resultados</span>
         </div>
       </div>
 
       <style jsx global>{`
         @media print {
-          @page { size: A4 portrait; margin: 8mm; }
+          @page { size: A4 portrait; margin: 6mm; }
           body * { visibility: hidden !important; }
           .no-print, .no-print * { display: none !important; visibility: hidden !important; }
           #metabox-report-content, #metabox-report-content * { 
@@ -267,15 +241,17 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
             left: 0 !important; 
             top: 0 !important; 
             width: 100% !important; 
+            height: 100% !important; 
             margin: 0 !important; 
-            padding: 24px !important; 
-            background-color: #f7f5ef !important; 
+            padding: 10px !important; 
+            background-color: #ffffff !important; 
             color: #111c1f !important; 
             border: none !important; 
             border-radius: 0 !important; 
             -webkit-print-color-adjust: exact !important; 
             print-color-adjust: exact !important; 
             box-shadow: none !important;
+            overflow: hidden !important;
           }
         }
       `}</style>
@@ -391,7 +367,7 @@ function ToolClientContent({ slug }) {
     let cleanSlug = typeof targetSlug === "string" ? targetSlug.replace("/herramientas/", "").trim() : null;
     if (cleanSlug) {
       router.push(`/herramientas/${cleanSlug}`);
-      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+      if (typeof window !== "undefined") window.scrollTo({ top: "0", behavior: "smooth" });
     }
   }, [router]);
 
@@ -434,4 +410,4 @@ export default function ToolClient({ slug }) {
     </Suspense>
   );
         }
-                                        
+                                  
