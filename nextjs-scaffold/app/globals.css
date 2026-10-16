@@ -472,12 +472,12 @@ input[type="range"].slider-coral {
 }
 
 /* ==========================================================================
-   ESTILOS DE IMPRESIÓN FINTECH PREMIUM (1 PÁGINA EXACTA)
+   ESTILOS DE IMPRESIÓN FINTECH PREMIUM (1 PÁGINA CON ENCABEZADO Y DETALLES CORPORATIVOS)
    ========================================================================== */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 5mm 8mm 5mm 8mm;
+    margin: 8mm 10mm 8mm 10mm;
   }
 
   :root {
@@ -497,8 +497,8 @@ input[type="range"].slider-coral {
     --coral: #b91c1c;
     --coral-strong: #991b1b;
     --coral-soft: #fdecec;
-    --border: #e2e8f0;
-    --border-strong: #cbd5e1;
+    --border: #cbd5e1;
+    --border-strong: #94a3b8;
   }
 
   html,
@@ -536,11 +536,40 @@ input[type="range"].slider-coral {
     width: 100% !important;
     max-height: 270mm !important;
     margin: 0 !important;
-    padding: 0.1rem !important;
+    padding: 0.2rem !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    transform: scale(0.85);
+    transform: scale(0.88);
     transform-origin: top center;
+  }
+
+  /* 🌟 ENCABEZADO CORPORATIVO EJECUTIVO DE ALTO NIVEL */
+  #metabox-printable-tool-container::before {
+    content: "🛡️ METABOX • REPORTE FINANCIERO EJECUTIVO  |  📅 Fecha: " attr(data-print-date);
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #1e293b;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+  }
+
+  /* 🌟 PIE DE PÁGINA CORPORATIVO CON SELLO DE PRIVACIDAD */
+  #metabox-printable-tool-container::after {
+    content: "🔒 Documento generado de forma 100% privada y local en tu navegador • metabox.app";
+    display: block;
+    text-align: center;
+    font-size: 0.55rem;
+    color: #64748b;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 0.4rem;
+    margin-top: 0.6rem;
+    font-weight: 500;
   }
 
   #metabox-printable-tool-container div,
@@ -549,32 +578,32 @@ input[type="range"].slider-coral {
     color: #1e293b !important;
     border-color: #cbd5e1 !important;
     box-shadow: none !important;
-    margin-bottom: 0.2rem !important;
+    margin-bottom: 0.25rem !important;
   }
 
   #metabox-printable-tool-container [style*="background"],
   #metabox-printable-tool-container [style*="background-color"] {
     background-color: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 8px !important;
-    padding: 0.3rem 0.5rem !important;
+    padding: 0.35rem 0.55rem !important;
   }
 
   #metabox-printable-tool-container h1,
   #metabox-printable-tool-container h2,
   #metabox-printable-tool-container h3,
   #metabox-printable-tool-container h4 {
-    font-size: 0.8rem !important;
+    font-size: 0.85rem !important;
     color: #0f172a !important;
-    margin-bottom: 0.1rem !important;
+    margin-bottom: 0.15rem !important;
   }
 
   #metabox-printable-tool-container p,
   #metabox-printable-tool-container span,
   #metabox-printable-tool-container label {
     color: #334155 !important;
-    font-size: 0.68rem !important;
-    line-height: 1.2 !important;
+    font-size: 0.72rem !important;
+    line-height: 1.25 !important;
   }
 
   #metabox-printable-tool-container .text-lime,
@@ -593,7 +622,7 @@ input[type="range"].slider-coral {
     font-weight: 600 !important;
     -webkit-appearance: none !important;
     appearance: none !important;
-    font-size: 0.72rem !important;
+    font-size: 0.75rem !important;
   }
 
   #metabox-printable-tool-container section,
@@ -604,7 +633,7 @@ input[type="range"].slider-coral {
 
   canvas, svg {
     max-width: 100% !important;
-    max-height: 95px !important;
+    max-height: 100px !important;
     page-break-inside: avoid !important;
   }
 
@@ -616,4 +645,4 @@ input[type="range"].slider-coral {
 .print-only {
   display: none;
     }
-
+  
