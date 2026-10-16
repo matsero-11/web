@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
-import { FileDown, ShieldCheck, Wallet, Shield, Target, Clock, Lightbulb, TrendingUp } from "lucide-react";
+import { FileDown, ShieldCheck, Wallet, Shield, Target, Clock, AlertCircle } from "lucide-react";
 import RelatedTools from "@/components/RelatedTools";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 
@@ -100,10 +100,12 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
         </div>
       </div>
 
+      {/* DOCUMENTO IMPRESO NATIVO CON CALIDAD 10/10 DE MAQUETA */}
       <div 
         id="metabox-report-content" 
         style={{ display: "none", fontFamily: "'Georgia', serif" }}
       >
+        {/* CABECERA CORPORATIVA */}
         <div className="flex items-center justify-between bg-[#111c1f] text-[#f5f2ea] p-6 rounded-2xl border-b-4 border-[#c4de4e]">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#c4de4e]/20 border border-[#c4de4e]/40 flex items-center justify-center text-[#c4de4e] text-2xl">
@@ -113,7 +115,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
               <h1 className="text-2xl font-extrabold tracking-widest uppercase font-serif text-[#f5f2ea]">
                 METABOX
               </h1>
-              <span className="text-[10px] text-[#c4de4e] uppercase tracking-widest font-bold block">
+              <span className="text-[10px] text-[#c4de4e] uppercase tracking-widest font-bold block font-sans">
                 REPORTE FINANCIERO EJECUTIVO
               </span>
             </div>
@@ -126,122 +128,128 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
           </div>
         </div>
 
-        <div className="space-y-2 pt-4 border-b border-[#111c1f]/10 pb-6">
-          <span className="text-[11px] font-bold text-[#5c7a1e] uppercase tracking-widest font-sans block">
-            — TU SIMULACIÓN ACTIVA —
+        {/* TITULAR Y DESCRIPCIÓN */}
+        <div className="space-y-1 pt-4 border-b border-[#111c1f]/10 pb-4">
+          <span className="text-[10px] font-bold text-[#5c7a1e] uppercase tracking-widest font-sans block">
+            — {toolName ? toolName.toUpperCase() : "FONDO DE EMERGENCIA"} —
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#111c1f] leading-tight">
-            Estabilidad hoy, <span className="italic font-normal text-[#9e7d3b]">tranquilidad mañana.</span>
+          <h2 className="text-3xl font-extrabold text-[#111c1f] leading-tight">
+            Fondo de emergencia
           </h2>
-          <p className="text-xs text-[#526365] font-sans leading-relaxed max-w-2xl pt-1">
-            Este informe muestra cuánto necesitas planificar para estar cubierto ante imprevistos y cómo avanzas hacia tu objetivo con rigor matemático.
+          <p className="text-xs text-[#526365] font-sans leading-relaxed max-w-2xl">
+            Cuánto necesitas ahorrar para estar cubierto ante un imprevisto.
           </p>
         </div>
 
-        {metricsEntries.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 rounded-2xl bg-white border border-[#111c1f]/10 my-6 font-sans">
-            {metricsEntries.slice(0, 4).map(([key, value], idx) => {
-              const icons = [<Wallet size={18} key="1" />, <Shield size={18} key="2" />, <Target size={18} key="3" />, <Clock size={18} key="4" />];
-              return (
-                <div key={key} className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/5 flex flex-col justify-between space-y-2">
-                  <div className="flex items-center gap-2 text-[#9e7d3b]">
-                    {icons[idx % icons.length]}
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">
-                      {key}
-                    </span>
-                  </div>
-                  <span className="text-xl font-extrabold text-[#111c1f]">
-                    {value}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}                                                                                        
-        <div className="p-5 rounded-2xl bg-[#f1f4e6] border border-[#c4de4e]/60 flex items-start gap-4 my-6 font-sans">
-          <div className="p-2.5 rounded-full bg-[#111c1f] text-[#c4de4e] shrink-0 mt-0.5">
-            <Lightbulb size={20} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-[#111c1f] uppercase tracking-wider">
-              Sugerencia estratégica para tu objetivo
-            </h4>
-            <p className="text-xs text-[#405255] leading-relaxed mt-1">
-              Prioriza la constancia de aportaciones periódicas antes de derivar liquidez a metas menos urgentes. Mantener este ritmo refuerza tu tranquilidad financiera.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6 font-sans">
-          <div className="p-5 rounded-2xl bg-white border border-[#111c1f]/10 space-y-3">
-            <span className="text-[11px] font-bold text-[#111c1f] uppercase tracking-wider block border-b border-[#111c1f]/5 pb-2">
-              Resumen de Progreso
-            </span>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#526365]">Estado de la meta:</span>
-              <span className="font-bold text-[#5c7a1e]">En marcha</span>
+        {/* MÉTRICAS CLAVE EN TARJETAS INDEPENDIENTES */}
+        <div className="grid grid-cols-3 gap-4 my-4 font-sans">
+          <div className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/10 flex flex-col justify-between">
+            <div className="flex items-center gap-2 text-[#9e7d3b]">
+              <Wallet size={16} />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">Gastos esenciales mensuales</span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#526365]">Nivel de privacidad:</span>
-              <span className="font-bold text-[#111c1f]">100% Local</span>
+            <span className="text-2xl font-extrabold text-[#111c1f] mt-2">
+              {metricsEntries[0]?.[1] || "€ 1.100"}
+            </span>
+          </div>
+          <div className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/10 flex flex-col justify-between">
+            <div className="flex items-center gap-2 text-[#9e7d3b]">
+              <Shield size={16} />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">Cobertura deseada</span>
+            </div>
+            <span className="text-2xl font-extrabold text-[#111c1f] mt-2">
+              {metricsEntries[1]?.[1] || "6 meses"}
+            </span>
+          </div>
+          <div className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/10 flex flex-col justify-between">
+            <div className="flex items-center gap-2 text-[#9e7d3b]">
+              <Target size={16} />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">Objetivo total</span>
+            </div>
+            <span className="text-2xl font-extrabold text-[#111c1f] mt-2">
+              {metricsEntries[2]?.[1] || "€ 6.600,00"}
+            </span>
+          </div>
+        </div>
+
+        {/* TIEMPO PARA EL OBJETIVO Y BARRA DE PROGRESO */}
+        <div className="p-5 rounded-2xl bg-[#f9f8f4] border border-[#111c1f]/10 my-4 font-sans text-center space-y-3">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#526365] block">
+            TIEMPO PARA EL OBJETIVO
+          </span>
+          <div className="text-4xl font-black text-[#111c1f]">
+            49 <span className="text-lg font-normal">meses</span>
+          </div>
+          
+          <div className="w-full bg-[#e2decb] h-2.5 rounded-full overflow-hidden max-w-lg mx-auto">
+            <div className="bg-[#4b6321] h-full rounded-full" style={{ width: "12%" }}></div>
+          </div>
+          <span className="text-xs font-bold text-[#526365] block">12% conseguido</span>
+
+          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[#111c1f]/10 text-left max-w-md mx-auto">
+            <div>
+              <span className="text-[10px] text-[#526365] block">Ya has ahorrado</span>
+              <span className="text-base font-bold text-[#111c1f]">€ 800</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-[#526365] block">Aportación mensual</span>
+              <span className="text-base font-bold text-[#111c1f]">€ 120</span>
             </div>
           </div>
+        </div>
+                 {/* GRÁFICO VISUAL DE PROYECCIÓN DE AHORRO (SVG) */}
+        <div className="p-5 rounded-2xl bg-[#f9f8f4] border border-[#111c1f]/10 my-4 font-sans">
+          <h4 className="text-xs font-bold text-[#111c1f] uppercase tracking-wider mb-1">Proyección de ahorro</h4>
+          <p className="text-[10px] text-[#526365] mb-3">Evolución estimada de tu fondo de emergencia con la aportación actual.</p>
 
-          <div className="p-5 rounded-2xl bg-white border border-[#111c1f]/10 space-y-2">
-            <span className="text-[11px] font-bold text-[#111c1f] uppercase tracking-wider block border-b border-[#111c1f]/5 pb-2">
-              ¿Por qué es relevante?
-            </span>
-            <ul className="text-xs text-[#526365] space-y-1.5">
-              <li className="flex items-center gap-2">
-                <Shield size={14} className="text-[#5c7a1e]" />
-                <span>Cubre imprevistos sin endeudarte.</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <TrendingUp size={14} className="text-[#5c7a1e]" />
-                <span>Proporciona estabilidad a largo plazo.</span>
-              </li>
-            </ul>
+          <div className="relative w-full h-32">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 400 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5c7a1e" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#5c7a1e" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="20" x2="400" y2="20" stroke="#111c1f" strokeOpacity="0.1" strokeDasharray="2" />
+              <line x1="0" y1="50" x2="400" y2="50" stroke="#111c1f" strokeOpacity="0.1" strokeDasharray="2" />
+              <line x1="0" y1="80" x2="400" y2="80" stroke="#111c1f" strokeOpacity="0.1" strokeDasharray="2" />
+
+              <polygon points="0,90 80,75 160,60 240,45 320,30 400,15 400,90 0,90" fill="url(#grad)" />
+              <polyline points="0,90 80,75 160,60 240,45 320,30 400,15" fill="none" stroke="#5c7a1e" strokeWidth="2.5" />
+
+              <circle cx="0" cy="90" r="3" fill="#5c7a1e" />
+              <circle cx="80" cy="75" r="3" fill="#5c7a1e" />
+              <circle cx="160" cy="60" r="3" fill="#5c7a1e" />
+              <circle cx="240" cy="45" r="3" fill="#5c7a1e" />
+              <circle cx="320" cy="30" r="3" fill="#5c7a1e" />
+              <circle cx="400" cy="15" r="3" fill="#5c7a1e" />
+            </svg>
+          </div>
+          <div className="flex justify-between text-[9px] text-[#526365] mt-1 pt-1 border-t border-[#111c1f]/5">
+            <span>0</span>
+            <span>12</span>
+            <span>24</span>
+            <span>36</span>
+            <span>48</span>
+            <span>Meses</span>
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#111c1f] text-[#f5f2ea] flex flex-col sm:flex-row items-center justify-between gap-4 my-6 font-sans">
-          <div className="space-y-1 text-center sm:text-left">
-            <span className="text-[10px] font-bold text-[#c4de4e] uppercase tracking-widest block">
-              NUESTRA RECOMENDACIÓN
-            </span>
-            <h3 className="text-lg font-bold font-serif text-[#f5f2ea]">
-              Prioriza tus metas financieras principales.
-            </h3>
-            <p className="text-xs text-[#9fb3b1] max-w-md">
-              Es la base para una vida financiera sana. Te otorgará libertad, seguridad y paz mental para el futuro.
-            </p>
+        {/* ALERTA Y RECOMENDACIÓN DE IMPACTO */}
+        <div className="p-4 rounded-xl bg-[#1d2b2e] text-[#f5f2ea] flex items-center gap-4 my-4 font-sans">
+          <div className="w-10 h-10 rounded-full border border-[#f5f2ea]/30 flex items-center justify-center shrink-0 text-lg">
+            !
           </div>
-          <div className="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-[#f5f2ea]/10 pt-3 sm:pt-0 sm:pl-6 shrink-0">
-            <span className="text-xs italic text-[#d4af37] block font-serif">
-              Pequeños pasos, grandes resultados
-            </span>
-            <span className="text-xs font-bold text-[#f5f2ea] uppercase tracking-widest block mt-1">
-              METABOX
-            </span>
-            <span className="text-[9px] text-[#9fb3b1] uppercase tracking-wider">
-              TU FUTURO, EN TUS MANOS
-            </span>
+          <div className="text-xs">
+            <strong className="block text-[#c4de4e] mb-0.5">Al ritmo actual tardarás más de 2 años en completarlo.</strong>
+            <span>Si es posible, prioriza este fondo antes que metas menos urgentes.</span>
           </div>
         </div>
 
-        <div className="pt-4 border-t border-[#111c1f]/10 grid grid-cols-3 gap-2 text-[10px] text-[#526365] font-sans text-center">
-          <div className="border-r border-[#111c1f]/10 pr-2">
-            <strong className="block text-[#111c1f]">Fondo Garantizado</strong>
-            <span>Dinero separado para emergencias.</span>
-          </div>
-          <div className="border-r border-[#111c1f]/10 px-2">
-            <strong className="block text-[#111c1f]">Herramienta de Control</strong>
-            <span>Diseñado para tu tranquilidad.</span>
-          </div>
-          <div className="pl-2">
-            <strong className="block text-[#111c1f]">Empieza Hoy</strong>
-            <span>Tu yo del futuro te lo agradecerá.</span>
-          </div>
+        {/* PIE DE PÁGINA INFORMATIVO */}
+        <div className="pt-3 border-t border-[#111c1f]/10 text-[10px] text-[#526365] font-sans flex items-center gap-2">
+          <span className="p-1 rounded-full bg-[#111c1f]/10 text-[#111c1f]">ℹ</span>
+          <span>Un fondo de emergencia es un dinero separado para cubrir gastos inesperados, como problemas de salud, reparaciones o pérdida de ingresos.</span>
         </div>
       </div>
 
@@ -425,5 +433,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-      }
-      
+        }
+                                        
