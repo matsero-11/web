@@ -321,6 +321,7 @@ input[data-slider-input] {
   -webkit-user-select: text !important;
   cursor: text;
   opacity: 1;
+  margin-bottom: 0.75rem !important; /* 🌟 Espacio visual perfecto entre input y slider */
 }
 
 input[type="range"] {
@@ -332,7 +333,8 @@ input[type="range"] {
   width: 100%;
   min-width: 0;
   height: var(--slider-thumb-size);
-  margin: 0;
+  margin-top: 0.5rem !important;
+  margin-bottom: 1.5rem !important; /* 🌟 Mayor separación visual para que respire perfectamente */
   padding: 0;
 
   appearance: none;
@@ -470,20 +472,20 @@ input[type="range"].slider-coral {
 }
 
 /* ==========================================================================
-   ESTILOS DE IMPRESIÓN FINTECH PREMIUM (PDF EJECUTIVO)
+   ESTILOS DE IMPRESIÓN FINTECH PREMIUM (PDF EJECUTIVO 1 PÁGINA)
    ========================================================================== */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 15mm 18mm 15mm 18mm;
+    margin: 10mm 12mm 10mm 12mm;
   }
 
   :root {
     --bg: #ffffff;
-    --surface: #f8fafc;
-    --surface-alt: #eef2f6;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
     --surface-raised: #ffffff;
-    --text: #111827;
+    --text: #0f172a;
     --text-muted: #334155;
     --text-subtle: #64748b;
     --lime: #166534;
@@ -502,7 +504,7 @@ input[type="range"].slider-coral {
   html,
   body {
     background: #ffffff !important;
-    color: #111827 !important;
+    color: #0f172a !important;
     font-family: system-ui, -apple-system, sans-serif !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -531,44 +533,46 @@ input[type="range"].slider-coral {
     top: 0 !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 1rem !important;
+    padding: 0.5rem !important;
     background: #ffffff !important;
-    color: #111827 !important;
+    color: #0f172a !important;
   }
 
-  /* 🌟 TRANSFORMACIÓN DE TARJETAS OSCURAS A PANELES CLAROS PREMIUM */
+  /* 🌟 TARJETAS LIMPIAS Y COMPACTAS PARA ENCAJAR EN 1 SOLA PÁGINA */
   #metabox-printable-tool-container div,
   #metabox-printable-tool-container section {
     background-color: #ffffff !important;
-    color: #1f2937 !important;
-    border-color: #e5e7eb !important;
+    color: #1e293b !important;
+    border-color: #e2e8f0 !important;
     box-shadow: none !important;
+    margin-bottom: 0.4rem !important;
   }
 
-  /* Contenedores internos con fondo sutil tipo tarjeta de banca privada */
   #metabox-printable-tool-container [style*="background"],
   #metabox-printable-tool-container [style*="background-color"] {
     background-color: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
+    padding: 0.5rem 0.75rem !important;
   }
 
-  /* 🖋️ TIPOGRAFÍA DE ALTO CONTRASTE */
+  /* 🖋️ TIPOGRAFÍA DE MÁXIMA ELEGANCIA */
   #metabox-printable-tool-container h1,
   #metabox-printable-tool-container h2,
   #metabox-printable-tool-container h3,
-  #metabox-printable-tool-container h4,
-  #metabox-printable-tool-container strong {
+  #metabox-printable-tool-container h4 {
+    font-size: 0.95rem !important;
     color: #0f172a !important;
+    margin-bottom: 0.2rem !important;
   }
 
   #metabox-printable-tool-container p,
   #metabox-printable-tool-container span,
   #metabox-printable-tool-container label {
     color: #334155 !important;
+    font-size: 0.8rem !important;
   }
 
-  /* Tonos verdes ejecutivos para los resultados destacados */
   #metabox-printable-tool-container .text-lime,
   #metabox-printable-tool-container [style*="color: var(--lime)"],
   #metabox-printable-tool-container [style*="color:#c4de4e"] {
@@ -576,19 +580,17 @@ input[type="range"].slider-coral {
     font-weight: 700 !important;
   }
 
-  /* Transformación de campos numéricos e inputs en texto fijo elegante */
   #metabox-printable-tool-container input {
     border: none !important;
     background: transparent !important;
     box-shadow: none !important;
     padding: 0 !important;
-    color: #111827 !important;
+    color: #0f172a !important;
     font-weight: 600 !important;
     -webkit-appearance: none !important;
     appearance: none !important;
   }
 
-  /* Prevención de cortes de página incómodos en bloques clave */
   #metabox-printable-tool-container section,
   #metabox-printable-tool-container > div {
     break-inside: avoid !important;
@@ -597,6 +599,7 @@ input[type="range"].slider-coral {
 
   canvas, svg {
     max-width: 100% !important;
+    max-height: 160px !important;
     page-break-inside: avoid !important;
   }
 
@@ -607,5 +610,5 @@ input[type="range"].slider-coral {
 
 .print-only {
   display: none;
-    }
+  }
 
