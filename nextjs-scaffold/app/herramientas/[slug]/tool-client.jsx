@@ -186,7 +186,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
           </div>
           <span style={{ fontSize: "10px", fontWeight: 700, color: "#1e293b", display: "block" }}>12% conseguido</span>
         </div>
-            {/* GRÁFICO DE PROYECCIÓN 📈 */}
+                                {/* GRÁFICO DE PROYECCIÓN 📈 */}
         <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "12px", fontFamily: "sans-serif" }}>
           <h4 style={{ fontSize: "10px", fontWeight: 700, color: "#0f172a", textTransform: "uppercase", margin: "0 0 2px 0" }}>Proyección de ahorro</h4>
           <p style={{ fontSize: "9px", color: "#475569", margin: "0 0 6px 0" }}>Evolución estimada con la aportación actual.</p>
@@ -412,4 +412,4 @@ export default function ToolClient({ slug }) {
     </Suspense>
   );
           }
-                       
+    
