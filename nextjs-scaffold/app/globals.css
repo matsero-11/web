@@ -175,7 +175,7 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 2rem;
   width: 100%;
-  max-width: 1200px; /* Ampliado para ocupar mejor el espacio en pantallas grandes */
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
 }
@@ -493,5 +493,24 @@ input[type="range"].slider-coral {
   [role="status"] {
     display: none !important;
   }
-}
 
+  /* Aislar y hacer visible únicamente el contenedor de la herramienta */
+  #metabox-printable-tool-container,
+  #metabox-printable-tool-container * {
+    visibility: visible !important;
+  }
+
+  #metabox-printable-tool-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  }
+  
