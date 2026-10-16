@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
-import { FileDown, ShieldCheck } from "lucide-react";
+import { FileDown, ShieldCheck, Wallet, Shield, Target, Clock, Lightbulb, TrendingUp } from "lucide-react";
 import RelatedTools from "@/components/RelatedTools";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 
@@ -84,6 +84,8 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
     year: "numeric"
   }).replace(".", "");
 
+  const metricsEntries = summaryData ? Object.entries(summaryData) : [];
+
   return (
     <>
       <div className="export-bar no-print" style={{ marginTop: "2.5rem", padding: "1.25rem", borderRadius: "1.1rem", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", ...fontBody }}>
@@ -99,7 +101,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md no-print animate-fadeIn">
-          <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-[#0f1719] border border-[#f5f2ea]/20 text-[#f5f2ea] shadow-2xl p-6 sm:p-10">
+          <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-[#0b1214] border border-[#f5f2ea]/20 text-[#f5f2ea] shadow-2xl p-6 sm:p-10">
             <div className="flex items-center justify-between border-b border-[#f5f2ea]/10 pb-4 mb-6">
               <div>
                 <span className="text-[11px] font-bold text-[#c4de4e] tracking-widest uppercase">Vista Previa Corporativa</span>
@@ -110,16 +112,16 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
 
             <div 
               id="metabox-report-content" 
-              className="printable-report space-y-6 p-6 sm:p-10 rounded-3xl bg-[#f5f2ea] text-[#0f1719] border border-[#0f1719]/10 shadow-2xl"
-              style={{ fontFamily: "var(--font-body, system-ui, sans-serif)" }}
+              className="printable-report space-y-6 p-8 sm:p-12 rounded-3xl bg-[#f7f5ef] text-[#111c1f] border border-[#111c1f]/10 shadow-2xl relative overflow-hidden"
+              style={{ fontFamily: "'Georgia', serif" }}
             >
-              <div className="flex items-center justify-between bg-[#111c1f] text-[#f5f2ea] p-6 rounded-2xl border-b-4 border-[#c4de4e]">
+              <div className="flex items-center justify-between bg-[#111c1f] text-[#f5f2ea] p-6 rounded-2xl border-b-4 border-[#c4de4e] shadow-md">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#c4de4e]/20 border border-[#c4de4e]/40 flex items-center justify-center text-[#c4de4e] text-2xl shadow-inner">
+                  <div className="w-12 h-12 rounded-xl bg-[#c4de4e]/20 border border-[#c4de4e]/40 flex items-center justify-center text-[#c4de4e] text-2xl">
                     🛡️
                   </div>
                   <div>
-                    <h1 className="text-2xl font-extrabold tracking-widest uppercase font-serif" style={{ color: "#f5f2ea" }}>
+                    <h1 className="text-2xl font-extrabold tracking-widest uppercase font-serif text-[#f5f2ea]">
                       METABOX
                     </h1>
                     <span className="text-[10px] text-[#c4de4e] uppercase tracking-widest font-bold block">
@@ -127,66 +129,139 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
                     </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="inline-flex items-center gap-2 text-xs text-[#f5f2ea]/90 font-medium bg-[#1a292c] px-3.5 py-1.5 rounded-xl border border-[#f5f2ea]/10">
+                <div className="text-right font-sans">
+                  <div className="inline-flex items-center gap-2 text-xs text-[#f5f2ea] font-medium bg-[#1a292c] px-3.5 py-1.5 rounded-xl border border-[#f5f2ea]/10">
                     <span>📅</span>
                     <span>Fecha del reporte: <strong>{currentDateFormatted}</strong></span>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-b border-[#0f1719]/10 pb-5">
-                <span className="text-xs font-bold text-[#4a6b10] uppercase tracking-wider block">
-                  Simulación Activa
+              <div className="space-y-2 pt-2 border-b border-[#111c1f]/10 pb-6">
+                <span className="text-[11px] font-bold text-[#5c7a1e] uppercase tracking-widest font-sans block">
+                  — TU SIMULACIÓN ACTIVA —
                 </span>
-                <h2 className="text-3xl font-extrabold text-[#111c1f] tracking-tight font-serif">
-                  {toolName}
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-[#111c1f] leading-tight">
+                  Estabilidad hoy, <span className="italic font-normal text-[#9e7d3b]">tranquilidad mañana.</span>
                 </h2>
-                <p className="text-xs text-[#526365] leading-relaxed max-w-2xl">
-                  Este informe detalla las métricas clave y proyecciones calculadas de forma local en tu dispositivo para garantizar total privacidad y rigor analítico.
+                <p className="text-xs text-[#526365] font-sans leading-relaxed max-w-2xl pt-1">
+                  Este informe muestra cuánto necesitas planificar para estar cubierto ante imprevistos y cómo avanzas hacia tu objetivo con rigor matemático.
                 </p>
               </div>
 
-              {summaryData && Object.keys(summaryData).length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-white border border-[#0f1719]/10 shadow-sm">
-                  {Object.entries(summaryData).map(([key, value]) => (
-                    <div key={key} className="p-4 rounded-xl bg-[#f9f8f6] border border-[#0f1719]/5 space-y-1.5 flex flex-col justify-between">
-                      <span className="text-[10px] uppercase tracking-widest text-[#526365] font-bold block">
-                        {key}
-                      </span>
-                      <span className="text-lg sm:text-xl font-extrabold text-[#111c1f] block">
-                        {value}
-                      </span>
-                    </div>
-                  ))}
+              {metricsEntries.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 rounded-2xl bg-white border border-[#111c1f]/10 shadow-sm font-sans">
+                  {metricsEntries.slice(0, 4).map(([key, value], idx) => {
+                    const icons = [<Wallet size={18} key="1" />, <Shield size={18} key="2" />, <Target size={18} key="3" />, <Clock size={18} key="4" />];
+                    return (
+                      <div key={key} className="p-4 rounded-xl bg-[#f9f8f4] border border-[#111c1f]/5 flex flex-col justify-between space-y-2">
+                        <div className="flex items-center gap-2 text-[#9e7d3b]">
+                          {icons[idx % icons.length]}
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#526365]">
+                            {key}
+                          </span>
+                        </div>
+                        <span className="text-xl font-extrabold text-[#111c1f]">
+                          {value}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="p-6 rounded-2xl bg-white border border-[#0f1719]/10 text-center text-[#526365] text-xs">
+                <div className="p-6 rounded-2xl bg-white border border-[#111c1f]/10 text-center text-[#526365] text-xs font-sans">
                   Modifica los parámetros en la calculadora para ver las métricas clave reflejadas aquí en tiempo real.
                 </div>
               )}
-
-              <div className="p-5 rounded-2xl bg-[#eef3dc] border border-[#c4de4e]/50 space-y-2">
-                <h4 className="text-xs font-bold text-[#3d570d] uppercase tracking-wider flex items-center gap-2">
-                  <span>💡</span> Análisis y Recomendación de Impacto
-                </h4>
-                <p className="text-xs text-[#283808] leading-relaxed font-medium">
-                  Los valores analizados se encuentran alineados con una estrategia de optimización sólida. Mantener este ritmo refuerza tu estabilidad y proyección a largo plazo.
-                </p>
-              </div>
-
-              <div className="pt-6 border-t border-[#0f1719]/10 flex items-center justify-between text-[11px] text-[#526365]">
+                                 <div className="p-5 rounded-2xl bg-[#f1f4e6] border border-[#c4de4e]/60 flex items-start gap-4 font-sans">
+                <div className="p-2.5 rounded-full bg-[#111c1f] text-[#c4de4e] shrink-0 mt-0.5">
+                  <Lightbulb size={20} />
+                </div>
                 <div>
-                  <span className="font-bold text-[#111c1f] block">METABOX</span>
-                  <span>Pequeños pasos, grandes resultados</span>
-                </div>
-                <div className="text-right font-medium text-[#3d570d]">
-                  <span>Tu futuro, en tus manos</span>
+                  <h4 className="text-xs font-bold text-[#111c1f] uppercase tracking-wider">
+                    Sugerencia estratégica para tu objetivo
+                  </h4>
+                  <p className="text-xs text-[#405255] leading-relaxed mt-1">
+                    Prioriza la constancia de aportaciones periódicas antes de derivar liquidez a metas menos urgentes. Mantener este ritmo refuerza tu tranquilidad financiera.
+                  </p>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans">
+                <div className="p-5 rounded-2xl bg-white border border-[#111c1f]/10 space-y-3">
+                  <span className="text-[11px] font-bold text-[#111c1f] uppercase tracking-wider block border-b border-[#111c1f]/5 pb-2">
+                    Resumen de Progreso
+                  </span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#526365]">Estado de la meta:</span>
+                    <span className="font-bold text-[#5c7a1e]">En marcha</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#526365]">Nivel de privacidad:</span>
+                    <span className="font-bold text-[#111c1f]">100% Local</span>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white border border-[#111c1f]/10 space-y-2">
+                  <span className="text-[11px] font-bold text-[#111c1f] uppercase tracking-wider block border-b border-[#111c1f]/5 pb-2">
+                    ¿Por qué es relevante?
+                  </span>
+                  <ul className="text-xs text-[#526365] space-y-1.5">
+                    <li className="flex items-center gap-2">
+                      <Shield size={14} className="text-[#5c7a1e]" />
+                      <span>Cubre imprevistos sin endeudarte.</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <TrendingUp size={14} className="text-[#5c7a1e]" />
+                      <span>Proporciona estabilidad a largo plazo.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-[#111c1f] text-[#f5f2ea] flex flex-col sm:flex-row items-center justify-between gap-4 font-sans">
+                <div className="space-y-1 text-center sm:text-left">
+                  <span className="text-[10px] font-bold text-[#c4de4e] uppercase tracking-widest block">
+                    NUESTRA RECOMENDACIÓN
+                  </span>
+                  <h3 className="text-lg font-bold font-serif text-[#f5f2ea]">
+                    Prioriza tus metas financieras principales.
+                  </h3>
+                  <p className="text-xs text-[#9fb3b1] max-w-md">
+                    Es la base para una vida financiera sana. Te otorgará libertad, seguridad y paz mental para el futuro.
+                  </p>
+                </div>
+                <div className="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-[#f5f2ea]/10 pt-3 sm:pt-0 sm:pl-6 shrink-0">
+                  <span className="text-xs italic text-[#d4af37] block font-serif">
+                    Pequeños pasos, grandes resultados
+                  </span>
+                  <span className="text-xs font-bold text-[#f5f2ea] uppercase tracking-widest block mt-1">
+                    METABOX
+                  </span>
+                  <span className="text-[9px] text-[#9fb3b1] uppercase tracking-wider">
+                    TU FUTURO, EN TUS MANOS
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#111c1f]/10 grid grid-cols-3 gap-2 text-[10px] text-[#526365] font-sans text-center">
+                <div className="border-r border-[#111c1f]/10 pr-2">
+                  <strong className="block text-[#111c1f]">Fondo Garantizado</strong>
+                  <span>Dinero separado para emergencias.</span>
+                </div>
+                <div className="border-r border-[#111c1f]/10 px-2">
+                  <strong className="block text-[#111c1f]">Herramienta de Control</strong>
+                  <span>Diseñado para tu tranquilidad.</span>
+                </div>
+                <div className="pl-2">
+                  <strong className="block text-[#111c1f]">Empieza Hoy</strong>
+                  <span>Tu yo del futuro te lo agradecerá.</span>
+                </div>
+              </div>
+
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#f5f2ea]/10">
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#f5f2ea]/10 font-sans">
               <button onClick={() => setShowModal(false)} className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#162225] hover:bg-[#1e2f33] text-[#f5f2ea] font-medium text-xs transition">Cerrar</button>
               <button onClick={handlePrintPDF} className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#c4de4e] hover:bg-[#b0cc3e] text-[#111c1f] font-bold text-xs transition shadow-lg shadow-[#c4de4e]/20 flex items-center justify-center gap-2">
                 <span>🖨️</span><span>Guardar PDF / Imprimir</span>
@@ -198,12 +273,12 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
 
       <style jsx global>{`
         @media print {
-          @page { size: A4 portrait; margin: 10mm; }
+          @page { size: A4 portrait; margin: 8mm; }
           body * { visibility: hidden !important; }
           .no-print, .no-print * { display: none !important; visibility: hidden !important; }
           #metabox-report-content, #metabox-report-content * { visibility: visible !important; }
           #metabox-report-content {
-            position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 20px !important; background-color: #f5f2ea !important; color: #0f1719 !important; border: none !important; border-radius: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-shadow: none !important;
+            position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 24px !important; background-color: #f7f5ef !important; color: #111c1f !important; border: none !important; border-radius: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-shadow: none !important;
           }
         }
       `}</style>
@@ -264,8 +339,8 @@ function QuickSmartCapture({ onValueExtracted }) {
       </div>
     </div>
   );
-                        }
-          // 3. COMPONENTES PRINCIPALES
+}
+
 function ToolClientContent({ slug }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -361,4 +436,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-}
+              }
+      
