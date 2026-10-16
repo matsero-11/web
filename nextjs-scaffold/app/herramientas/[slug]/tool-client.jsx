@@ -106,7 +106,6 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
         </div>
       </div>
 
-      {/* PLANTILLA A4 CON FONDO 100% BLANCO PURO Y DISEÑO BLINDADO */}
       <div 
         id="metabox-report-content" 
         style={{ display: "none", fontFamily: "'Georgia', serif", backgroundColor: "#ffffff", color: "#111c1f", padding: "16px" }}
@@ -120,78 +119,79 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
               <h1 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "1px", margin: 0, textTransform: "uppercase" }}>
                 METABOX
               </h1>
-              <span style={{ fontSize: "8px", color: "#c4de4e", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, display: "block" }}>
+              <span style={{ fontSize: "9px", color: "#c4de4e", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, display: "block" }}>
                 REPORTE FINANCIERO EJECUTIVO
               </span>
             </div>
           </div>
           <div style={{ textAlign: "right", fontFamily: "sans-serif" }}>
-            <div style={{ fontSize: "9px", color: "#f5f2ea", backgroundColor: "#1a292c", padding: "3px 8px", borderRadius: "6px", border: "1px solid rgba(245, 242, 234, 0.1)" }}>
+            <div style={{ fontSize: "10px", color: "#f5f2ea", backgroundColor: "#1a292c", padding: "4px 9px", borderRadius: "6px", border: "1px solid rgba(245, 242, 234, 0.1)" }}>
               📅 <strong>{currentDateFormatted}</strong>
             </div>
           </div>
         </div>
 
-        <div style={{ marginTop: "10px", marginBottom: "10px", borderBottom: "1px solid #e5e7eb", paddingBottom: "8px" }}>
-          <span style={{ fontSize: "8px", fontWeight: 700, color: "#5c7a1e", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "sans-serif", display: "block" }}>
+        <div style={{ marginTop: "12px", marginBottom: "12px", borderBottom: "1px solid #e5e7eb", paddingBottom: "10px" }}>
+          <span style={{ fontSize: "9px", fontWeight: 700, color: "#5c7a1e", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "sans-serif", display: "block" }}>
             — {toolName ? toolName.toUpperCase() : "SIMULACIÓN FINANCIERA"} —
           </span>
-          <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#111c1f", margin: "2px 0 2px 0", lineHeight: 1.1 }}>
+          <h2 style={{ fontSize: "21px", fontWeight: 800, color: "#111c1f", margin: "3px 0 3px 0", lineHeight: 1.1 }}>
             Estabilidad hoy, <span style={{ fontStyle: "italic", fontWeight: 400, color: "#9e7d3b" }}>tranquilidad mañana.</span>
           </h2>
-          <p style={{ fontSize: "9px", color: "#4b5563", fontFamily: "sans-serif", margin: 0, lineHeight: 1.2 }}>
+          <p style={{ fontSize: "10px", color: "#374151", fontFamily: "sans-serif", margin: 0, lineHeight: 1.3 }}>
             Informe proyectado con rigor matemático para asegurar tu cobertura ante imprevistos.
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "10px", fontFamily: "sans-serif" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "12px", fontFamily: "sans-serif" }}>
           {cleanEntries.length > 0 ? (
             cleanEntries.slice(0, 3).map(([key, value]) => (
-              <div key={key} style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "8px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", display: "block", marginBottom: "2px" }}>
+              <div key={key} style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", color: "#475569", display: "block", marginBottom: "3px" }}>
                   {key}
                 </span>
-                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>
                   {String(value)}
                 </span>
               </div>
             ))
           ) : (
             <>
-              <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", display: "block" }}>GASTO MENSUAL</span>
-                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>€ 1.100</span>
+              <div style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "9px", fontWeight: 700, color: "#475569", display: "block" }}>GASTO MENSUAL</span>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>€ 1.100</span>
               </div>
-              <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", display: "block" }}>COBERTURA</span>
-                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>6 meses</span>
+              <div style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "9px", fontWeight: 700, color: "#475569", display: "block" }}>COBERTURA</span>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>6 meses</span>
               </div>
-              <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", display: "block" }}>OBJETIVO TOTAL</span>
-                <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>€ 6.600</span>
+              <div style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "9px", fontWeight: 700, color: "#475569", display: "block" }}>OBJETIVO TOTAL</span>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>€ 6.600</span>
               </div>
             </>
           )}
         </div>
 
-        <div style={{ padding: "10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "10px", fontFamily: "sans-serif", textAlign: "center" }}>
-          <span style={{ fontSize: "8px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", display: "block", marginBottom: "2px" }}>
+        <div style={{ padding: "12px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "12px", fontFamily: "sans-serif", textAlign: "center" }}>
+          <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", color: "#475569", display: "block", marginBottom: "3px" }}>
             TIEMPO PARA EL OBJETIVO
           </span>
-          <div style={{ fontSize: "24px", fontWeight: 900, color: "#0f172a", marginBottom: "4px" }}>
-            49 <span style={{ fontSize: "11px", fontWeight: 400, color: "#4b5563" }}>meses</span>
+          <div style={{ fontSize: "26px", fontWeight: 900, color: "#0f172a", marginBottom: "5px" }}>
+            49 <span style={{ fontSize: "12px", fontWeight: 500, color: "#374151" }}>meses</span>
           </div>
           
-          <div style={{ width: "100%", backgroundColor: "#e2e8f0", height: "5px", borderRadius: "3px", overflow: "hidden", maxWidth: "300px", margin: "0 auto 3px auto" }}>
+          <div style={{ width: "100%", backgroundColor: "#cbd5e1", height: "6px", borderRadius: "3px", overflow: "hidden", maxWidth: "320px", margin: "0 auto 4px auto" }}>
             <div style={{ backgroundColor: "#4b6321", height: "100%", width: "12%" }}></div>
           </div>
-          <span style={{ fontSize: "9px", fontWeight: 700, color: "#4b5563", display: "block" }}>12% conseguido</span>
+          <span style={{ fontSize: "10px", fontWeight: 700, color: "#1e293b", display: "block" }}>12% conseguido</span>
         </div>
-              <div style={{ padding: "8px 12px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "10px", fontFamily: "sans-serif" }}>
-          <h4 style={{ fontSize: "9px", fontWeight: 700, color: "#0f172a", textTransform: "uppercase", margin: "0 0 2px 0" }}>Proyección de ahorro</h4>
-          <p style={{ fontSize: "8px", color: "#64748b", margin: "0 0 4px 0" }}>Evolución estimada con la aportación actual.</p>
+            {/* GRÁFICO DE PROYECCIÓN 📈 */}
+        <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "12px", fontFamily: "sans-serif" }}>
+          <h4 style={{ fontSize: "10px", fontWeight: 700, color: "#0f172a", textTransform: "uppercase", margin: "0 0 2px 0" }}>Proyección de ahorro</h4>
+          <p style={{ fontSize: "9px", color: "#475569", margin: "0 0 6px 0" }}>Evolución estimada con la aportación actual.</p>
 
-          <div style={{ width: "100%", height: "45px" }}>
+          <div style={{ width: "100%", height: "50px" }}>
             <svg style={{ width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 400 50" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
@@ -203,25 +203,27 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
               <line x1="0" y1="30" x2="400" y2="30" stroke="#0f172a" strokeOpacity="0.06" strokeDasharray="2" />
 
               <polygon points="0,42 100,35 200,26 300,16 400,8 400,45 0,45" fill="url(#grad2)" />
-              <polyline points="0,42 100,35 200,26 300,16 400,8" fill="none" stroke="#5c7a1e" strokeWidth="2" />
+              <polyline points="0,42 100,35 200,26 300,16 400,8" fill="none" stroke="#5c7a1e" strokeWidth="2.2" />
             </svg>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "7px", color: "#64748b", marginTop: "2px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", fontWeight: 600, color: "#334155", marginTop: "3px" }}>
             <span>Mes 0</span><span>Mes 12</span><span>Mes 24</span><span>Mes 36</span><span>Mes 48</span>
           </div>
         </div>
 
-        <div style={{ padding: "8px 12px", borderRadius: "8px", backgroundColor: "#111c1f", color: "#f5f2ea", display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontFamily: "sans-serif" }}>
-          <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: "1px solid rgba(245, 242, 234, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", flexShrink: 0 }}>
+        {/* ALERTA ⚠️ */}
+        <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#111c1f", color: "#f5f2ea", display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", fontFamily: "sans-serif" }}>
+          <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: "1px solid rgba(245, 242, 234, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", flexShrink: 0 }}>
             !
           </div>
-          <div style={{ fontSize: "9px" }}>
+          <div style={{ fontSize: "10px" }}>
             <strong style={{ color: "#c4de4e", display: "block", marginBottom: "1px" }}>Prioriza tus metas financieras principales.</strong>
-            <span style={{ color: "#9fb3b1" }}>Es la base para una vida financiera sana y libre de deudas.</span>
+            <span style={{ color: "#cbd5e1" }}>Es la base para una vida financiera sana y libre de deudas.</span>
           </div>
         </div>
 
-        <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "7px", color: "#64748b", fontFamily: "sans-serif" }}>
+        {/* PIE DE PÁGINA 📄 */}
+        <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#475569", fontFamily: "sans-serif" }}>
           <span><strong>METABOX</strong> — Tu futuro, en tus manos</span>
           <span style={{ fontStyle: "italic", color: "#9e7d3b" }}>Pequeños pasos, grandes resultados</span>
         </div>
@@ -243,7 +245,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
             width: 100% !important; 
             height: 100% !important; 
             margin: 0 !important; 
-            padding: 10px !important; 
+            padding: 12px !important; 
             background-color: #ffffff !important; 
             color: #111c1f !important; 
             border: none !important; 
@@ -367,7 +369,7 @@ function ToolClientContent({ slug }) {
     let cleanSlug = typeof targetSlug === "string" ? targetSlug.replace("/herramientas/", "").trim() : null;
     if (cleanSlug) {
       router.push(`/herramientas/${cleanSlug}`);
-      if (typeof window !== "undefined") window.scrollTo({ top: "0", behavior: "smooth" });
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [router]);
 
@@ -409,5 +411,5 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-        }
-                                  
+          }
+                       
