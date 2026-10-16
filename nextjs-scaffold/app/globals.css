@@ -321,7 +321,7 @@ input[data-slider-input] {
   -webkit-user-select: text !important;
   cursor: text;
   opacity: 1;
-  margin-bottom: 0.75rem !important; /* 🌟 Espacio visual perfecto entre input y slider */
+  margin-bottom: 0.75rem !important;
 }
 
 input[type="range"] {
@@ -334,7 +334,7 @@ input[type="range"] {
   min-width: 0;
   height: var(--slider-thumb-size);
   margin-top: 0.5rem !important;
-  margin-bottom: 1.5rem !important; /* 🌟 Mayor separación visual para que respire perfectamente */
+  margin-bottom: 1.5rem !important;
   padding: 0;
 
   appearance: none;
@@ -472,12 +472,12 @@ input[type="range"].slider-coral {
 }
 
 /* ==========================================================================
-   ESTILOS DE IMPRESIÓN FINTECH PREMIUM (PDF EJECUTIVO 1 PÁGINA)
+   ESTILOS DE IMPRESIÓN FINTECH PREMIUM (1 PÁGINA EXACTA)
    ========================================================================== */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 12mm 10mm 12mm;
+    margin: 5mm 8mm 5mm 8mm;
   }
 
   :root {
@@ -508,6 +508,8 @@ input[type="range"].slider-coral {
     font-family: system-ui, -apple-system, sans-serif !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    height: 100% !important;
+    overflow: hidden !important;
   }
 
   nav,
@@ -528,49 +530,51 @@ input[type="range"].slider-coral {
   }
 
   #metabox-printable-tool-container {
-    position: relative !important;
+    position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
+    max-height: 270mm !important;
     margin: 0 !important;
-    padding: 0.5rem !important;
+    padding: 0.1rem !important;
     background: #ffffff !important;
     color: #0f172a !important;
+    transform: scale(0.85);
+    transform-origin: top center;
   }
 
-  /* 🌟 TARJETAS LIMPIAS Y COMPACTAS PARA ENCAJAR EN 1 SOLA PÁGINA */
   #metabox-printable-tool-container div,
   #metabox-printable-tool-container section {
     background-color: #ffffff !important;
     color: #1e293b !important;
-    border-color: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
     box-shadow: none !important;
-    margin-bottom: 0.4rem !important;
+    margin-bottom: 0.2rem !important;
   }
 
   #metabox-printable-tool-container [style*="background"],
   #metabox-printable-tool-container [style*="background-color"] {
     background-color: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 10px !important;
-    padding: 0.5rem 0.75rem !important;
+    border-radius: 8px !important;
+    padding: 0.3rem 0.5rem !important;
   }
 
-  /* 🖋️ TIPOGRAFÍA DE MÁXIMA ELEGANCIA */
   #metabox-printable-tool-container h1,
   #metabox-printable-tool-container h2,
   #metabox-printable-tool-container h3,
   #metabox-printable-tool-container h4 {
-    font-size: 0.95rem !important;
+    font-size: 0.8rem !important;
     color: #0f172a !important;
-    margin-bottom: 0.2rem !important;
+    margin-bottom: 0.1rem !important;
   }
 
   #metabox-printable-tool-container p,
   #metabox-printable-tool-container span,
   #metabox-printable-tool-container label {
     color: #334155 !important;
-    font-size: 0.8rem !important;
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
   }
 
   #metabox-printable-tool-container .text-lime,
@@ -589,6 +593,7 @@ input[type="range"].slider-coral {
     font-weight: 600 !important;
     -webkit-appearance: none !important;
     appearance: none !important;
+    font-size: 0.72rem !important;
   }
 
   #metabox-printable-tool-container section,
@@ -599,7 +604,7 @@ input[type="range"].slider-coral {
 
   canvas, svg {
     max-width: 100% !important;
-    max-height: 160px !important;
+    max-height: 95px !important;
     page-break-inside: avoid !important;
   }
 
@@ -610,5 +615,5 @@ input[type="range"].slider-coral {
 
 .print-only {
   display: none;
-  }
+    }
 
