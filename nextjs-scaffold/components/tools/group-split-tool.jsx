@@ -11,6 +11,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -49,7 +50,7 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
 
   const total = people.reduce((sum, p) => sum + (p.paid || 0), 0);
   const share = people.length > 0 ? total / people.length : 0;
-  const maxSliderValue = Math.max(2000, total, ...people.map(p => p.paid || 0));
+  const maxSliderValue = Math.max(MAX_FINANCIAL_LIMIT, total, ...people.map(p => p.paid || 0));
 
   const updatePaid = (id, paid) => {
     setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, paid } : p)));
@@ -269,4 +270,4 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
 }
 
 export default GroupSplitTool;
-                
+      
