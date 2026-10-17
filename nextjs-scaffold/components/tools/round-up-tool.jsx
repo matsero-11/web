@@ -19,6 +19,7 @@ import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -64,7 +65,7 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
     }
   }, [purchasesPerWeek, avgAmount, roundTo, onStateChange]);
 
-  const maxAvgSlider = Math.max(200, avgAmount * 1.5);
+  const maxAvgSlider = Math.max(MAX_FINANCIAL_LIMIT, avgAmount * 1.5);
   const rem = avgAmount % roundTo;
   const roundUpPerPurchase = rem === 0 ? 0 : roundTo - rem;
   const weekly = purchasesPerWeek * roundUpPerPurchase;
@@ -262,7 +263,7 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <SliderControl label="Compras por semana" value={purchasesPerWeek} min={0} max={30} step={1} unit="compras" onChange={setPurchasesPerWeek} />
-          <SliderControl label="Importe medio por compra" value={avgAmount} min={0.5} max={maxAvgSlider} step={0.5} unit="€" onChange={setAvgAmount} accent="lavender" />
+          <SliderControl label="Importe medio por compra" value={avgAmount} min={0.5} max={MAX_FINANCIAL_LIMIT} step={0.5} unit="€" onChange={setAvgAmount} accent="lavender" />
         </div>
       </Card>
 
@@ -299,4 +300,4 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
 }
 
 export default RoundUpTool;
-                    
+            
