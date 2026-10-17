@@ -222,4 +222,4 @@ function ScenarioComparatorTool({ onBack, onNavigate, initialParams = {}, onStat
 }
 
 export default ScenarioComparatorTool;
-                                      
+      
