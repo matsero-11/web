@@ -258,5 +258,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-}
-
+                  }
+          
