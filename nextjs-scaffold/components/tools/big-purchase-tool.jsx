@@ -18,6 +18,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const PURCHASE_TYPES = [
   { id: "coche", label: "Coche", icon: Car, defaultBudget: 12000 },
@@ -113,7 +114,6 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
 }
 
 function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
-  // Inicialización inteligente con soporte de initialParams
   const [type, setType] = useState(() => {
     const p = initialParams?.type;
     return PURCHASE_TYPES.some((t) => t.id === p) ? p : "coche";
@@ -155,7 +155,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 48;
   });
 
-  // Sincronización automática con la URL mediante onStateChange
   useEffect(() => {
     if (typeof onStateChange === "function") {
       onStateChange({
@@ -191,7 +190,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
   const isGoalAchieved = current >= budget && budget > 0;
 
-  // Comparador: financiar una parte del importe restante vs ahorrar todo
   const financedAmount = remaining * (financePct / 100);
   const cashNeeded = remaining - financedAmount;
   const cashMonthly = monthsLeft > 0 ? cashNeeded / monthsLeft : cashNeeded;
@@ -340,8 +338,8 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Presupuesto" value={budget} min={200} max={80000} step={100} unit="€" accent="lime" setValue={setBudget} />
-          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={budget} step={50} unit="€" accent="lavender" setValue={setCurrent} />
+          <DecimalSliderRow label="Presupuesto" value={budget} min={200} max={MAX_FINANCIAL_LIMIT} step={500} unit="€" accent="lime" setValue={setBudget} />
+          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={Math.max(budget, MAX_FINANCIAL_LIMIT)} step={100} unit="€" accent="lavender" setValue={setCurrent} />
           <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={0} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
@@ -425,4 +423,4 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default BigPurchaseTool;
-    
+                
