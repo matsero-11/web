@@ -18,6 +18,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -183,7 +184,7 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Presupuesto del viaje" value={budget} min={100} max={10000} step={50} unit="€" onChange={setBudget} />
+          <SliderControl label="Presupuesto del viaje" value={budget} min={100} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setBudget} />
           <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={25} unit="€" onChange={setCurrent} />
           {!tripDate && (
             <SliderControl label="Meses hasta el viaje" value={monthsLeft} min={0} max={24} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
@@ -225,4 +226,4 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default TripSavingsTool;
-      
+
