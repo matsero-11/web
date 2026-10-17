@@ -9,6 +9,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 // Función auxiliar declarada fuera del componente principal para evitar problemas de hoisting/inicialización
 function calculateMonthlyPayment(principal, annualRate, years) {
@@ -122,7 +123,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
           <span style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1rem" }}>Tu hipoteca actual</span>
         </div>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Capital que te falta por pagar" value={loanAmount} min={10000} max={500000} step={5000} unit="€" onChange={setLoanAmount} />
+          <SliderControl label="Capital que te falta por pagar" value={loanAmount} min={10000} max={MAX_FINANCIAL_LIMIT} step={5000} unit="€" onChange={setLoanAmount} />
           <SliderControl label="Tipo de interés de tu banco" value={interestRate} min={0.1} max={10} step={0.1} unit="%" accent="lavender" onChange={setInterestRate} />
           <SliderControl label="Años que te quedan de contrato" value={remainingYears} min={1} max={35} step={1} unit="años" accent="lavender" onChange={setRemainingYears} />
         </div>
@@ -134,7 +135,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
           <span style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "1rem" }}>Tu adelanto de dinero</span>
         </div>
         <div className="flex flex-col gap-6">
-          <SliderControl label="¿Cuánto dinero quieres adelantar hoy?" value={extraPayment} min={1000} max={loanAmount} step={1000} unit="€" onChange={setExtraPayment} />
+          <SliderControl label="¿Cuánto dinero quieres adelantar hoy?" value={extraPayment} min={1000} max={MAX_FINANCIAL_LIMIT} step={1000} unit="€" onChange={setExtraPayment} />
           <SliderControl label="Comisión del banco por adelantar" value={commissionRate} min={0} max={2} step={0.05} unit="%" accent="lavender" onChange={setCommissionRate} />
           
           <div className="flex flex-col gap-3 pt-2">
@@ -257,5 +258,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-                    }
-                  
+}
+
