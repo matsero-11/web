@@ -18,6 +18,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   { q: "¿Qué es el interés compuesto?", a: "Es el interés que se calcula no solo sobre tu capital inicial, sino también sobre los intereses ya generados en periodos anteriores, por lo que tu dinero crece de forma acelerada cuanto más tiempo lo dejas invertido." },
@@ -289,8 +290,8 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={50000} step={100} unit="€" accent="lime" setValue={setInitial} />
-          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={2000} step={10} unit="€" accent="lavender" setValue={setMonthly} />
+          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lime" setValue={setInitial} />
+          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} />
           <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} />
           <DecimalSliderRow label="Años" value={years} min={1} max={40} step={1} unit="años" accent="lavender" setValue={setYears} />
         </div>
@@ -329,4 +330,4 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 }
 
 export default CompoundInterestTool;
-              
+      
