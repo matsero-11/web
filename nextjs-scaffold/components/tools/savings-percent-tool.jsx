@@ -13,6 +13,7 @@ import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -197,8 +198,8 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Ingreso mensual" value={income} min={0} max={6000} step={50} unit="€" onChange={setIncome} />
-          <SliderControl label="Ahorro mensual" value={savings} min={0} max={Math.max(income, 100)} step={10} unit="€" onChange={setSavings} accent="lavender" />
+          <SliderControl label="Ingreso mensual" value={income} min={0} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setIncome} />
+          <SliderControl label="Ahorro mensual" value={savings} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setSavings} accent="lavender" />
         </div>
       </Card>
 
@@ -264,4 +265,4 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default SavingsPercentTool;
-    
+        
