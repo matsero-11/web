@@ -8,6 +8,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -318,7 +319,7 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
           label="Ingreso mensual"
           value={income}
           min={0}
-          max={10000}
+          max={MAX_FINANCIAL_LIMIT}
           step={1}
           unit="€"
           accent="lime"
@@ -475,4 +476,4 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
 }
 
 export default Rule502030Tool;
-        
+      
