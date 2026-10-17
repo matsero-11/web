@@ -18,6 +18,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -167,7 +168,7 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
                 label={it.name}
                 value={it.amount}
                 min={0}
-                max={30}
+                max={MAX_FINANCIAL_LIMIT}
                 step={0.5}
                 unit="€"
                 onChange={(v) => updateAmount(it.id, v)}
@@ -256,4 +257,4 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
 }
 
 export default DailyExpenseTool;
-              
+                
