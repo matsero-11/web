@@ -10,6 +10,7 @@ import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -298,7 +299,7 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
             value={amount}
             setValue={setAmount}
             min={0}
-            max={50000}
+            max={MAX_FINANCIAL_LIMIT}
             unit={fromLabel}
           />
 
@@ -307,7 +308,7 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
             value={rate}
             setValue={setRate}
             min={0.0001}
-            max={5000}
+            max={MAX_FINANCIAL_LIMIT}
             unit={`1 ${fromLabel} = X ${toLabel}`}
           />
 
@@ -347,4 +348,4 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
 }
 
 export default CurrencyConverterTool;
-      
+          
