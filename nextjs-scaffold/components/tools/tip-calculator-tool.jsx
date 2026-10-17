@@ -9,6 +9,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -199,7 +200,7 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
                   }}
                 />
                 <div style={{ flex: 1 }}>
-                  <SliderControl label="" value={c.amount} min={0} max={200} step={0.5} unit="€" onChange={(v) => updateConsumer(c.id, v)} />
+                  <SliderControl label="" value={c.amount} min={0} max={MAX_FINANCIAL_LIMIT} step={0.5} unit="€" onChange={(v) => updateConsumer(c.id, v)} />
                 </div>
                 <div style={{ ...fontBody, color: T.lime, fontSize: "0.8rem", fontWeight: 600, width: "4rem", textAlign: "right", flexShrink: 0 }}>
                   {fmtEUR(consumerShare(c.amount))}
@@ -243,7 +244,7 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
               <Chip key={p} label={`${p}%`} active={tipPct === p} onClick={() => setTipPct(p)} />
             ))}
           </div>
-          <SliderControl label="Importe de la cuenta" value={bill} min={0} max={500} step={1} unit="€" onChange={setBill} />
+          <SliderControl label="Importe de la cuenta" value={bill} min={0} max={MAX_FINANCIAL_LIMIT} step={1} unit="€" onChange={setBill} />
           <SliderControl label="Propina" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
           {!byConsumption && (
             <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
@@ -283,4 +284,4 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default TipCalculatorTool;
-          
+
