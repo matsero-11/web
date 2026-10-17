@@ -18,6 +18,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   { q: "¿Cómo funciona el reto de ahorro de 52 semanas?", a: "Cada semana ahorras una cantidad progresiva: la semana 1 ahorras el importe base, la semana 2 el doble, y así sucesivamente. Al final del reto habrás acumulado el total de todas las semanas." },
@@ -319,7 +320,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
             <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
             <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
           </div>
-          <DecimalSliderRow label="Incremento semanal base" value={baseAmount} min={1} max={20} step={0.5} unit="€" accent="lavender" setValue={setBaseAmount} />
+          <DecimalSliderRow label="Incremento semanal base" value={baseAmount} min={1} max={MAX_FINANCIAL_LIMIT} step={0.5} unit="€" accent="lavender" setValue={setBaseAmount} />
         </div>
       </Card>
 
@@ -367,4 +368,4 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
 }
 
 export default ChallengeTool;
-                     
+                              
