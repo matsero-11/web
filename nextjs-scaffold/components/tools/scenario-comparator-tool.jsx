@@ -11,6 +11,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -130,16 +131,16 @@ function ScenarioComparatorTool({ onBack, onNavigate, initialParams = {}, onStat
       <div className={`grid grid-cols-1 ${showThird ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
         <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Situación actual</div>
-          <SliderControl label="Ahorro mensual" value={current} min={0} max={2000} step={10} unit="€" onChange={setCurrent} />
+          <SliderControl label="Ahorro mensual" value={current} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setCurrent} />
         </Card>
         <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
           <div style={{ ...fontBody, color: T.lavender, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Nuevo escenario</div>
-          <SliderControl label="Ahorro mensual" value={alternative} min={0} max={2000} step={10} unit="€" onChange={setAlternative} accent="lavender" />
+          <SliderControl label="Ahorro mensual" value={alternative} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setAlternative} accent="lavender" />
         </Card>
         {showThird && (
           <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
             <div style={{ ...fontBody, color: T.coral, fontSize: "0.82rem", marginBottom: "0.8rem" }}>Tercer escenario</div>
-            <SliderControl label="Ahorro mensual" value={thirdScenario} min={0} max={2000} step={10} unit="€" onChange={setThirdScenario} />
+            <SliderControl label="Ahorro mensual" value={thirdScenario} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setThirdScenario} />
           </Card>
         )}
       </div>
@@ -221,4 +222,4 @@ function ScenarioComparatorTool({ onBack, onNavigate, initialParams = {}, onStat
 }
 
 export default ScenarioComparatorTool;
-            
+                                      
