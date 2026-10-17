@@ -16,6 +16,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -91,8 +92,8 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const animatedPayment = useAnimatedNumber(payment);
   const animatedInterest = useAnimatedNumber(totalInterest);
 
-  const maxPrincipalSlider = Math.max(300000, principal * 1.5);
-  const maxExtraSlider = Math.max(1000, payment * 2);
+  const maxPrincipalSlider = Math.max(MAX_FINANCIAL_LIMIT, principal * 1.5);
+  const maxExtraSlider = Math.max(MAX_FINANCIAL_LIMIT, payment * 2);
 
   const chartData = useMemo(() => {
     let balance = principal;
@@ -309,4 +310,4 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default LoanPaymentTool;
-      
+          
