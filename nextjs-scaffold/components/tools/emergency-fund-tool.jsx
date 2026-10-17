@@ -93,7 +93,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
     [breakdown]
   );
   const expenses = useBreakdown ? breakdownTotal : simpleExpenses;
-  const goal = expenses * monthsTarget;
+  const goal = Math.min(expenses * monthsTarget, MAX_FINANCIAL_LIMIT);
 
   useEffect(() => {
     if (current > goal) setCurrent(goal);
@@ -255,4 +255,4 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default EmergencyFundTool;
-                         
+
