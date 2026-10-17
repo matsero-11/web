@@ -11,13 +11,14 @@ import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
-// Función auxiliar declarada fuera del componente principal para evitar problemas de hoisting/inicialización
+// Función auxiliar segura para calcular la cuota mensual
 function calculateMonthlyPayment(principal, annualRate, years) {
-  if (principal <= 0 || annualRate <= 0 || years <= 0) return 0;
+  if (principal <= 0 || years <= 0) return 0;
+  if (annualRate <= 0) return principal / (years * 12);
   const monthlyRate = annualRate / 100 / 12;
   const totalPayments = years * 12;
   const denominator = 1 - Math.pow(1 + monthlyRate, -totalPayments);
-  if (denominator <= 0) return 0;
+  if (denominator <= 0) return principal / totalPayments;
   return (principal * monthlyRate) / denominator;
 }
 
@@ -46,24 +47,37 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
     [loanAmount, interestRate, remainingYears]
   );
   
-  const currentTotalInterest = useMemo(() => Math.max(0, (currentMonthlyPayment * remainingYears * 12) - loanAmount), [currentMonthlyPayment, remainingYears, loanAmount]);
+  const totalOriginalMonths = remainingYears * 12;
+  const currentTotalInterest = useMemo(() => {
+    const total = (currentMonthlyPayment * totalOriginalMonths) - loanAmount;
+    return Math.max(0, isNaN(total) ? 0 : total);
+  }, [currentMonthlyPayment, totalOriginalMonths, loanAmount]);
+
   const commissionCost = useMemo(() => (extraPayment * commissionRate) / 100, [extraPayment, commissionRate]);
   const effectiveExtraPayment = Math.max(0, extraPayment - commissionCost);
   const newLoanAmount = Math.max(0, loanAmount - effectiveExtraPayment);
 
   const newTermSimulation = useMemo(() => {
     if (newLoanAmount <= 0 || currentMonthlyPayment <= 0) return { totalMonths: 0, years: "0.0", totalInterest: 0 };
+    if (interestRate <= 0) {
+      const months = Math.ceil(newLoanAmount / (currentMonthlyPayment));
+      return { totalMonths: months, years: (months / 12).toFixed(1), totalInterest: 0 };
+    }
     const mr = interestRate / 100 / 12;
     const num = 1 - (mr * newLoanAmount) / currentMonthlyPayment;
-    if (num <= 0) return { totalMonths: 0, years: "0.0", totalInterest: 0 };
+    if (num <= 0) return { totalMonths: totalOriginalMonths, years: remainingYears.toFixed(1), totalInterest: currentTotalInterest };
     const tm = -Math.log(num) / Math.log(1 + mr);
-    return { totalMonths: Math.round(tm), years: (tm / 12).toFixed(1), totalInterest: Math.max(0, (currentMonthlyPayment * tm) - newLoanAmount) };
-  }, [newLoanAmount, currentMonthlyPayment, interestRate]);
+    const validTm = isNaN(tm) || tm < 0 ? 0 : Math.round(tm);
+    const totalInt = Math.max(0, (currentMonthlyPayment * validTm) - newLoanAmount);
+    return { totalMonths: validTm, years: (validTm / 12).toFixed(1), totalInterest: totalInt };
+  }, [newLoanAmount, currentMonthlyPayment, interestRate, totalOriginalMonths, remainingYears, currentTotalInterest]);
 
   const newQuotaSimulation = useMemo(() => {
     const q = calculateMonthlyPayment(newLoanAmount, interestRate, remainingYears);
-    return { newQuota: q, totalInterest: Math.max(0, (q * remainingYears * 12) - newLoanAmount) };
-  }, [newLoanAmount, interestRate, remainingYears]);
+    const validQ = isNaN(q) ? 0 : q;
+    const totalInt = Math.max(0, (validQ * totalOriginalMonths) - newLoanAmount);
+    return { newQuota: validQ, totalInterest: totalInt };
+  }, [newLoanAmount, interestRate, remainingYears, totalOriginalMonths]);
 
   const newInterestValue = amortizationType === "term" ? newTermSimulation.totalInterest : newQuotaSimulation.totalInterest;
   const interestSaved = Math.max(0, currentTotalInterest - newInterestValue - commissionCost);
@@ -71,8 +85,8 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
 
   const monthsSavedTotal = useMemo(() => {
     if (amortizationType !== "term") return 0;
-    return Math.max(0, (remainingYears * 12) - newTermSimulation.totalMonths);
-  }, [remainingYears, newTermSimulation, amortizationType]);
+    return Math.max(0, totalOriginalMonths - newTermSimulation.totalMonths);
+  }, [totalOriginalMonths, newTermSimulation, amortizationType]);
 
   const yearsSavedFormatted = (monthsSavedTotal / 12).toFixed(1);
 
@@ -97,7 +111,7 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
           {fmtEUR(animatedSaved)}
         </div>
         <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", marginTop: "0.5rem", padding: "0 1rem" }}>
-          {amortizationType === "term" && Number(yearsSavedFormatted) > 0 ? (
+          {amortizationType === "term" ? (
             <span>
               🎉 Te quitas <strong style={{ color: T.lime }}>{yearsSavedFormatted} años</strong> de pagar hipoteca y tu mensualidad sigue fija en <strong>{fmtEUR(currentMonthlyPayment)}/mes</strong>.
             </span>
@@ -258,5 +272,5 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-                  }
-          
+      }
+  
