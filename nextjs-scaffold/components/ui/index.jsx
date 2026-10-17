@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
-
-const HARD_MAX = 200000;
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 function Button({ children, variant = "primary", onClick, icon: Icon, disabled }) {
   const base = {
@@ -121,9 +120,9 @@ function Card({ children, onClick, disabled, style, glow, result }) {
 
 /**
  * SliderControl — input numérico decimal + slider sincronizados y ultra fluidos.
- * Actualizado automáticamente para admitir 1.000.000 en hipotecas/grandes compras y 200.000 por defecto.
+ * Actualizado para usar MAX_FINANCIAL_LIMIT (1.000.000 €) de forma global por defecto.
  */
-function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, accent = "lime" }) {
+function SliderControl({ label, value, min = 0, max, step = 0.01, unit, onChange, accent = "lime" }) {
   const color = accent === "lavender" ? T.lavender : T.lime;
   const safeValue = Number.isFinite(value) ? value : 0;
 
@@ -136,17 +135,8 @@ function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, ac
     }
   }, [safeValue, isEditing]);
 
-  // Lógica centralizada para los techos máximos
-  const isBigAsset = label && (
-    label.toLowerCase().includes("hipoteca") || 
-    label.toLowerCase().includes("préstamo") || 
-    label.toLowerCase().includes("vivienda") ||
-    label.toLowerCase().includes("coche") ||
-    label.toLowerCase().includes("inversión")
-  );
-
-  const defaultHardMax = isBigAsset ? 1000000 : HARD_MAX;
-  const effectiveMax = Math.min(defaultHardMax, max ?? defaultHardMax);
+  // Techo máximo unificado globalmente a MAX_FINANCIAL_LIMIT (1.000.000)
+  const effectiveMax = Math.min(MAX_FINANCIAL_LIMIT, max ?? MAX_FINANCIAL_LIMIT);
 
   const dynamicMax = Math.max(effectiveMax, Math.min(safeValue * 1.5, effectiveMax));
   const pct = dynamicMax > min ? Math.min(Math.max(((safeValue - min) / (dynamicMax - min)) * 100, 0), 100) : 0;
@@ -155,8 +145,8 @@ function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, ac
     const text = rawText.trim();
 
     if (text === "") {
-      onChange(0);
-      setInputText("0");
+      onChange(min);
+      setInputText(String(min));
       return;
     }
 
@@ -214,7 +204,7 @@ function SliderControl({ label, value, min, max, step = 0.01, unit, onChange, ac
             aria-label={label ? `${label} (valor numérico)` : "Valor numérico"}
             style={{
               ...fontDisplay,
-              width: "5.5rem",
+              width: "6rem",
               background: T.surfaceAlt,
               border: `1px solid ${T.border}`,
               borderRadius: "0.5rem",
@@ -333,4 +323,4 @@ function AdviceBlock({ text, children, icon: Icon, tone = "lime" }) {
 }
 
 export { Button, Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock };
-            
+      
