@@ -10,6 +10,7 @@ import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import GoalProjection from "@/components/engines/GoalProjection";
 import AdSlot from "@/components/AdSlot";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -213,9 +214,9 @@ function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Objetivo" value={goal} min={500} max={30000} step={100} unit="€" onChange={(v) => updateActive({ goal: v })} />
+          <SliderControl label="Objetivo" value={goal} min={500} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" onChange={(v) => updateActive({ goal: v })} />
           <SliderControl label="Ya ahorrado" value={current} min={0} max={goal} step={50} unit="€" onChange={(v) => updateActive({ current: v })} />
-          <SliderControl label="Ahorro mensual" value={monthly} min={10} max={2000} step={10} unit="€" onChange={(v) => updateActive({ monthly: v })} />
+          <SliderControl label="Ahorro mensual" value={monthly} min={10} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={(v) => updateActive({ monthly: v })} />
         </div>
       </Card>
 
@@ -224,7 +225,7 @@ function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange
           ¿Y si ahorras un poco más al mes?
         </div>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Ahorro extra" value={extra} min={0} max={500} step={10} unit="€" onChange={(v) => updateActive({ extra: v })} accent="lavender" />
+          <SliderControl label="Ahorro extra" value={extra} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={(v) => updateActive({ extra: v })} accent="lavender" />
         </div>
       </Card>
 
@@ -263,4 +264,4 @@ function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default SavingsGoalTool;
-                          
+                                              
