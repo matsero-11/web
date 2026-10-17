@@ -11,6 +11,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -181,8 +182,8 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Gastos fijos mensuales" value={expenses} min={0} max={5000} step={25} unit="€" onChange={setExpenses} />
-          <SliderControl label="Cuánto quieres ahorrar" value={desiredSavings} min={0} max={3000} step={10} unit="€" onChange={setDesiredSavings} accent="lavender" />
+          <SliderControl label="Gastos fijos mensuales" value={expenses} min={0} max={MAX_FINANCIAL_LIMIT} step={25} unit="€" onChange={setExpenses} />
+          <SliderControl label="Cuánto quieres ahorrar" value={desiredSavings} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setDesiredSavings} accent="lavender" />
         </div>
       </Card>
 
@@ -225,3 +226,4 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
 }
 
 export default TargetIncomeTool;
+
