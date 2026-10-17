@@ -15,6 +15,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -76,7 +77,7 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     if (current > budget) setCurrent(budget);
   }, [budget, current]);
 
-  const maxCurrentSlider = Math.max(budget, current, 1000);
+  const maxCurrentSlider = Math.max(budget, current, MAX_FINANCIAL_LIMIT);
   const monthsLeft = currentMonth <= 12 ? 12 - currentMonth + 1 : 12;
   const remaining = Math.max(budget - current, 0);
   const requiredMonthly = monthsLeft > 0 ? remaining / monthsLeft : remaining;
@@ -205,7 +206,7 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         <div className="flex flex-col gap-4">
           {gifts.map((g) => (
             <div key={g.id} style={{ position: "relative" }}>
-              <SliderControl label={g.name} value={g.amount} min={0} max={1000} step={5} unit="€" onChange={(v) => updateAmount(g.id, v)} />
+              <SliderControl label={g.name} value={g.amount} min={0} max={MAX_FINANCIAL_LIMIT} step={5} unit="€" onChange={(v) => updateAmount(g.id, v)} />
               <button
                 onClick={() => removeGift(g.id)}
                 aria-label={`Eliminar ${g.name}`}
@@ -270,3 +271,4 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default HolidaySavingsTool;
+            
