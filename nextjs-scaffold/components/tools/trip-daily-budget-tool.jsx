@@ -18,6 +18,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -174,13 +175,13 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
             ? "Vas por encima del ritmo previsto. Si quieres llegar sin sobresaltos, reduce un poco el gasto de los próximos días."
             : remainingDays === 0
             ? "El viaje ha terminado según estos datos. Compara el gasto real con el plan original para el próximo viaje."
-            : "Vas dentro del plan. Aun así, deja algo de margen para imprevistos de última hora."
+            : "Vas dentro del plan. Aun assim, deja algo de margen para imprevistos de última hora."
         }
       />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Presupuesto total del viaje" value={totalBudget} min={50} max={10000} step={50} unit="€" onChange={setTotalBudget} />
+          <SliderControl label="Presupuesto total del viaje" value={totalBudget} min={50} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setTotalBudget} />
           <SliderControl label="Días totales de viaje" value={totalDays} min={1} max={60} step={1} unit="días" onChange={setTotalDays} />
           <SliderControl label="Gastado hasta ahora" value={spent} min={0} max={totalBudget} step={10} unit="€" onChange={setSpent} accent="lavender" />
           <SliderControl label="Días ya pasados" value={daysElapsed} min={0} max={totalDays} step={1} unit="días" onChange={setDaysElapsed} accent="lavender" />
@@ -194,7 +195,7 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Presupuesto de viaje: ${fmtEUR(totalBudget)} para ${totalDays} días, gastado ${fmtEUR(spent)} en ${daysElapsed} días → ${fmtEUR(dailyAllowanceLeft)}/día restante.`
+            `Presupuesto de viaje: ${fmtEUR(totalBudget)} para ${totalDays} días, gastado ${fmtEUR(spent)} in ${daysElapsed} días → ${fmtEUR(dailyAllowanceLeft)}/día restante.`
           }
         />
         <ExportCSVButton
@@ -221,4 +222,4 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
 }
 
 export default TripDailyBudgetTool;
-            
+
