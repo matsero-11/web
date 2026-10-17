@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { T, fontBody } from "@/lib/design-tokens";
-import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
+import { fmtEUR } from "@/lib/hooks";
 import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
@@ -22,7 +22,7 @@ const FAQS = [
   },
 ];
 
-export default function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [goal, setGoal] = useState(() => {
     const p = initialParams?.goal;
     return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 10000;
@@ -167,5 +167,7 @@ export default function SavingsGoalTool({ onBack, onNavigate, initialParams = {}
       </div>
     </div>
   );
-        }
+}
+
+export default SavingsGoalTool;
 
