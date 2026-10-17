@@ -265,4 +265,4 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default SavingsPercentTool;
-        
+
