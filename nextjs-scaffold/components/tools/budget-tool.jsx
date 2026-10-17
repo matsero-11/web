@@ -19,6 +19,7 @@ import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const EXPENSE_CATEGORIES = [
   { id: "vivienda", label: "Vivienda", icon: HomeIcon, default: 650, maxPct: 35 },
@@ -301,7 +302,7 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
       />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <DecimalSliderRow label="Ingresos mensuales" value={income} min={0} max={6000} step={50} unit="€" accent="lavender" setValue={setIncome} />
+        <DecimalSliderRow label="Ingresos mensuales" value={income} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lavender" setValue={setIncome} />
       </Card>
 
       {activeCats.length > 0 && (
@@ -329,7 +330,7 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
               const overBenchmark = c.maxPct && catPct > c.maxPct;
               return (
                 <div key={c.id}>
-                  <DecimalSliderRow label={c.label} value={amounts[c.id] || 0} min={0} max={2000} step={10} unit="€" accent="lime" setValue={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))} />
+                  <DecimalSliderRow label={c.label} value={amounts[c.id] || 0} min={0} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" accent="lime" setValue={(v) => setAmounts((a) => ({ ...a, [c.id]: v }))} />
                   {c.maxPct && (
                     <div style={{ ...fontBody, fontSize: "0.72rem", color: overBenchmark ? T.coral : T.textMuted, marginTop: "0.3rem" }}>
                       {catPct.toFixed(0)}% de tus ingresos {overBenchmark ? `— por encima del ${c.maxPct}% recomendado` : `(referencia: hasta ${c.maxPct}%)`}
@@ -385,4 +386,4 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
 }
 
 export default BudgetTool;
-          
+    
