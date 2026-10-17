@@ -340,7 +340,7 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
           </div>
         )}
 
-        <DecimalSliderRow label="Ya ahorrado este año" value={currentSaved} min={0} max={Math.max(goal, MAX_FINANCIAL_LIMIT)} step={100} unit="€" accent="lavender" setValue={setCurrentSaved} />
+        <DecimalSliderRow label="Ya ahorrado este año" value={currentSaved} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lavender" setValue={setCurrentSaved} />
         <div style={{ marginTop: "1.1rem" }}>
           <ProgressBar pct={yearPct} gradientEnd={T.lavender} />
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginTop: "0.6rem" }}>
@@ -367,11 +367,7 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
         <ExportCSVButton
           filename="planificador-ahorro-anual"
           getRows={() =>
-            MONTHS.main?.map((m, i) => ({
-              mes: m,
-              importe: (lowMonths.has(i) ? lowShare : normalShare).toFixed(2),
-              tipo: lowMonths.has(i) ? "flojo" : "normal",
-            })) || MONTHS.map((m, i) => ({
+            MONTHS.map((m, i) => ({
               mes: m,
               importe: (lowMonths.has(i) ? lowShare : normalShare).toFixed(2),
               tipo: lowMonths.has(i) ? "flojo" : "normal",
@@ -390,4 +386,4 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default AnnualPlannerTool;
-            
+             
