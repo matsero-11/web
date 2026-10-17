@@ -1,109 +1,63 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus, X } from "lucide-react";
-import { fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
+import { T, fontBody } from "@/lib/design-tokens";
+import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
+import { Card, SliderControl, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
-import RelatedTools from "@/components/RelatedTools";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
+import RelatedTools from "@/components/RelatedTools";
 import GoalProjection from "@/components/engines/GoalProjection";
 import AdSlot from "@/components/AdSlot";
-import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
-    q: "¿Cómo calculo cuánto tardaré en llegar a mi objetivo de ahorro?",
-    a: "Se divide lo que te falta por ahorrar (objetivo menos lo ya ahorrado) entre tu aportación mensual, incluyendo cualquier ahorro extra que añadas. Esta calculadora lo hace automáticamente y actualiza el resultado al instante.",
+    q: "¿Cómo puedo calcular el tiempo necesario para alcanzar mi meta?",
+    a: "Introduciendo el importe total de tu objetivo, el dinero que ya tienes ahorrado y lo que puedes aportar cada mes. La herramienta calcula automáticamente los meses o años necesarios.",
   },
   {
-    q: "¿Merece la pena añadir un ahorro extra al mes?",
-    a: "Sí: incluso una aportación extra pequeña puede adelantar significativamente la fecha en la que alcanzas tu objetivo, especialmente en metas a medio o largo plazo.",
-  },
-  {
-    q: "¿Puedo tener varios objetivos de ahorro a la vez?",
-    a: "Sí: puedes crear varios objetivos con nombre propio (viaje, coche, fondo de estudios...) y cambiar entre ellos, cada uno con su propio progreso guardado.",
+    q: "¿Qué pasa si añado una aportación extra mensual?",
+    a: "El simulador recalcula de forma instantánea el tiempo de consecución para mostrarte cuánto antes alcanzarás tu meta financiera.",
   },
 ];
 
-const DEFAULT_GOAL = { id: "1", name: "Mi objetivo", goal: 5000, current: 1200, monthly: 180, extra: 0 };
-
-function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
-  const [goals, setGoals] = useState(() => {
-    const p = initialParams?.goals;
-    if (p) {
-      try {
-        const parsed = JSON.parse(p);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {}
-    }
-    return [DEFAULT_GOAL];
+export default function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+  const [goal, setGoal] = useState(() => {
+    const p = initialParams?.goal;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 10000;
   });
 
-  const [activeId, setActiveId] = useState(() => {
-    const p = initialParams?.activeId;
-    return typeof p === "string" && p.trim() !== "" ? p : "1";
+  const [current, setCurrent] = useState(() => {
+    const p = initialParams?.current;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1500;
   });
 
-  const [newGoalName, setNewGoalName] = useState("");
-  const [showAdd, setShowAdd] = useState(false);
+  const [monthly, setMonthly] = useState(() => {
+    const p = initialParams?.monthly;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 300;
+  });
+
+  const [extra, setExtra] = useState(() => {
+    const p = initialParams?.extra;
+    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 0;
+  });
+
+  useEffect(() => {
+    if (current > goal) setCurrent(goal);
+  }, [goal, current]);
 
   useEffect(() => {
     if (typeof onStateChange === "function") {
-      onStateChange({
-        goals: goals.length > 0 ? JSON.stringify(goals) : null,
-        activeId: activeId !== "1" ? activeId : null,
-      });
+      onStateChange({ goal, current, monthly, extra });
     }
-  }, [goals, activeId, onStateChange]);
+  }, [goal, current, monthly, extra, onStateChange]);
 
-  const active = goals.find((goalObj) => goalObj.id === activeId) || goals[0];
+  const maxCurrentSlider = Math.max(goal, current, MAX_FINANCIAL_LIMIT);
 
-  const updateActive = (patch) => {
-    setGoals((prev) => prev.map((goalObj) => (goalObj.id === active.id ? { ...goalObj, ...patch } : goalObj)));
-  };
-
-  useEffect(() => {
-    if (active && active.current > active.goal) {
-      setGoals((prev) =>
-        prev.map((goalObj) => (goalObj.id === active.id ? { ...goalObj, current: goalObj.goal } : goalObj))
-      );
-    }
-  }, [active?.goal]);
-
-  const addGoal = () => {
-    const name = newGoalName.trim();
-    if (!name) return;
-    const id = `${Date.now()}`;
-    setGoals((prev) => [...prev, { id, name, goal: 3000, current: 0, monthly: 100, extra: 0 }]);
-    setActiveId(id);
-    setNewGoalName("");
-    setShowAdd(false);
-  };
-
-  const removeGoal = (idToRemove) => {
-    if (goals.length <= 1) return;
-    const next = goals.filter((goalObj) => goalObj.id !== idToRemove);
-    setGoals(next);
-    if (activeId === idToRemove) setActiveId(next[0].id);
-  };
-
-  if (!active) return null;
-
-  const { goal, current, monthly, extra } = active;
-  const pct = goal > 0 ? (current / goal) * 100 : 0;
-  const remaining = Math.max(goal - current, 0);
-  const months = monthly + extra > 0 ? Math.ceil(remaining / (monthly + extra)) : Infinity;
-
-  let advice = `Con este ritmo alcanzarías "${active.name}" en ${Number.isFinite(months) ? months : "muchos"} meses. Prueba a mover "Ahorro extra" y observa cuánto se adelanta la fecha.`;
-  if (pct >= 80) advice = "Estás muy cerca de este objetivo. Comprueba cuánto cambia la fecha si aumentas temporalmente la aportación estos últimos meses.";
-  else if (Number.isFinite(months) && months <= 6) advice = "A este ritmo lo consigues en menos de medio año: tienes margen de sobra para este objetivo.";
-  else if (Number.isFinite(months) && months > 36) advice = "Al ritmo actual tardarás más de 3 años. Subir la aportación mensual, aunque sea poco, acorta el plazo de forma notable.";
-
-  const pageTitle = "Calculadora de objetivo de ahorro: cuándo lo conseguirás | MetaBox";
+  const pageTitle = "Calculadora de objetivo de ahorro: cuánto tardarás en llegar a tu meta | MetaBox";
   const pageDescription =
-    "Calcula cuánto tardarás en alcanzar tus objetivos de ahorro, gestiona varias metas a la vez con nombre propio, y ve tu proyección en una gráfica interactiva. Gratis y sin registro.";
+    "Calcula cuánto tardarás en alcanzar tu objetivo de ahorro introduciendo tu meta, lo que ya tienes y tu aportación mensual o extra. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/savings";
 
   return (
@@ -113,7 +67,7 @@ function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange
         <meta name="description" content={pageDescription} />
         <meta
           name="keywords"
-          content="calculadora objetivo de ahorro, cuánto tardaré en ahorrar, planificador de metas de ahorro, varios objetivos de ahorro"
+          content="objetivo de ahorro, calculadora meta de ahorro, cuánto tardaré en ahorrar, planificador de ahorro"
         />
         <link rel="canonical" href={pageUrl} />
 
@@ -147,10 +101,10 @@ function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: FAQS.map((faqItem) => ({
+            mainEntity: FAQS.map((f) => ({
               "@type": "Question",
-              name: faqItem.q,
-              acceptedAnswer: { "@type": "Answer", text: faqItem.a },
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
             })),
           })}
         </script>
@@ -158,110 +112,60 @@ function SavingsGoalTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <ToolHeader title="Objetivo de ahorro" subtitle="Gestiona una o varias metas y verás el resultado al instante." onBack={onBack} />
 
-      <div className="flex flex-wrap gap-2">
-        {goals.map((goalObj) => (
-          <div key={goalObj.id} style={{ position: "relative" }}>
-            <Chip label={goalObj.name} active={activeId === goalObj.id} onClick={() => setActiveId(goalObj.id)} />
-            {goals.length > 1 && activeId === goalObj.id && (
-              <button
-                onClick={() => removeGoal(goalObj.id)}
-                aria-label={`Eliminar ${goalObj.name}`}
-                style={{
-                  position: "absolute", top: "-6px", right: "-6px",
-                  background: T.coral, borderRadius: "50%", width: "16px", height: "16px",
-                  display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer",
-                }}
-              >
-                <X size={10} color="#fff" />
-              </button>
-            )}
-          </div>
-        ))}
-        {!showAdd ? (
-          <button
-            onClick={() => setShowAdd(true)}
-            style={{
-              ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem",
-              padding: "0.55rem 0.9rem", borderRadius: "999px", fontSize: "0.85rem", fontWeight: 500,
-              border: `1px dashed ${T.border}`, background: "transparent", color: T.textMuted, cursor: "pointer",
-            }}
-          >
-            <Plus size={14} /> Nuevo objetivo
-          </button>
-        ) : (
-          <div className="flex items-center gap-1.5">
-            <input
-              value={newGoalName}
-              onChange={(e) => setNewGoalName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addGoal()}
-              placeholder="Nombre (ej. Viaje a Japón)..."
-              autoFocus
-              style={{
-                ...fontBody, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "999px",
-                padding: "0.5rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", width: "11rem",
-              }}
-            />
-            <button onClick={addGoal} aria-label="Confirmar" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-              <Plus size={16} color="#12200A" />
-            </button>
-          </div>
-        )}
-      </div>
+      <GoalProjection goal={goal} current={current} monthly={monthly} extra={extra} monthsSavedLabel="meses menos" />
 
-      <GoalProjection goal={goal} current={current} monthly={monthly} extra={extra} monthsSavedLabel="antes que sin ahorro extra" />
-
-      <AdviceBlock text={advice} />
+      <AdviceBlock
+        text={
+          current >= goal
+            ? "¡Ya has alcanzado o superado tu objetivo! Puedes marcar una nueva meta más ambiciosa."
+            : monthly + extra === 0
+            ? "Introduce una aportación mensual o extra superior a 0 € para poder calcular el tiempo estimado."
+            : "Al ritmo actual mantienes una constancia sólida. Subir la aportación mensual, aunque sea poco, acorta el plazo de forma notable."
+        }
+      />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Objetivo" value={goal} min={500} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" onChange={(v) => updateActive({ goal: v })} />
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={goal} step={50} unit="€" onChange={(v) => updateActive({ current: v })} />
-          <SliderControl label="Ahorro mensual" value={monthly} min={10} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={(v) => updateActive({ monthly: v })} />
+          <SliderControl label="Objetivo" value={goal} min={500} max={MAX_FINANCIAL_LIMIT} step={500} unit="€" onChange={setGoal} />
+          <SliderControl label="Ya ahorrado" value={current} min={0} max={maxCurrentSlider} step={100} unit="€" onChange={setCurrent} />
+          <SliderControl label="Ahorro mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setMonthly} accent="lavender" />
         </div>
       </Card>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
           ¿Y si ahorras un poco más al mes?
         </div>
-        <div className="flex flex-col gap-6">
-          <SliderControl label="Ahorro extra" value={extra} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={(v) => updateActive({ extra: v })} accent="lavender" />
-        </div>
+        <SliderControl label="Ahorro extra" value={extra} min={0} max={MAX_FINANCIAL_LIMIT} step={25} unit="€" onChange={setExtra} accent="lavender" />
       </Card>
 
       <AdSlot minHeight="0px" />
 
-      <RelatedTools ids={["interest", "emergency", "percent"]} onNavigate={onNavigate} />
+      <RelatedTools ids={["budget", "percent", "emergency"]} onNavigate={onNavigate} primaryId="budget" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `${active.name}: ${fmtEUR(goal)} — ya ahorrado ${fmtEUR(current)} — ahorro mensual ${fmtEUR(monthly + extra)} — lo conseguirás en ${Number.isFinite(months) ? months + " meses" : "un plazo indeterminado"}.`
+            `Objetivo de ahorro: Meta de ${fmtEUR(goal)}, ya ahorrado ${fmtEUR(current)}, aportando ${fmtEUR(monthly + extra)}/mes.`
           }
         />
         <ExportCSVButton
           filename="objetivo-de-ahorro"
           getRows={() => [
-            {
-              objetivo: active.name,
-              meta_total: goal,
-              ya_ahorrado: current,
-              ahorro_mensual: monthly,
-              ahorro_extra: extra,
-              meses_estimados: Number.isFinite(months) ? months : "Indefinido",
-            },
+            { metrica: "Objetivo", valor: goal.toFixed(2) },
+            { metrica: "Ya ahorrado", valor: current.toFixed(2) },
+            { metrica: "Ahorro mensual", valor: monthly.toFixed(2) },
+            { metrica: "Ahorro extra", valor: extra.toFixed(2) },
           ]}
         />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Ya sea para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar varios objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
+          Ya sea para un objetivo concreto o un ahorro general, saber cuándo lo vas a conseguir ayuda a mantener la motivación. Esta calculadora te permite gestionar tus objetivos a la vez —cada uno con su nombre, su progreso y su propia proyección— y ver el efecto de sumar un ahorro extra a la fecha de consecución de cada uno.
         </p>
       </div>
     </div>
   );
-}
+        }
 
-export default SavingsGoalTool;
-                                              
