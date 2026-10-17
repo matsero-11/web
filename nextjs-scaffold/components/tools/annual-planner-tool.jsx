@@ -9,6 +9,7 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
 const BarChart = dynamic(() => import("recharts").then((mod) => mod.BarChart), { ssr: false });
@@ -221,7 +222,7 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Objetivo anual" value={goal} min={200} max={20000} step={50} unit="€" accent="lime" setValue={setGoal} />
+          <DecimalSliderRow label="Objetivo anual" value={goal} min={200} max={MAX_FINANCIAL_LIMIT} step={500} unit="€" accent="lime" setValue={setGoal} />
           <DecimalSliderRow label="Reducción en meses flojos" value={reductionPct} min={10} max={90} step={1} unit="%" accent="lavender" setValue={setReductionPct} />
         </div>
       </Card>
@@ -339,7 +340,7 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
           </div>
         )}
 
-        <DecimalSliderRow label="Ya ahorrado este año" value={currentSaved} min={0} max={goal} step={10} unit="€" accent="lavender" setValue={setCurrentSaved} />
+        <DecimalSliderRow label="Ya ahorrado este año" value={currentSaved} min={0} max={Math.max(goal, MAX_FINANCIAL_LIMIT)} step={100} unit="€" accent="lavender" setValue={setCurrentSaved} />
         <div style={{ marginTop: "1.1rem" }}>
           <ProgressBar pct={yearPct} gradientEnd={T.lavender} />
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", marginTop: "0.6rem" }}>
@@ -366,7 +367,11 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
         <ExportCSVButton
           filename="planificador-ahorro-anual"
           getRows={() =>
-            MONTHS.map((m, i) => ({
+            MONTHS.main?.map((m, i) => ({
+              mes: m,
+              importe: (lowMonths.has(i) ? lowShare : normalShare).toFixed(2),
+              tipo: lowMonths.has(i) ? "flojo" : "normal",
+            })) || MONTHS.map((m, i) => ({
               mes: m,
               importe: (lowMonths.has(i) ? lowShare : normalShare).toFixed(2),
               tipo: lowMonths.has(i) ? "flojo" : "normal",
@@ -385,4 +390,4 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default AnnualPlannerTool;
-      
+            
