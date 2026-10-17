@@ -13,6 +13,7 @@ import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import GoalProjection from "@/components/engines/GoalProjection";
 import AdSlot from "@/components/AdSlot";
+import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -98,7 +99,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
     if (current > goal) setCurrent(goal);
   }, [goal, current]);
 
-  const maxCurrentSlider = Math.max(goal, current, 1000);
+  const maxCurrentSlider = Math.max(goal, current, MAX_FINANCIAL_LIMIT);
 
   const pageTitle = "Calculadora de fondo de emergencia: cuánto ahorrar y en cuántos meses | MetaBox";
   const pageDescription =
@@ -160,7 +161,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           {!useBreakdown ? (
-            <SliderControl label="Gasto esencial mensual" value={simpleExpenses} min={300} max={4000} step={50} unit="€" onChange={setSimpleExpenses} />
+            <SliderControl label="Gasto esencial mensual" value={simpleExpenses} min={300} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setSimpleExpenses} />
           ) : (
             <div>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>
@@ -173,7 +174,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
                     label={c.label}
                     value={breakdown[c.id] || 0}
                     min={0}
-                    max={2000}
+                    max={MAX_FINANCIAL_LIMIT}
                     step={10}
                     unit="€"
                     onChange={(v) => setBreakdown((b) => ({ ...b, [c.id]: v }))}
@@ -218,7 +219,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <SliderControl label="Ya ahorrado" value={current} min={0} max={maxCurrentSlider} step={50} unit="€" onChange={setCurrent} />
-          <SliderControl label="Aportación mensual" value={monthly} min={10} max={1000} step={10} unit="€" onChange={setMonthly} accent="lavender" />
+          <SliderControl label="Aportación mensual" value={monthly} min={10} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setMonthly} accent="lavender" />
         </div>
       </Card>
 
@@ -254,4 +255,4 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default EmergencyFundTool;
-        
+                         
