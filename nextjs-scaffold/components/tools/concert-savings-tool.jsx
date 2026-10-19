@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Helmet } from "react-helmet-async";
 import { Music2, Ticket, MapPin, Share2, Download, Copy } from "lucide-react";
@@ -10,8 +10,6 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-
-/* 🧩 Parte 1: Constantes, Utilidades y StoryDeck */
 
 const CITIES = [
   { id: "madrid", label: "Madrid", transport: 70, hotel: 95 },
@@ -38,25 +36,6 @@ const THEMES = [
   { id: "lavanda", label: "Lavanda" },
   { id: "coral", label: "Coral" },
   { id: "aurora", label: "Aurora" },
-];
-
-const FAQS = [
-  {
-    q: "¿Cuánto cuesta realmente ir a un concierto fuera de tu ciudad?",
-    a: "Hay que sumar cuatro partidas: la entrada, el transporte de ida y vuelta, el alojamiento y los extras (comida, merchandising y transporte local).",
-  },
-  {
-    q: "¿Con cuánta antelación debo empezar a ahorrar?",
-    a: "Cuanto antes mejor: repartir el total en más meses baja la cuota mensual y te da margen si los precios suben.",
-  },
-  {
-    q: "¿Cómo se reparte el ahorro mensual sin errores de redondeo?",
-    a: "La herramienta calcula todo en céntimos y reparte la diferencia entre los primeros meses.",
-  },
-  {
-    q: "¿Los precios que muestra la herramienta son reales?",
-    a: "No. Son estimaciones iniciales orientativas para empezar.",
-  },
 ];
 
 const MAX_MONTHS_SCHEDULE = 60;
@@ -284,17 +263,6 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
     return () => window.removeEventListener("deviceorientation", onOrient);
   }, [motionOn, fxEff]);
 
-  const enableMotion = async () => {
-    try {
-      const DOE = window.DeviceOrientationEvent;
-      if (DOE && typeof DOE.requestPermission === "function") {
-        const res = await DOE.requestPermission();
-        if (res !== "granted") return;
-      }
-      setMotionOn(true);
-    } catch {}
-  };
-
   const go = (i) => setIndex(clamp(i, 0, SLIDES - 1));
 
   const applyTilt = (clientX, clientY) => {
@@ -423,12 +391,6 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
       {eyebrow("Coste total")}
       <div style={{ margin: "auto 0", ...depth(34) }}>
         <div style={{ ...fontDisplay, color: T.text, fontSize: bigSize(totalText), lineHeight: 1, fontWeight: 700, letterSpacing: "-0.02em" }}>{totalText}</div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginTop: "0.6rem" }}>Entrada, viaje, alojamiento y extras</div>
-        {d.totalC > 0 && (
-          <div style={{ display: "flex", height: "0.7rem", borderRadius: "999px", overflow: "hidden", background: "rgba(255,255,255,0.08)", marginTop: "1.1rem" }}>
-            {d.breakdown.map((b) => (b.c > 0 ? <div key={b.key} style={{ width: `${(b.c / d.totalC) * 100}%`, background: b.color }} /> : null))}
-          </div>
-        )}
       </div>
       {footer(2)}
     </>,
@@ -436,9 +398,6 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
       {eyebrow(d.covered ? "Presupuesto" : "Cada mes")}
       <div style={{ margin: "auto 0", ...depth(34) }}>
         <div style={{ ...fontDisplay, color: th.a1, fontSize: bigSize(monthlyText), lineHeight: 1, fontWeight: 700, letterSpacing: "-0.02em" }}>{monthlyText}</div>
-        <div style={{ ...fontBody, color: T.text, fontSize: "1rem", marginTop: "0.6rem" }}>
-          {d.covered ? "Ya tienes todo ahorrado" : `durante ${d.m} ${plural(d.m, "mes", "meses")}${d.usingDate ? " hasta el concierto" : ""}`}
-        </div>
       </div>
       {footer(3)}
     </>,
@@ -451,9 +410,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
               <span style={{ ...fontDisplay, color: T.text, fontSize: "1.7rem", fontWeight: 700 }}>{ms.percent}%</span>
             </div>
           ))
-        ) : (
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem" }}>Añade importes para ver tus hitos.</div>
-        )}
+        ) : null}
       </div>
       {footer(4)}
     </>,
@@ -461,17 +418,9 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
       {eyebrow("Comparte")}
       <div style={{ margin: "auto 0", ...depth(30) }}>
         <div style={{ ...fontDisplay, color: T.text, fontSize: "1.9rem", lineHeight: 1.1, fontWeight: 700 }}>Tu plan, en una historia</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "1rem" }}>
-          <button type="button" tabIndex={index === 4 ? 0 : -1} onClick={onShare} style={slideBtn(true)}>
-            <Share2 size={16} aria-hidden="true" /> Compartir plan
-          </button>
-          <button type="button" tabIndex={index === 4 ? 0 : -1} onClick={onImage} style={slideBtn(false)}>
-            <Download size={16} aria-hidden="true" /> Guardar imagen
-          </button>
-        </div>
-        <div role="status" aria-live="polite" style={{ ...fontBody, color: th.a1, fontSize: "0.85rem", fontWeight: 600, minHeight: "1.3rem", marginTop: "0.7rem", textAlign: "center" }}>
-          {status}
-        </div>
+        <button type="button" tabIndex={index === 4 ? 0 : -1} onClick={onShare} style={slideBtn(true)}>
+          <Share2 size={16} aria-hidden="true" /> Compartir plan
+        </button>
       </div>
       {footer(5)}
     </>,
@@ -513,10 +462,45 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
           const active = i === index;
           const transform = fxEff
             ? `translateX(${rel * 62}%) translateZ(${-Math.min(abs, 3) * 150}px) rotateY(${-clamp(rel, -1.6, 1.6) * 38}deg) scale(${1 - Math.min(abs, 2) * 0.05})`
-            : `translateX(${rel * 108}%
-          /* 🧩 Parte 2: Lógica, cálculos y manejadores de ConcertSavingsTool */
-
-function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+            : `translateX(${rel * 108}%) scale(${1 - Math.min(abs, 2) * 0.04})`;
+          return (
+            <div
+              key={i}
+              ref={(el) => { cardRefs.current[i] = el; }}
+              role="group"
+              aria-hidden={!active}
+              onClick={() => { if (!active) go(i); }}
+              style={{
+                position: "absolute",
+                top: 0, bottom: 0, left: 0, right: 0,
+                margin: "0 auto",
+                width: "min(86%, 21rem)",
+                transform,
+                opacity: Math.max(0, 1 - Math.min(abs, 2.2) * 0.38),
+                zIndex: 100 - Math.round(abs * 10),
+                visibility: abs > 2.3 ? "hidden" : "visible",
+                transformStyle: "preserve-3d",
+                transition: dragging ? "none" : "transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 320ms ease",
+              }}
+            >
+              <div className="cs-tilt">
+                <div className={fxEff ? "cs-sway" : undefined} style={fxEff ? undefined : { position: "relative", width: "100%", height: "100%" }}>
+                  <div style={{ position: "absolute", inset: 0, borderRadius: "1.75rem", overflow: "hidden", background: faceBg, border: `1px solid ${alpha(th.a1, 0.35)}` }}>
+                    <div className="cs-blob-a" style={{ position: "absolute", top: "-12%", right: "-18%", width: "70%", height: "52%", borderRadius: "50%", background: alpha(th.a2, 0.45), filter: "blur(38px)" }} />
+                  </div>
+                  <div style={{ position: "absolute", inset: 0, padding: "1.5rem", display: "flex", flexDirection: "column", transformStyle: "preserve-3d" }}>
+                    {content}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+                 }
+    function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const p = initialParams || {};
 
   const [artist, setArtist] = useState(() => (typeof p.artist === "string" ? p.artist.slice(0, 40) : ""));
@@ -589,7 +573,6 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const dateMonths = monthsUntil(eventDate);
   const usingDate = dateMonths !== null && dateMonths > 0;
-  const dateInPast = Boolean(eventDate) && dateMonths === 0;
   const m = clamp(usingDate ? dateMonths : months, 1, MAX_MONTHS_SCHEDULE);
 
   const covered = totalC > 0 && remainingC === 0;
@@ -672,11 +655,6 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     setStatus(ok ? "Resumen y enlace copiados" : "No se pudo copiar");
   };
 
-  const handleCopy = async () => {
-    const ok = await copyText(summaryText());
-    setStatus(ok ? "Resumen copiado" : "No se pudo copiar");
-  };
-
   const handleImage = async () => {
     setStatus("Generando imagen…");
     const blob = await buildShareImage({
@@ -732,12 +710,14 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     breakdown,
     milestones,
   };
-            
-/* 🧩 Parte 3: Renderizado visual, interfaz y exportación */
+
+  const pageTitle = "Ahorro para concierto y viaje: cuánto ahorrar al mes | MetaBox";
+  const pageDescription =
+    "Calcula cuánto ahorrar cada mes para ir a un concierto: entrada, viaje, alojamiento y extras, con plan mes a mes. Gratis, sin registro y 100% privado.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-concierto-viaje";
 
   const cardPad = { paddingTop: "1.2rem", paddingBottom: "1.2rem" };
   const labelStyle = { ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.5rem", display: "block" };
-  const hintStyle = { ...fontBody, color: T.textMuted, fontSize: "0.8rem", lineHeight: 1.5, marginTop: "0.6rem" };
   const chipRow = { display: "flex", flexWrap: "wrap", gap: "0.5rem" };
   const iconInline = { display: "inline", marginRight: "0.35rem", verticalAlign: "-2px", color: T.lime };
   const sliderGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 18rem), 1fr))", gap: "1.5rem" };
@@ -904,4 +884,4 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default ConcertSavingsTool;
-    
+            
