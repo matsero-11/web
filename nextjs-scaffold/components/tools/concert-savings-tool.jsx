@@ -106,9 +106,8 @@ async function copyText(text) {
       return false;
     }
   }
-}
-
-async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyText, monthsText, th }) {
+  }
+async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyText, monthsText, th, artistImage }) {
   const W = 1080;
   const H = 1920;
   const canvas = document.createElement("canvas");
@@ -141,6 +140,30 @@ async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyTe
   ctx.fillStyle = g2;
   ctx.fillRect(0, 0, W, H);
 
+  if (artistImage) {
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = artistImage;
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(W / 2, 420, 180, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, W / 2 - 180, 420 - 180, 360, 360);
+      ctx.restore();
+      
+      ctx.beginPath();
+      ctx.arc(W / 2, 420, 180, 0, Math.PI * 2, true);
+      ctx.strokeStyle = th.a1;
+      ctx.lineWidth = 8;
+      ctx.stroke();
+    } catch (e) {
+      console.log("No se pudo cargar la imagen para el canvas", e);
+    }
+  }
+
   const wrap = (text, x, y, maxW, lineH, maxLines) => {
     const words = String(text).split(/\s+/);
     const lines = [];
@@ -162,14 +185,16 @@ async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyTe
   const X = 96;
   const maxW = W - X * 2;
   ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left";
 
   ctx.fillStyle = th.a1;
   ctx.font = `700 40px ${body}`;
-  ctx.fillText("PLAN DE CONCIERTO", X, 200);
+  ctx.fillText("PASE VIP DE CONCIERTO", X, 200);
 
   ctx.fillStyle = "#f5f2ea";
-  ctx.font = `700 150px ${display}`;
-  let y = wrap(artist || "Tu concierto", X, 400, maxW, 156, 3);
+  ctx.font = `700 120px ${display}`;
+  
+  let y = wrap(artist || "Tu concierto", X, artistImage ? 760 : 400, maxW, 126, 3);
 
   ctx.fillStyle = th.a1;
   ctx.font = `600 56px ${body}`;
@@ -204,8 +229,7 @@ async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyTe
   ctx.fillText("metabox-web.vercel.app", W - X, 1820);
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
-}
-
+  }
 function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
@@ -329,7 +353,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   };
 
   const eyebrow = (txt) => (
-    <div style={{ ...fontBody, color: th.a1, fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>{txt}</div>
+    <div style={{ ...fontBody, color: th.a1, fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>{txt}</div>
   );
 
   const footer = (k) => (
@@ -372,45 +396,52 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
     border: primary ? "none" : `1px solid ${alpha(th.a1, 0.5)}`,
   });
 
+  const ArtistAvatar = () => {
+    if (!d.artistImage) return null;
+    return (
+      <div style={{ display: "flex", justifyContent: "center", margin: "1rem 0", ...depth(50) }}>
+        <div style={{ position: "relative", width: "110px", height: "110px", borderRadius: "50%", padding: "4px", background: `linear-gradient(135deg, ${th.a1}, ${th.a2})`, boxShadow: `0 10px 25px ${alpha(th.a1, 0.4)}` }}>
+          <img src={d.artistImage} alt={d.artist} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", border: "3px solid #0a1214" }} />
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 60%)" }} />
+        </div>
+      </div>
+    );
+  };
+
   const slides = [
     <>
-      {eyebrow("Plan de concierto")}
-      <div style={{ margin: "auto 0", ...depth(34) }}>
-        <div style={{ ...fontDisplay, color: T.text, fontSize: nameSize, lineHeight: 1.02, fontWeight: 700, letterSpacing: "-0.02em", overflowWrap: "anywhere" }}>
-          {d.artist || "Tu concierto"}
-        </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        {eyebrow("Pase VIP de Concierto")}
+        <div style={{ fontSize: "0.6rem", color: th.a1, border: `1px solid ${th.a1}`, padding: "2px 6px", borderRadius: "4px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Admit One</div>
+      </div>
+      <ArtistAvatar />
+      <div style={{ margin: "auto 0", textAlign: "center", ...depth(34) }}>
+        <div style={{ ...fontDisplay, color: T.text, fontSize: nameSize, lineHeight: 1.02, fontWeight: 700, letterSpacing: "-0.02em", overflowWrap: "anywhere" }}>{d.artist || "Tu concierto"}</div>
         <div style={{ ...fontBody, color: th.a1, fontSize: "1.15rem", fontWeight: 600, marginTop: "0.9rem" }}>{d.city}</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.9rem" }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: "2px", marginTop: "1rem", opacity: 0.6 }}>
+          {[...Array(24)].map((_, i) => (<div key={i} style={{ width: Math.random() > 0.5 ? "2px" : "4px", height: "16px", background: T.text }} />))}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.5rem", marginTop: "0.9rem" }}>
           {[d.ticketLabel, `${d.people} ${plural(d.people, "persona", "personas")}`, `${d.nights} ${plural(d.nights, "noche", "noches")}`].map(pill)}
         </div>
       </div>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.9rem" }}>Desliza para ver tu plan →</div>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginBottom: "0.9rem", textAlign: "center" }}>Desliza para ver tu plan →</div>
       {footer(1)}
     </>,
     <>
       {eyebrow("Coste total")}
-      <div style={{ margin: "auto 0", ...depth(34) }}>
-        <div style={{ ...fontDisplay, color: T.text, fontSize: bigSize(totalText), lineHeight: 1, fontWeight: 700, letterSpacing: "-0.02em" }}>{totalText}</div>
-      </div>
+      <div style={{ margin: "auto 0", ...depth(34) }}><div style={{ ...fontDisplay, color: T.text, fontSize: bigSize(totalText), lineHeight: 1, fontWeight: 700, letterSpacing: "-0.02em" }}>{totalText}</div></div>
       {footer(2)}
     </>,
     <>
       {eyebrow(d.covered ? "Presupuesto" : "Cada mes")}
-      <div style={{ margin: "auto 0", ...depth(34) }}>
-        <div style={{ ...fontDisplay, color: th.a1, fontSize: bigSize(monthlyText), lineHeight: 1, fontWeight: 700, letterSpacing: "-0.02em" }}>{monthlyText}</div>
-      </div>
+      <div style={{ margin: "auto 0", ...depth(34) }}><div style={{ ...fontDisplay, color: th.a1, fontSize: bigSize(monthlyText), lineHeight: 1, fontWeight: 700, letterSpacing: "-0.02em" }}>{monthlyText}</div></div>
       {footer(3)}
     </>,
     <>
       {eyebrow("Hitos del plan")}
       <div style={{ margin: "auto 0", display: "flex", flexDirection: "column", gap: "1rem", ...depth(30) }}>
-        {d.totalC > 0 ? (
-          d.milestones.map((ms) => (
-            <div key={ms.percent}>
-              <span style={{ ...fontDisplay, color: T.text, fontSize: "1.7rem", fontWeight: 700 }}>{ms.percent}%</span>
-            </div>
-          ))
-        ) : null}
+        {d.totalC > 0 ? (d.milestones.map((ms) => (<div key={ms.percent}><span style={{ ...fontDisplay, color: T.text, fontSize: "1.7rem", fontWeight: 700 }}>{ms.percent}%</span></div>))) : null}
       </div>
       {footer(4)}
     </>,
@@ -418,9 +449,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
       {eyebrow("Comparte")}
       <div style={{ margin: "auto 0", ...depth(30) }}>
         <div style={{ ...fontDisplay, color: T.text, fontSize: "1.9rem", lineHeight: 1.1, fontWeight: 700 }}>Tu plan, en una historia</div>
-        <button type="button" tabIndex={index === 4 ? 0 : -1} onClick={onShare} style={slideBtn(true)}>
-          <Share2 size={16} aria-hidden="true" /> Compartir plan
-        </button>
+        <button type="button" tabIndex={index === 4 ? 0 : -1} onClick={onShare} style={slideBtn(true)}><Share2 size={16} aria-hidden="true" /> Compartir plan</button>
       </div>
       {footer(5)}
     </>,
@@ -445,52 +474,20 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   return (
     <div>
       <style>{css}</style>
-      <div
-        role="region"
-        aria-label="Resumen de tu plan en tarjetas"
-        tabIndex={0}
-        onKeyDown={onKeyDown}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={(e) => finishPointer(e, false)}
-        onPointerCancel={(e) => finishPointer(e, true)}
-        style={{ position: "relative", height: "clamp(27rem, 66vh, 35rem)", perspective: "1100px", overflow: "hidden", touchAction: "pan-y", userSelect: "none", borderRadius: "1.5rem" }}
-      >
+      <div role="region" aria-label="Resumen de tu plan en tarjetas" tabIndex={0} onKeyDown={onKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={(e) => finishPointer(e, false)} onPointerCancel={(e) => finishPointer(e, true)} style={{ position: "relative", height: "clamp(27rem, 66vh, 35rem)", perspective: "1100px", overflow: "hidden", touchAction: "pan-y", userSelect: "none", borderRadius: "1.5rem" }}>
         {slides.map((content, i) => {
           const rel = i - (index - dragX / stepRef.current);
           const abs = Math.abs(rel);
           const active = i === index;
-          const transform = fxEff
-            ? `translateX(${rel * 62}%) translateZ(${-Math.min(abs, 3) * 150}px) rotateY(${-clamp(rel, -1.6, 1.6) * 38}deg) scale(${1 - Math.min(abs, 2) * 0.05})`
-            : `translateX(${rel * 108}%) scale(${1 - Math.min(abs, 2) * 0.04})`;
+          const transform = fxEff ? `translateX(${rel * 62}%) translateZ(${-Math.min(abs, 3) * 150}px) rotateY(${-clamp(rel, -1.6, 1.6) * 38}deg) scale(${1 - Math.min(abs, 2) * 0.05})` : `translateX(${rel * 108}%) scale(${1 - Math.min(abs, 2) * 0.04})`;
           return (
-            <div
-              key={i}
-              ref={(el) => { cardRefs.current[i] = el; }}
-              role="group"
-              aria-hidden={!active}
-              onClick={() => { if (!active) go(i); }}
-              style={{
-                position: "absolute",
-                top: 0, bottom: 0, left: 0, right: 0,
-                margin: "0 auto",
-                width: "min(86%, 21rem)",
-                transform,
-                opacity: Math.max(0, 1 - Math.min(abs, 2.2) * 0.38),
-                zIndex: 100 - Math.round(abs * 10),
-                visibility: abs > 2.3 ? "hidden" : "visible",
-                transformStyle: "preserve-3d",
-                transition: dragging ? "none" : "transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 320ms ease",
-              }}
-            >
+            <div key={i} ref={(el) => { cardRefs.current[i] = el; }} role="group" aria-hidden={!active} onClick={() => { if (!active) go(i); }} style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, margin: "0 auto", width: "min(86%, 21rem)", transform, opacity: Math.max(0, 1 - Math.min(abs, 2.2) * 0.38), zIndex: 100 - Math.round(abs * 10), visibility: abs > 2.3 ? "hidden" : "visible", transformStyle: "preserve-3d", transition: dragging ? "none" : "transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 320ms ease" }}>
               <div className="cs-tilt">
                 <div className={fxEff ? "cs-sway" : undefined} style={fxEff ? undefined : { position: "relative", width: "100%", height: "100%" }}>
                   <div style={{ position: "absolute", inset: 0, borderRadius: "1.75rem", overflow: "hidden", background: faceBg, border: `1px solid ${alpha(th.a1, 0.35)}` }}>
                     <div className="cs-blob-a" style={{ position: "absolute", top: "-12%", right: "-18%", width: "70%", height: "52%", borderRadius: "50%", background: alpha(th.a2, 0.45), filter: "blur(38px)" }} />
                   </div>
-                  <div style={{ position: "absolute", inset: 0, padding: "1.5rem", display: "flex", flexDirection: "column", transformStyle: "preserve-3d" }}>
-                    {content}
-                  </div>
+                  <div style={{ position: "absolute", inset: 0, padding: "1.5rem", display: "flex", flexDirection: "column", transformStyle: "preserve-3d" }}>{content}</div>
                 </div>
               </div>
             </div>
@@ -499,11 +496,13 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
       </div>
     </div>
   );
-}
+                          }
 function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const p = initialParams || {};
 
   const [artist, setArtist] = useState(() => (typeof p.artist === "string" ? p.artist.slice(0, 40) : ""));
+  const [artistImage, setArtistImage] = useState(null); 
+  
   const [city, setCity] = useState(() => (CITIES.some((c) => c.id === p.city) ? p.city : "madrid"));
   const [ticket, setTicket] = useState(() => (TICKETS.some((t) => t.id === p.ticket) ? p.ticket : "general"));
   const [ticketPrice, setTicketPrice] = useState(() => readNum(p.ticketPrice, ticketOf(p.ticket).price, 0, 1500));
@@ -520,22 +519,30 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
   const [status, setStatus] = useState("");
 
   useEffect(() => {
+    if (!artist.trim()) {
+      setArtistImage(null);
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(artist)}&limit=1`);
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          setArtistImage(data.data[0].picture_xl || data.data[0].picture_big);
+        } else {
+          setArtistImage(null);
+        }
+      } catch (e) {
+        console.error("Error buscando artista:", e);
+        setArtistImage(null);
+      }
+    }, 800);
+    return () => clearTimeout(delayDebounceFn);
+  }, [artist]);
+
+  useEffect(() => {
     if (typeof onStateChange === "function") {
-      onStateChange({
-        artist: artist || null,
-        city,
-        ticket,
-        ticketPrice,
-        people,
-        transport,
-        hotel,
-        nights,
-        extras,
-        months,
-        saved,
-        date: eventDate || null,
-        estilo: styleId,
-      });
+      onStateChange({ artist: artist || null, city, ticket, ticketPrice, people, transport, hotel, nights, extras, months, saved, date: eventDate || null, estilo: styleId });
     }
   }, [artist, city, ticket, ticketPrice, people, transport, hotel, nights, extras, months, saved, eventDate, styleId, onStateChange]);
 
@@ -628,9 +635,7 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
   const summaryText = () =>
     `${artistName ? `Concierto de ${artistName}` : "Mi concierto"} en ${cityObj.label}: coste total ${fmtEUR(fromCents(totalC))} ` +
     `(entradas ${fmtEUR(fromCents(ticketsC))}, viaje ${fmtEUR(fromCents(transportC))}, alojamiento ${fmtEUR(fromCents(hotelC))}, extras ${fmtEUR(fromCents(extrasC))}). ` +
-    (covered
-      ? "Ya tengo todo el presupuesto ahorrado."
-      : `Llevo ${fmtEUR(fromCents(savedC))} y ahorrando ${fmtEUR(fromCents(monthlyC))} al mes durante ${m} ${plural(m, "mes", "meses")} lo consigo.`);
+    (covered ? "Ya tengo todo el presupuesto ahorrado." : `Llevo ${fmtEUR(fromCents(savedC))} y ahorrando ${fmtEUR(fromCents(monthlyC))} al mes durante ${m} ${plural(m, "mes", "meses")} lo consigo.`);
 
   const csvRows = () => [
     ...breakdown.map((b) => ({ seccion: "Coste", concepto: b.label, importe: fromCents(b.c).toFixed(2) })),
@@ -665,6 +670,7 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
       monthlyText: covered ? "¡Cubierto!" : fmtEUR(fromCents(monthlyC)),
       monthsText: covered ? "Presupuesto cubierto" : `durante ${m} ${plural(m, "mes", "meses")}`,
       th,
+      artistImage,
     });
     if (!blob) {
       setStatus("No se pudo crear la imagen");
@@ -694,26 +700,10 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     setStatus("Imagen guardada");
   };
 
-  const deckData = {
-    artist: artistName,
-    city: cityObj.label,
-    ticketLabel: ticketObj.label,
-    people,
-    nights,
-    totalC,
-    monthlyC,
-    m,
-    usingDate,
-    pct,
-    covered,
-    remainingC,
-    breakdown,
-    milestones,
-  };
+  const deckData = { artist: artistName, artistImage, city: cityObj.label, ticketLabel: ticketObj.label, people, nights, totalC, monthlyC, m, usingDate, pct, covered, remainingC, breakdown, milestones };
 
   const pageTitle = "Ahorro para concierto y viaje: cuánto ahorrar al mes | MetaBox";
-  const pageDescription =
-    "Calcula cuánto ahorrar cada mes para ir a un concierto: entrada, viaje, alojamiento y extras, con plan mes a mes. Gratis, sin registro y 100% privado.";
+  const pageDescription = "Calcula cuánto ahorrar cada mes para ir a un concierto: entrada, viaje, alojamiento y extras, con plan mes a mes. Gratis, sin registro y 100% privado.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-concierto-viaje";
 
   const cardPad = { paddingTop: "1.2rem", paddingBottom: "1.2rem" };
@@ -737,60 +727,21 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         <meta property="og:locale" content="es_ES" />
       </Helmet>
 
-      <ToolHeader
-        title="Ahorro para concierto y viaje"
-        subtitle="Entrada, viaje, alojamiento y extras: cuánto ahorrar cada mes para ir a ver a tu artista."
-        onBack={onBack}
-      />
+      <ToolHeader title="Ahorro para concierto y viaje" subtitle="Entrada, viaje, alojamiento y extras: cuánto ahorrar cada mes para ir a ver a tu artista." onBack={onBack} />
 
       <Card style={cardPad}>
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           <div>
-            <label htmlFor="concert-artist" style={labelStyle}>
-              <Music2 size={14} aria-hidden="true" style={iconInline} /> Artista o grupo
-            </label>
-            <input
-              id="concert-artist"
-              type="text"
-              value={artist}
-              maxLength={40}
-              onChange={(e) => setArtist(e.target.value)}
-              placeholder="Nombre de tu artista o grupo"
-              style={{
-                ...fontBody,
-                width: "100%",
-                minHeight: "2.75rem",
-                background: T.surfaceAlt,
-                border: `1px solid ${T.border}`,
-                borderRadius: "0.9rem",
-                padding: "0.7rem 1rem",
-                color: T.text,
-                fontSize: "0.95rem",
-                outline: "none",
-              }}
-            />
+            <label htmlFor="concert-artist" style={labelStyle}><Music2 size={14} aria-hidden="true" style={iconInline} /> Artista o grupo</label>
+            <input id="concert-artist" type="text" value={artist} maxLength={40} onChange={(e) => setArtist(e.target.value)} placeholder="Nombre de tu artista o grupo" style={{ ...fontBody, width: "100%", minHeight: "2.75rem", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.9rem", padding: "0.7rem 1rem", color: T.text, fontSize: "0.95rem", outline: "none" }} />
           </div>
-
           <div>
-            <div style={labelStyle}>
-              <MapPin size={14} aria-hidden="true" style={iconInline} /> Ciudad del concierto
-            </div>
-            <div style={chipRow}>
-              {CITIES.map((c) => (
-                <Chip key={c.id} label={c.label} active={city === c.id} onClick={() => handleCity(c.id)} />
-              ))}
-            </div>
+            <div style={labelStyle}><MapPin size={14} aria-hidden="true" style={iconInline} /> Ciudad del concierto</div>
+            <div style={chipRow}>{CITIES.map((c) => (<Chip key={c.id} label={c.label} active={city === c.id} onClick={() => handleCity(c.id)} />))}</div>
           </div>
-
           <div>
-            <div style={labelStyle}>
-              <Ticket size={14} aria-hidden="true" style={iconInline} /> Tipo de entrada
-            </div>
-            <div style={chipRow}>
-              {TICKETS.map((t) => (
-                <Chip key={t.id} label={t.label} active={ticket === t.id} onClick={() => handleTicket(t.id)} />
-              ))}
-            </div>
+            <div style={labelStyle}><Ticket size={14} aria-hidden="true" style={iconInline} /> Tipo de entrada</div>
+            <div style={chipRow}>{TICKETS.map((t) => (<Chip key={t.id} label={t.label} active={ticket === t.id} onClick={() => handleTicket(t.id)} />))}</div>
           </div>
         </div>
       </Card>
@@ -802,11 +753,8 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         </div>
         <div style={{ ...chipRow, marginBottom: "1rem", alignItems: "center" }}>
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginRight: "0.25rem" }}>Estilo</span>
-          {THEMES.map((t) => (
-            <Chip key={t.id} label={t.label} active={styleId === t.id} onClick={() => setStyleId(t.id)} />
-          ))}
+          {THEMES.map((t) => (<Chip key={t.id} label={t.label} active={styleId === t.id} onClick={() => setStyleId(t.id)} />))}
         </div>
-
         <StoryDeck d={deckData} th={th} fx={fx} onShare={handleShare} onImage={handleImage} status={status} />
       </section>
 
@@ -829,20 +777,9 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           <div>
             <label htmlFor="concert-date" style={labelStyle}>Fecha del concierto (opcional, más preciso)</label>
-            <input
-              id="concert-date"
-              type="date"
-              value={eventDate}
-              min={todayISO()}
-              onChange={(e) => setEventDate(e.target.value)}
-              style={{ ...fontBody, width: "100%", minHeight: "2.75rem", padding: "0.6rem 1rem", fontSize: "0.9rem", color: T.text }}
-            />
+            <input id="concert-date" type="date" value={eventDate} min={todayISO()} onChange={(e) => setEventDate(e.target.value)} style={{ ...fontBody, width: "100%", minHeight: "2.75rem", padding: "0.6rem 1rem", fontSize: "0.9rem", color: T.text }} />
           </div>
-
-          {!usingDate && (
-            <SliderControl label="Meses hasta el concierto" value={months} min={1} max={36} step={1} unit={plural(months, "mes", "meses")} onChange={setMonths} accent="lavender" />
-          )}
-
+          {!usingDate && (<SliderControl label="Meses hasta el concierto" value={months} min={1} max={36} step={1} unit={plural(months, "mes", "meses")} onChange={setMonths} accent="lavender" />)}
           <SliderControl label="Ya ahorrado para este plan" value={Math.min(saved, maxSaved)} min={0} max={maxSaved} step={5} unit="€" onChange={setSaved} />
         </div>
       </Card>
@@ -852,19 +789,10 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="fillConcert" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={th.a1} stopOpacity={0.45} />
-                  <stop offset="100%" stopColor={th.a1} stopOpacity={0} />
-                </linearGradient>
-              </defs>
+              <defs><linearGradient id="fillConcert" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={th.a1} stopOpacity={0.45} /><stop offset="100%" stopColor={th.a1} stopOpacity={0} /></linearGradient></defs>
               <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={16} />
               <YAxis hide domain={[0, totalC > 0 ? fromCents(totalC) : 1]} />
-              <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem" }}
-                formatter={(v) => [fmtEUR(v), "Ahorrado"]}
-                labelFormatter={(l) => (l === 0 ? "Hoy" : `Mes ${l}`)}
-              />
+              <Tooltip contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem" }} formatter={(v) => [fmtEUR(v), "Ahorrado"]} labelFormatter={(l) => (l === 0 ? "Hoy" : `Mes ${l}`)} />
               <Area type="monotone" dataKey="ahorro" stroke={th.a1} strokeWidth={2} fill="url(#fillConcert)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -872,7 +800,6 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["savings", "challenge", "interest"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.75rem", paddingTop: "0.5rem" }}>
