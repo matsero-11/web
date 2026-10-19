@@ -31,6 +31,8 @@ const TOOL_MAP = {
   "conversor-de-moneda-viajes": dynamic(() => import("@/components/tools/currency-converter-tool"), { ssr: false }),
   "calculadora-de-propina": dynamic(() => import("@/components/tools/tip-calculator-tool"), { ssr: false }),
   "cuanto-necesito-ganar-ingreso-minimo": dynamic(() => import("@/components/tools/target-income-tool"), { ssr: false }),
+  // 👇 NUEVA HERRAMIENTA AÑADIDA AQUÍ 👇
+  "ahorro-concierto-viaje": dynamic(() => import("@/components/tools/concert-savings-tool"), { ssr: false }),
 };
 
 function ToolLoading() {
@@ -186,7 +188,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
           </div>
           <span style={{ fontSize: "10px", fontWeight: 700, color: "#1e293b", display: "block" }}>12% conseguido</span>
         </div>
-                                {/* GRÁFICO DE PROYECCIÓN 📈 */}
+
         <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "12px", fontFamily: "sans-serif" }}>
           <h4 style={{ fontSize: "10px", fontWeight: 700, color: "#0f172a", textTransform: "uppercase", margin: "0 0 2px 0" }}>Proyección de ahorro</h4>
           <p style={{ fontSize: "9px", color: "#475569", margin: "0 0 6px 0" }}>Evolución estimada con la aportación actual.</p>
@@ -211,7 +213,6 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
           </div>
         </div>
 
-        {/* ALERTA ⚠️ */}
         <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#111c1f", color: "#f5f2ea", display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", fontFamily: "sans-serif" }}>
           <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: "1px solid rgba(245, 242, 234, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", flexShrink: 0 }}>
             !
@@ -222,7 +223,6 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
           </div>
         </div>
 
-        {/* PIE DE PÁGINA 📄 */}
         <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#475569", fontFamily: "sans-serif" }}>
           <span><strong>METABOX</strong> — Tu futuro, en tus manos</span>
           <span style={{ fontStyle: "italic", color: "#9e7d3b" }}>Pequeños pasos, grandes resultados</span>
@@ -259,7 +259,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
       `}</style>
     </>
   );
-}
+            }
 
 function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
@@ -273,7 +273,8 @@ function QuickSmartCapture({ onValueExtracted }) {
     setStatus("Analizando imagen en tu dispositivo...");
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    // 👇 BUG CORREGIDO AQUÍ: 'event' cambiado por 'readerEvent' 👇
+    reader.onload = (readerEvent) => {
       const img = new Image();
       img.onload = () => {
         try {
@@ -291,7 +292,7 @@ function QuickSmartCapture({ onValueExtracted }) {
           setStatus("Error al procesar la imagen.");
         }
       };
-      img.src = event.target?.result;
+      img.src = readerEvent.target?.result;
     };
     reader.readAsDataURL(file);
   };
@@ -411,5 +412,4 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-          }
-    
+      }
