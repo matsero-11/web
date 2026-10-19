@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Helmet } from "react-helmet-async";
 import { Music2, Ticket, MapPin, Share2, Download, Copy } from "lucide-react";
@@ -206,7 +206,7 @@ async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyTe
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
 
-function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
+function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -499,8 +499,8 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
       </div>
     </div>
   );
-         }       
-    function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
+}
+function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const p = initialParams || {};
 
   const [artist, setArtist] = useState(() => (typeof p.artist === "string" ? p.artist.slice(0, 40) : ""));
@@ -807,7 +807,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
           ))}
         </div>
 
-        <StoryDeck d={deckData} th={th} fx={fx} onShare={handleShare} onImage={handleImage} onCopy={handleCopy} status={status} />
+        <StoryDeck d={deckData} th={th} fx={fx} onShare={handleShare} onImage={handleImage} status={status} />
       </section>
 
       <AdviceBlock text={advice} />
@@ -884,4 +884,3 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
 }
 
 export default ConcertSavingsTool;
-            
