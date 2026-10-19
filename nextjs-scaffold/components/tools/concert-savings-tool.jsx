@@ -499,7 +499,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, onCopy, status }) {
       </div>
     </div>
   );
-                 }
+                 
     function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const p = initialParams || {};
 
