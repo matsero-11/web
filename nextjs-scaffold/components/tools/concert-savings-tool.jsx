@@ -36,6 +36,12 @@ const THEMES = [
   { id: "lavanda", label: "Lavanda" },
   { id: "coral", label: "Coral" },
   { id: "aurora", label: "Aurora" },
+  { id: "cyberpunk", label: "Cyberpunk" },
+  { id: "gold", label: "Oro" },
+  { id: "platinum", label: "Platino" },
+  { id: "ocean", label: "Océano" },
+  { id: "sunset", label: "Atardecer" },
+  { id: "emerald", label: "Esmeralda" },
 ];
 
 const MAX_MONTHS_SCHEDULE = 60;
@@ -64,10 +70,16 @@ const bigSize = (s) => (s.length > 11 ? "2.6rem" : s.length > 9 ? "3.1rem" : s.l
 
 function themeOf(id) {
   const map = {
-    lima: { a1: T.lime, a2: T.lavender, a3: T.coral, aurora: false },
-    lavanda: { a1: T.lavender, a2: T.coral, a3: T.lime, aurora: false },
-    coral: { a1: T.coral, a2: T.lime, a3: T.lavender, aurora: false },
-    aurora: { a1: T.lime, a2: T.coral, a3: T.lavender, aurora: true },
+    lima: { a1: T.lime, a2: T.lavender, a3: T.coral },
+    lavanda: { a1: T.lavender, a2: T.coral, a3: T.lime },
+    coral: { a1: T.coral, a2: T.lime, a3: T.lavender },
+    aurora: { a1: T.lime, a2: T.coral, a3: T.lavender },
+    cyberpunk: { a1: "#00F0FF", a2: "#FF003C", a3: "#7000FF" },
+    gold: { a1: "#FFD700", a2: "#FFA500", a3: "#B8860B" },
+    platinum: { a1: "#E0E0E0", a2: "#9E9E9E", a3: "#FFFFFF" },
+    ocean: { a1: "#00B4D8", a2: "#03045E", a3: "#90E0EF" },
+    sunset: { a1: "#FF7B54", a2: "#FFD56B", a3: "#FF4C60" },
+    emerald: { a1: "#00FF87", a2: "#60EFFF", a3: "#00B4D8" },
   };
   return map[id] || map.lima;
 }
@@ -189,7 +201,7 @@ async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyTe
 
   ctx.fillStyle = th.a1;
   ctx.font = `700 40px ${body}`;
-  ctx.fillText("PASE VIP DE CONCIERTO", X, 200);
+  ctx.fillText("MI PLAN DE CONCIERTO", X, 200);
 
   ctx.fillStyle = "#f5f2ea";
   ctx.font = `700 120px ${display}`;
@@ -229,7 +241,7 @@ async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyTe
   ctx.fillText("metabox-web.vercel.app", W - X, 1820);
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
-  }
+}
 function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   const [index, setIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
@@ -368,7 +380,18 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   const pill = (txt) => (
     <span
       key={txt}
-      style={{ ...fontBody, fontSize: "0.8rem", fontWeight: 600, color: T.text, padding: "0.35rem 0.8rem", borderRadius: "999px", border: `1px solid ${alpha(th.a1, 0.45)}`, background: alpha(th.a1, 0.14) }}
+      style={{ 
+        ...fontBody, 
+        fontSize: "0.8rem", 
+        fontWeight: 700, 
+        color: T.text, 
+        padding: "0.4rem 0.9rem", 
+        borderRadius: "999px", 
+        border: `1px solid ${alpha(th.a1, 0.5)}`, 
+        background: alpha(th.a1, 0.15),
+        boxShadow: `0 4px 10px ${alpha(th.a1, 0.1)}`,
+        backdropFilter: "blur(4px)"
+      }}
     >
       {txt}
     </span>
@@ -377,6 +400,22 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   const nameSize = d.artist.length > 22 ? "2rem" : d.artist.length > 12 ? "2.6rem" : "3.4rem";
   const totalText = fmtBig(d.totalC);
   const monthlyText = d.covered ? "¡Cubierto!" : fmtEUR(fromCents(d.monthlyC));
+
+  const metallicStyle = {
+    ...fontDisplay,
+    fontSize: nameSize,
+    lineHeight: 1.05,
+    fontWeight: 900,
+    letterSpacing: "-0.02em",
+    overflowWrap: "anywhere",
+    background: `linear-gradient(135deg, #ffffff 0%, ${th.a1} 40%, ${th.a2} 70%, #ffffff 100%)`,
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    filter: `drop-shadow(0px 4px 15px ${alpha(th.a1, 0.6)}) drop-shadow(0px 0px 30px ${alpha(th.a2, 0.3)})`,
+    color: T.text,
+    backgroundSize: "200% auto",
+    animation: "metallic-shine 4s linear infinite",
+  };
 
   const slideBtn = (primary) => ({
     ...fontBody,
@@ -411,21 +450,59 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   const slides = [
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        {eyebrow("Pase VIP de Concierto")}
-        <div style={{ fontSize: "0.6rem", color: th.a1, border: `1px solid ${th.a1}`, padding: "2px 6px", borderRadius: "4px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Admit One</div>
+        {eyebrow("MI PLAN DE CONCIERTO")}
+        <div style={{ 
+          fontSize: "0.65rem", 
+          color: th.a1, 
+          border: `1px solid ${alpha(th.a1, 0.6)}`, 
+          padding: "3px 8px", 
+          borderRadius: "8px", 
+          textTransform: "uppercase", 
+          fontWeight: 800, 
+          letterSpacing: "0.1em", 
+          background: alpha(th.a1, 0.15),
+          boxShadow: `0 4px 12px ${alpha(th.a1, 0.2)}`
+        }}>
+          {d.ticketLabel}
+        </div>
       </div>
+      
       <ArtistAvatar />
+
       <div style={{ margin: "auto 0", textAlign: "center", ...depth(34) }}>
-        <div style={{ ...fontDisplay, color: T.text, fontSize: nameSize, lineHeight: 1.02, fontWeight: 700, letterSpacing: "-0.02em", overflowWrap: "anywhere" }}>{d.artist || "Tu concierto"}</div>
-        <div style={{ ...fontBody, color: th.a1, fontSize: "1.15rem", fontWeight: 600, marginTop: "0.9rem" }}>{d.city}</div>
-        <div style={{ display: "flex", justifyContent: "center", gap: "2px", marginTop: "1rem", opacity: 0.6 }}>
-          {[...Array(24)].map((_, i) => (<div key={i} style={{ width: Math.random() > 0.5 ? "2px" : "4px", height: "16px", background: T.text }} />))}
+        <div style={metallicStyle}>
+          {d.artist || "Tu concierto"}
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.5rem", marginTop: "0.9rem" }}>
-          {[d.ticketLabel, `${d.people} ${plural(d.people, "persona", "personas")}`, `${d.nights} ${plural(d.nights, "noche", "noches")}`].map(pill)}
+        
+        <div style={{ 
+          ...fontBody, 
+          color: th.a1, 
+          fontSize: "1.1rem", 
+          fontWeight: 700, 
+          marginTop: "0.9rem", 
+          letterSpacing: "0.1em",
+          textShadow: `0 2px 10px ${alpha(th.a1, 0.4)}`
+        }}>
+          {d.city.toUpperCase()}
+        </div>
+        
+        <div style={{ display: "flex", justifyContent: "center", gap: "3px", marginTop: "1.5rem", opacity: 0.7 }}>
+          {[...Array(20)].map((_, i) => (
+            <div key={i} style={{ 
+              width: Math.random() > 0.6 ? "2px" : "4px", 
+              height: "20px", 
+              background: th.a1,
+              borderRadius: "2px",
+              opacity: Math.random() * 0.5 + 0.5
+            }} />
+          ))}
+        </div>
+        
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.6rem", marginTop: "1.2rem" }}>
+          {[`${d.people} ${plural(d.people, "persona", "personas")}`, `${d.nights} ${plural(d.nights, "noche", "noches")}`].map(pill)}
         </div>
       </div>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginBottom: "0.9rem", textAlign: "center" }}>Desliza para ver tu plan →</div>
+      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginBottom: "0.9rem", textAlign: "center", letterSpacing: "0.05em" }}>Desliza para ver tu plan →</div>
       {footer(1)}
     </>,
     <>
@@ -455,7 +532,12 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
     </>,
   ];
 
-  const faceBg = `radial-gradient(120% 75% at 0% 0%, ${alpha(th.a1, 0.55)}, transparent 58%), radial-gradient(100% 70% at 100% 100%, ${alpha(th.a2, 0.5)}, transparent 62%), linear-gradient(165deg, #12211f 0%, #0a1214 70%)`;
+  const faceBg = `
+    radial-gradient(80% 60% at 20% 10%, ${alpha(th.a1, 0.4)} 0%, transparent 60%),
+    radial-gradient(70% 50% at 80% 90%, ${alpha(th.a2, 0.45)} 0%, transparent 60%),
+    radial-gradient(100% 100% at 50% 50%, ${alpha(th.a3 || th.a1, 0.15)} 0%, transparent 100%),
+    linear-gradient(165deg, #12211f 0%, #0a1214 100%)
+  `;
 
   const css = `
     @keyframes cs-float-a { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(14%,10%,0) scale(1.18); } }
@@ -468,6 +550,11 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
     @media (prefers-reduced-motion: reduce) {
       .cs-sway, .cs-blob-a, .cs-blob-b { animation: none !important; }
       .cs-tilt { transition: none; }
+    }
+    @keyframes metallic-shine {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
   `;
 
@@ -496,7 +583,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
       </div>
     </div>
   );
-                          }
+}
 function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const p = initialParams || {};
 
@@ -505,12 +592,12 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
   
   const [city, setCity] = useState(() => (CITIES.some((c) => c.id === p.city) ? p.city : "madrid"));
   const [ticket, setTicket] = useState(() => (TICKETS.some((t) => t.id === p.ticket) ? p.ticket : "general"));
-  const [ticketPrice, setTicketPrice] = useState(() => readNum(p.ticketPrice, ticketOf(p.ticket).price, 0, 1500));
-  const [people, setPeople] = useState(() => readNum(p.people, 1, 1, 8));
-  const [transport, setTransport] = useState(() => readNum(p.transport, cityOf(p.city).transport, 0, 600));
-  const [hotel, setHotel] = useState(() => readNum(p.hotel, cityOf(p.city).hotel, 0, 500));
-  const [nights, setNights] = useState(() => readNum(p.nights, 2, 0, 10));
-  const [extras, setExtras] = useState(() => readNum(p.extras, 120, 0, 1500));
+  const [ticketPrice, setTicketPrice] = useState(() => readNum(p.ticketPrice, ticketOf(p.ticket).price, 0, 5000));
+  const [people, setPeople] = useState(() => readNum(p.people, 1, 1, 15));
+  const [transport, setTransport] = useState(() => readNum(p.transport, cityOf(p.city).transport, 0, 10000));
+  const [hotel, setHotel] = useState(() => readNum(p.hotel, cityOf(p.city).hotel, 0, 5000));
+  const [nights, setNights] = useState(() => readNum(p.nights, 2, 0, 15));
+  const [extras, setExtras] = useState(() => readNum(p.extras, 120, 0, 5000));
   const [months, setMonths] = useState(() => readNum(p.months, 8, 1, 36));
   const [saved, setSaved] = useState(() => readNum(p.saved, 0, 0, 100000));
   const [eventDate, setEventDate] = useState(() => (typeof p.date === "string" ? p.date : ""));
@@ -763,12 +850,12 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
       <Card style={cardPad}>
         <div style={cardTitle}>Entradas, viaje y alojamiento</div>
         <div style={sliderGrid}>
-          <SliderControl label="Precio por entrada" value={ticketPrice} min={0} max={1500} step={5} unit="€" onChange={setTicketPrice} />
-          <SliderControl label="Personas que van" value={people} min={1} max={8} step={1} unit={plural(people, "persona", "personas")} onChange={setPeople} accent="lavender" />
-          <SliderControl label="Viaje por persona (ida y vuelta)" value={transport} min={0} max={600} step={10} unit="€" onChange={setTransport} />
-          <SliderControl label="Hotel por noche (habitación)" value={hotel} min={0} max={500} step={5} unit="€" onChange={setHotel} />
-          <SliderControl label="Noches de alojamiento" value={nights} min={0} max={10} step={1} unit={plural(nights, "noche", "noches")} onChange={setNights} accent="lavender" />
-          <SliderControl label="Extras (comida, merch, transporte local)" value={extras} min={0} max={1500} step={10} unit="€" onChange={setExtras} />
+          <SliderControl label="Precio por entrada" value={ticketPrice} min={0} max={5000} step={10} unit="€" onChange={setTicketPrice} />
+          <SliderControl label="Personas que van" value={people} min={1} max={15} step={1} unit={plural(people, "persona", "personas")} onChange={setPeople} accent="lavender" />
+          <SliderControl label="Viaje por persona (ida y vuelta)" value={transport} min={0} max={10000} step={50} unit="€" onChange={setTransport} />
+          <SliderControl label="Hotel por noche (habitación)" value={hotel} min={0} max={5000} step={20} unit="€" onChange={setHotel} />
+          <SliderControl label="Noches de alojamiento" value={nights} min={0} max={15} step={1} unit={plural(nights, "noche", "noches")} onChange={setNights} accent="lavender" />
+          <SliderControl label="Extras (comida, merch, transporte local)" value={extras} min={0} max={5000} step={20} unit="€" onChange={setExtras} />
         </div>
       </Card>
 
