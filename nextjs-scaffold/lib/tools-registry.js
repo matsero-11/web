@@ -20,6 +20,7 @@ import {
   Utensils,
   Briefcase,
   Building2,
+  Music2,
 } from "lucide-react";
 
 import SavingsTool from "@/components/tools/savings-goal-tool";
@@ -43,6 +44,7 @@ import CurrencyTool from "@/components/tools/currency-converter-tool";
 import TipTool from "@/components/tools/tip-calculator-tool";
 import TargetIncomeTool from "@/components/tools/target-income-tool";
 import MortgageSimulatorTool from "@/components/tools/mortgage-simulator-tool";
+import ConcertSavingsTool from "@/components/tools/concert-savings-tool";
 
 const ALL_TOOLS = [
   {
@@ -172,6 +174,23 @@ const ALL_TOOLS = [
       "presupuesto-diario-de-viaje",
       "conversor-de-moneda-viajes",
       "calculadora-objetivo-ahorro",
+    ],
+  },
+  {
+    id: "ahorro-concierto-viaje",
+    slug: "ahorro-concierto-viaje",
+    label: "Ahorro para concierto y viaje",
+    desc: "Entrada, viaje, alojamiento y extras: cuánto ahorrar cada mes",
+    icon: Music2,
+    tone: "lime",
+    category: "ahorrar",
+    tags: ["concierto", "viaje", "entrada", "ahorro", "vip", "música"],
+    component: ConcertSavingsTool,
+    priority: 0.8,
+    relatedTools: [
+      "ahorro-para-un-viaje",
+      "calculadora-objetivo-ahorro",
+      "presupuesto-mensual-categorias",
     ],
   },
   {
@@ -454,4 +473,4 @@ const CATEGORIES = [
 ];
 
 export { ALL_TOOLS, CATEGORIES };
-
+    
