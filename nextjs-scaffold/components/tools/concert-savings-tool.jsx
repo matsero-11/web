@@ -118,7 +118,7 @@ async function copyText(text) {
       return false;
     }
   }
-  }
+    }
 async function buildShareImage({ artist, city, ticketLabel, totalText, monthlyText, monthsText, th, artistImage }) {
   const W = 1080;
   const H = 1920;
@@ -365,11 +365,11 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   };
 
   const eyebrow = (txt) => (
-    <div style={{ ...fontBody, color: th.a1, fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>{txt}</div>
+    <div style={{ ...fontBody, color: th.a1, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase" }}>{txt}</div>
   );
 
   const footer = (k) => (
-    <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center", ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>
+    <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center", ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
       <span style={{ ...fontDisplay, color: T.text, fontWeight: 700, fontSize: "1rem" }}>MetaBox</span>
       <span>{k}/{SLIDES}</span>
     </div>
@@ -382,22 +382,22 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
       key={txt}
       style={{ 
         ...fontBody, 
-        fontSize: "0.8rem", 
+        fontSize: "0.9rem", 
         fontWeight: 700, 
-        color: T.text, 
-        padding: "0.4rem 0.9rem", 
+        color: "#ffffff", 
+        padding: "0.5rem 1rem", 
         borderRadius: "999px", 
-        border: `1px solid ${alpha(th.a1, 0.5)}`, 
-        background: alpha(th.a1, 0.15),
-        boxShadow: `0 4px 10px ${alpha(th.a1, 0.1)}`,
-        backdropFilter: "blur(4px)"
+        border: `1px solid ${alpha(th.a1, 0.8)}`, 
+        background: alpha(th.a1, 0.25),
+        boxShadow: `0 4px 15px ${alpha(th.a1, 0.2)}`,
+        backdropFilter: "blur(8px)"
       }}
     >
       {txt}
     </span>
   );
 
-  const nameSize = d.artist.length > 22 ? "2rem" : d.artist.length > 12 ? "2.6rem" : "3.4rem";
+  const nameSize = d.artist.length > 22 ? "2.2rem" : d.artist.length > 12 ? "2.8rem" : "3.6rem";
   const totalText = fmtBig(d.totalC);
   const monthlyText = d.covered ? "¡Cubierto!" : fmtEUR(fromCents(d.monthlyC));
 
@@ -408,13 +408,8 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
     fontWeight: 900,
     letterSpacing: "-0.02em",
     overflowWrap: "anywhere",
-    background: `linear-gradient(135deg, #ffffff 0%, ${th.a1} 40%, ${th.a2} 70%, #ffffff 100%)`,
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    filter: `drop-shadow(0px 4px 15px ${alpha(th.a1, 0.6)}) drop-shadow(0px 0px 30px ${alpha(th.a2, 0.3)})`,
-    color: T.text,
-    backgroundSize: "200% auto",
-    animation: "metallic-shine 4s linear infinite",
+    color: "#ffffff",
+    textShadow: `0 0 10px ${alpha(th.a1, 0.8)}, 0 0 25px ${alpha(th.a2, 0.6)}, 0 4px 10px rgba(0,0,0,0.8)`,
   };
 
   const slideBtn = (primary) => ({
@@ -428,7 +423,7 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
     padding: "0.65rem 1rem",
     borderRadius: "0.9rem",
     cursor: "pointer",
-    fontSize: "0.9rem",
+    fontSize: "0.95rem",
     fontWeight: 700,
     background: primary ? th.a1 : "transparent",
     color: primary ? "#0b1214" : T.text,
@@ -436,12 +431,34 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
   });
 
   const ArtistAvatar = () => {
-    if (!d.artistImage) return null;
+    const [imgError, setImgError] = useState(false);
+
+    if (!d.artistImage || imgError) {
+      return (
+        <div style={{ display: "flex", justifyContent: "center", margin: "1.2rem 0", ...depth(50) }}>
+          <div style={{ 
+            width: "90px", height: "90px", borderRadius: "50%", 
+            background: `linear-gradient(135deg, ${alpha(th.a1, 0.8)}, ${alpha(th.a2, 0.8)})`, 
+            border: `2px solid ${alpha(th.a1, 0.4)}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "2.5rem", fontWeight: 900, color: "#0a1214",
+            boxShadow: `0 10px 30px ${alpha(th.a1, 0.4)}`
+          }}>
+            {d.artist ? d.artist.charAt(0).toUpperCase() : "🎵"}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div style={{ display: "flex", justifyContent: "center", margin: "1rem 0", ...depth(50) }}>
-        <div style={{ position: "relative", width: "110px", height: "110px", borderRadius: "50%", padding: "4px", background: `linear-gradient(135deg, ${th.a1}, ${th.a2})`, boxShadow: `0 10px 25px ${alpha(th.a1, 0.4)}` }}>
-          <img src={d.artistImage} alt={d.artist} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", border: "3px solid #0a1214" }} />
-          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 60%)" }} />
+      <div style={{ display: "flex", justifyContent: "center", margin: "1.2rem 0", ...depth(50) }}>
+        <div style={{ position: "relative", width: "110px", height: "110px", borderRadius: "50%", padding: "4px", background: `linear-gradient(135deg, ${th.a1}, ${th.a2})`, boxShadow: `0 10px 30px ${alpha(th.a1, 0.5)}` }}>
+          <img 
+            src={d.artistImage} 
+            alt={d.artist} 
+            onError={() => setImgError(true)}
+            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", border: "3px solid #0a1214" }} 
+          />
         </div>
       </div>
     );
@@ -452,16 +469,15 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         {eyebrow("MI PLAN DE CONCIERTO")}
         <div style={{ 
-          fontSize: "0.65rem", 
-          color: th.a1, 
-          border: `1px solid ${alpha(th.a1, 0.6)}`, 
-          padding: "3px 8px", 
+          fontSize: "0.8rem", 
+          color: "#0a1214", 
+          border: `1px solid ${th.a1}`, 
+          padding: "4px 10px", 
           borderRadius: "8px", 
           textTransform: "uppercase", 
           fontWeight: 800, 
           letterSpacing: "0.1em", 
-          background: alpha(th.a1, 0.15),
-          boxShadow: `0 4px 12px ${alpha(th.a1, 0.2)}`
+          background: th.a1,
         }}>
           {d.ticketLabel}
         </div>
@@ -476,33 +492,33 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
         
         <div style={{ 
           ...fontBody, 
-          color: th.a1, 
-          fontSize: "1.1rem", 
-          fontWeight: 700, 
-          marginTop: "0.9rem", 
+          color: "#ffffff",
+          fontSize: "1.3rem", 
+          fontWeight: 800, 
+          marginTop: "1rem", 
           letterSpacing: "0.1em",
-          textShadow: `0 2px 10px ${alpha(th.a1, 0.4)}`
+          textShadow: `0 2px 10px ${alpha(th.a1, 0.8)}`
         }}>
           {d.city.toUpperCase()}
         </div>
         
-        <div style={{ display: "flex", justifyContent: "center", gap: "3px", marginTop: "1.5rem", opacity: 0.7 }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: "4px", marginTop: "1.5rem", opacity: 0.8 }}>
           {[...Array(20)].map((_, i) => (
             <div key={i} style={{ 
-              width: Math.random() > 0.6 ? "2px" : "4px", 
-              height: "20px", 
-              background: th.a1,
-              borderRadius: "2px",
+              width: Math.random() > 0.6 ? "3px" : "5px", 
+              height: "24px", 
+              background: "#ffffff",
+              borderRadius: "1px",
               opacity: Math.random() * 0.5 + 0.5
             }} />
           ))}
         </div>
         
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.6rem", marginTop: "1.2rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.6rem", marginTop: "1.5rem" }}>
           {[`${d.people} ${plural(d.people, "persona", "personas")}`, `${d.nights} ${plural(d.nights, "noche", "noches")}`].map(pill)}
         </div>
       </div>
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginBottom: "0.9rem", textAlign: "center", letterSpacing: "0.05em" }}>Desliza para ver tu plan →</div>
+      <div style={{ ...fontBody, color: "#ffffff", fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.9rem", textAlign: "center", letterSpacing: "0.05em", textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}>Desliza para ver tu plan →</div>
       {footer(1)}
     </>,
     <>
@@ -550,11 +566,6 @@ function StoryDeck({ d, th, fx, onShare, onImage, status }) {
     @media (prefers-reduced-motion: reduce) {
       .cs-sway, .cs-blob-a, .cs-blob-b { animation: none !important; }
       .cs-tilt { transition: none; }
-    }
-    @keyframes metallic-shine {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
     }
   `;
 
@@ -873,14 +884,40 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
       <Card style={cardPad}>
         <div style={cardTitle}>Tu camino hasta el concierto</div>
-        <div style={{ width: "100%", height: "190px" }}>
+        <div style={{ width: "100%", height: "220px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <defs><linearGradient id="fillConcert" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={th.a1} stopOpacity={0.45} /><stop offset="100%" stopColor={th.a1} stopOpacity={0} /></linearGradient></defs>
-              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={16} />
-              <YAxis hide domain={[0, totalC > 0 ? fromCents(totalC) : 1]} />
-              <Tooltip contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem" }} formatter={(v) => [fmtEUR(v), "Ahorrado"]} labelFormatter={(l) => (l === 0 ? "Hoy" : `Mes ${l}`)} />
-              <Area type="monotone" dataKey="ahorro" stroke={th.a1} strokeWidth={2} fill="url(#fillConcert)" />
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fillConcert" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={th.a1} stopOpacity={0.6} />
+                  <stop offset="95%" stopColor={th.a1} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis 
+                dataKey="mes" 
+                tick={{ fill: T.textMuted, fontSize: 12 }} 
+                axisLine={false} 
+                tickLine={false} 
+                minTickGap={16} 
+              />
+              <YAxis 
+                hide 
+                domain={[0, totalC > 0 ? fromCents(totalC) * 1.05 : 1]}
+              />
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: `1px solid ${alpha(th.a1, 0.3)}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.9rem", fontWeight: "bold" }}
+                formatter={(v) => [fmtEUR(v), "Ahorrado"]}
+                labelFormatter={(l) => (l === 0 ? "Hoy (Punto de partida)" : `Mes ${l}`)}
+                cursor={{ stroke: th.a1, strokeWidth: 1, strokeDasharray: "4 4" }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="ahorro" 
+                stroke={th.a1} 
+                strokeWidth={4} 
+                fill="url(#fillConcert)" 
+                activeDot={{ r: 8, fill: th.a1, stroke: "#0a1214", strokeWidth: 3 }}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -898,3 +935,4 @@ function ConcertSavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default ConcertSavingsTool;
+
