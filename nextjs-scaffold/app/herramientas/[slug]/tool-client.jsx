@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { T, fontBody, fontDisplay } from "@/lib/design-tokens";
 import { Button } from "@/components/ui";
 import { Component, useCallback, useMemo, useState, Suspense, useRef } from "react";
-import { FileDown, ShieldCheck, Wallet, Shield, Target, Clock, Lightbulb, TrendingUp } from "lucide-react";
+import { FileDown, ShieldCheck } from "lucide-react";
 import RelatedTools from "@/components/RelatedTools";
 import { ALL_TOOLS } from "@/lib/tools-registry";
 
@@ -75,7 +75,7 @@ class ToolErrorBoundary extends Component {
   }
 }
 
-function PremiumExecutiveReportExporter({ toolName, summaryData }) {
+function PremiumExecutiveReportExporter({ toolName, summaryData, slug }) {
   const handlePrintPDF = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
@@ -83,22 +83,79 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
       return;
     }
 
+    // Funciones auxiliares para leer datos de forma segura
+    const getNum = (keys) => {
+      for (const k of keys) { if (summaryData[k] !== undefined && summaryData[k] !== "") return parseFloat(String(summaryData[k]).replace(/[^0-9.-]+/g, "")) || 0; }
+      return 0;
+    };
+    const getStr = (keys) => {
+      for (const k of keys) { if (summaryData[k] !== undefined && summaryData[k] !== "") return String(summaryData[k]); }
+      return "";
+    };
+    const eur = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+
+    // Motor de Análisis Personalizado
+    let p1 = "";
+    let p2 = "";
+    
+    if (slug === "ahorro-concierto-viaje") {
+      const artist = getStr(["Artist", "artist", "Artista o grupo"]) || "tu artista";
+      const city = getStr(["City", "city", "Ciudad del concierto"]) || "tu ciudad";
+      const people = getNum(["People", "people", "Personas que van"]) || 1;
+      const ticketPrice = getNum(["Ticket Price", "ticketPrice", "Precio por entrada"]);
+      const transport = getNum(["Transport", "transport", "Viaje por persona (ida y vuelta)"]);
+      const hotel = getNum(["Hotel", "hotel", "Hotel por noche (habitación)"]);
+      const nights = getNum(["Nights", "nights", "Noches de alojamiento"]) || 2;
+      const extras = getNum(["Extras", "extras"]);
+      const months = getNum(["Months", "months", "Meses hasta el concierto"]) || 8;
+      const saved = getNum(["Saved", "saved", "Ya ahorrado para este plan"]);
+      
+      const rooms = Math.max(1, Math.ceil(people / 2));
+      const total = (ticketPrice * people) + (transport * people) + (hotel * nights * rooms) + extras;
+      const remaining = Math.max(total - saved, 0);
+      const monthly = remaining === 0 ? 0 : Math.ceil(remaining / months);
+
+      p1 = `Tu plan para ver a ${artist} en ${city} tiene un coste total estimado de ${eur(total)}. Teniendo en cuenta que ya has ahorrado ${eur(saved)}, te faltan ${eur(remaining)} para cubrir todos los gastos (entradas, viaje, alojamiento y extras). Para llegar a tiempo sin agobios, necesitas apartar ${eur(monthly)} al mes durante los próximos ${months} meses.`;
+      
+      if (remaining === 0) {
+        p2 = "¡Excelente noticia! Ya tienes el presupuesto completo cubierto. Te recomendamos reservar los vuelos y el alojamiento cuanto antes para evitar subidas de precio de última hora, y guardar un pequeño margen extra (10-15%) para gastos imprevistos durante el evento, como comidas o merchandising.";
+      } else if (months <= 2) {
+        p2 = "El margen de tiempo es muy ajustado, lo que eleva considerablemente la cuota mensual. Si te resulta inviable, considera ajustar los extras o buscar un alojamiento más económico compartiendo más habitaciones. Planificar con más antelación siempre reduce el impacto financiero y te permite encontrar mejores ofertas.";
+      } else {
+        p2 = "Para asegurar el éxito de este plan, te recomendamos automatizar el ahorro mediante una transferencia programada a una cuenta separada el mismo día que cobras. Además, revisa tus gastos variables (como las salidas de fin de semana) para encontrar ese margen extra sin que suponga un gran sacrificio.";
+      }
+    } else if (slug === "interes-compuesto-aportaciones") {
+      const capital = getNum(["Capital inicial", "montoInicial"]);
+      const aportacion = getNum(["Aportación mensual", "aportacion"]);
+      const interes = getNum(["Interés anual estimado", "interes"]);
+      const anos = getNum(["Años", "anos"]);
+      
+      p1 = `Has simulado una inversión a ${anos} años con un capital inicial de ${eur(capital)} y aportaciones mensuales de ${eur(aportacion)}, asumiendo una rentabilidad anual del ${interes}%. Gracias al poder del interés compuesto, tu capital final se multiplicará de forma exponencial, demostrando que el tiempo en el mercado es tu mejor aliado.`;
+      p2 = "El factor más determinante en esta herramienta no es la cantidad inicial, sino la constancia de las aportaciones mensuales y el tiempo. Te recomendamos mantener la disciplina incluso en meses complicados y reinvertir los beneficios. Recuerda que rentabilidades pasadas no garantizan rentabilidades futuras.";
+    } else if (slug === "fondo-de-emergencia") {
+      const gastos = getNum(["Gastos fijos mensuales", "gastos"]);
+      const meses = getNum(["Meses de cobertura", "meses"]);
+      const total = gastos * meses;
+      
+      p1 = `Con unos gastos fijos mensuales de ${eur(gastos)}, tu fondo de emergencia ideal asciende a ${eur(total)} para cubrir imprevistos durante ${meses} meses. Este colchón financiero es la base de cualquier estrategia de salud económica, ya que te protege de tener que endeudarte ante situaciones como pérdida de empleo o averías urgentes.`;
+      p2 = "Te sugerimos mantener este dinero en un producto de alta liquidez y bajo riesgo (como una cuenta remunerada o un fondo monetario) para que esté accesible en menos de 24 horas, pero que al mismo tiempo genere una pequeña rentabilidad para combatir la inflación. No inviertas este fondo en activos volátiles.";
+    } else {
+      // Fallback genérico inteligente para el resto de herramientas
+      p1 = `Este informe ejecutivo detalla los resultados de tu simulación en la herramienta "${toolName}". Los parámetros que has configurado reflejan un escenario financiero personalizado, permitiéndote visualizar de forma clara el impacto de tus decisiones actuales a medio y largo plazo.`;
+      p2 = "La planificación financiera no es un evento estático, sino un proceso dinámico. Te recomendamos revisar estas cifras periódicamente, actualizarlas según cómo evolucione tu situación personal o laboral, y ajustar tus metas para mantener siempre el control de tus finanzas.";
+    }
+
     const cleanEntries = Object.entries(summaryData || {}).filter(([key, val]) => {
       const valStr = String(val);
-      return val !== null && val !== undefined && val !== "" && !valStr.startsWith("[{") && !valStr.startsWith("{");
+      return val !== null && val !== undefined && val !== "" && !valStr.startsWith("[{") && !valStr.startsWith("{") && key !== "slug" && key !== "estilo";
     });
 
     const formattedData = cleanEntries.map(([key, value]) => {
-      const formattedKey = key
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, (str) => str.toUpperCase())
-        .replace(/_/g, ' ');
+      const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()).replace(/_/g, ' ');
       return { label: formattedKey, value: String(value) };
     });
 
-    const dateStr = new Date().toLocaleDateString("es-ES", {
-      day: "2-digit", month: "long", year: "numeric"
-    });
+    const dateStr = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
 
     const html = `
       <!DOCTYPE html>
@@ -106,103 +163,27 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Informe MetaBox - ${toolName || "Simulación"}</title>
+        <title>Informe MetaBox - ${toolName}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
-          
-          body { 
-            font-family: 'Inter', sans-serif; 
-            color: #1e293b; 
-            margin: 0; 
-            padding: 40px; 
-            background: #ffffff; 
-            -webkit-print-color-adjust: exact; 
-            print-color-adjust: exact;
-          }
-          .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 3px solid #c4de4e; 
-            padding-bottom: 20px; 
-            margin-bottom: 40px; 
-          }
-          .logo { 
-            font-family: 'Playfair Display', serif;
-            font-size: 28px; 
-            font-weight: 700; 
-            color: #0f172a; 
-            letter-spacing: 1px; 
-            text-transform: uppercase; 
-          }
-          .header-info {
-            text-align: right;
-            font-size: 12px;
-            color: #64748b;
-          }
-          .title-section { margin-bottom: 40px; }
-          .title-section h1 { 
-            font-family: 'Playfair Display', serif;
-            font-size: 36px; 
-            font-weight: 700; 
-            margin: 0; 
-            color: #0f172a; 
-            line-height: 1.2;
-          }
-          .title-section p { 
-            font-size: 14px; 
-            color: #64748b; 
-            margin: 8px 0 0 0; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            font-weight: 600;
-          }
-          .grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
-            margin-bottom: 40px; 
-          }
-          .card { 
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
-            padding: 24px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-          }
-          .card-label { 
-            font-size: 11px; 
-            color: #64748b; 
-            text-transform: uppercase; 
-            font-weight: 800; 
-            letter-spacing: 1px;
-            margin-bottom: 8px; 
-          }
-          .card-value { 
-            font-size: 24px; 
-            font-weight: 800; 
-            color: #0f172a; 
-          }
-          .table-container {
-            margin-bottom: 40px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-          }
+          body { font-family: 'Inter', sans-serif; color: #1e293b; margin: 0; padding: 40px; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #c4de4e; padding-bottom: 20px; margin-bottom: 40px; }
+          .logo { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #0f172a; letter-spacing: 1px; text-transform: uppercase; }
+          .header-info { text-align: right; font-size: 12px; color: #64748b; }
+          .title-section { margin-bottom: 30px; }
+          .title-section h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; margin: 0; color: #0f172a; line-height: 1.2; }
+          .title-section p { font-size: 14px; color: #64748b; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+          .analysis-section { margin-bottom: 40px; background: #f8fafc; padding: 30px; border-radius: 12px; border-left: 4px solid #c4de4e; }
+          .analysis-section h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: #0f172a; margin-top: 0; margin-bottom: 15px; }
+          .analysis-section p { font-size: 15px; line-height: 1.7; color: #334155; margin-bottom: 15px; text-align: justify; }
+          .analysis-section p:last-child { margin-bottom: 0; }
+          .table-container { margin-bottom: 40px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
           .table { width: 100%; border-collapse: collapse; }
-          .table th, .table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+          .table th, .table td { padding: 14px 24px; text-align: left; border-bottom: 1px solid #e2e8f0; }
           .table th { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 800; background: #f8fafc; }
           .table td { font-size: 15px; color: #1e293b; }
           .table tr:last-child td { border-bottom: none; }
-          .footer { 
-            text-align: center; 
-            font-size: 11px; 
-            color: #94a3b8; 
-            margin-top: 60px; 
-            border-top: 1px solid #e2e8f0; 
-            padding-top: 20px; 
-            line-height: 1.6;
-          }
+          .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; line-height: 1.6; }
         </style>
       </head>
       <body>
@@ -215,25 +196,22 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
         </div>
 
         <div class="title-section">
-          <h1>${toolName || "Simulación Financiera"}</h1>
-          <p>Resultados proyectados y análisis de viabilidad</p>
+          <h1>${toolName}</h1>
+          <p>Análisis de simulación y proyección</p>
         </div>
 
-        <div class="grid">
-          ${formattedData.slice(0, 3).map(item => `
-            <div class="card">
-              <div class="card-label">${item.label}</div>
-              <div class="card-value">${item.value}</div>
-            </div>
-          `).join('')}
+        <div class="analysis-section">
+          <h2>Análisis Personalizado</h2>
+          <p>${p1}</p>
+          <p>${p2}</p>
         </div>
 
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Parámetro / Concepto</th>
-                <th>Detalle</th>
+                <th>Parámetro Introducido</th>
+                <th>Valor</th>
               </tr>
             </thead>
             <tbody>
@@ -261,9 +239,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
 
     printWindow.onload = () => {
       printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 800);
+      setTimeout(() => { printWindow.print(); }, 800);
     };
   };
 
@@ -271,15 +247,15 @@ function PremiumExecutiveReportExporter({ toolName, summaryData }) {
     <div className="export-bar no-print" style={{ marginTop: "2.5rem", padding: "1.25rem", borderRadius: "1.1rem", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", ...fontBody }}>
       <button onClick={handlePrintPDF} type="button" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: T.lime, color: "#12200A", border: "none", padding: "0.75rem 1.2rem", borderRadius: "0.8rem", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", ...fontDisplay }}>
         <FileDown size={18} strokeWidth={2.5} aria-hidden="true" />
-        <span>Descargar Informe PDF</span>
+        <span>Descargar Informe Ejecutivo PDF</span>
       </button>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: T.textMuted, fontSize: "0.85rem" }}>
         <ShieldCheck size={18} color={T.lime} aria-hidden="true" />
-        <span>Informe premium generado 100% en tu navegador</span>
+        <span>Informe premium con análisis generado 100% en tu navegador</span>
       </div>
     </div>
   );
-              }
+      }
 function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -419,7 +395,7 @@ function ToolClientContent({ slug }) {
         </section>
       </div>
 
-      <PremiumExecutiveReportExporter toolName={currentToolData?.title || "Simulación Financiera"} summaryData={activeSummaryData} />
+      <PremiumExecutiveReportExporter toolName={currentToolData?.label || currentToolData?.title || "Simulación Financiera"} summaryData={activeSummaryData} slug={slug} />
     </div>
   );
 }
@@ -430,4 +406,4 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-                     }
+          }
