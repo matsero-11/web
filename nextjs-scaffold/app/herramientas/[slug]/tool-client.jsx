@@ -31,7 +31,6 @@ const TOOL_MAP = {
   "conversor-de-moneda-viajes": dynamic(() => import("@/components/tools/currency-converter-tool"), { ssr: false }),
   "calculadora-de-propina": dynamic(() => import("@/components/tools/tip-calculator-tool"), { ssr: false }),
   "cuanto-necesito-ganar-ingreso-minimo": dynamic(() => import("@/components/tools/target-income-tool"), { ssr: false }),
-  // 👇 NUEVA HERRAMIENTA AÑADIDA AQUÍ 👇
   "ahorro-concierto-viaje": dynamic(() => import("@/components/tools/concert-savings-tool"), { ssr: false }),
 };
 
@@ -78,189 +77,209 @@ class ToolErrorBoundary extends Component {
 
 function PremiumExecutiveReportExporter({ toolName, summaryData }) {
   const handlePrintPDF = () => {
-    if (typeof window !== "undefined") window.print();
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Por favor, permite las ventanas emergentes en tu navegador para poder descargar el PDF.");
+      return;
+    }
+
+    const cleanEntries = Object.entries(summaryData || {}).filter(([key, val]) => {
+      const valStr = String(val);
+      return val !== null && val !== undefined && val !== "" && !valStr.startsWith("[{") && !valStr.startsWith("{");
+    });
+
+    const formattedData = cleanEntries.map(([key, value]) => {
+      const formattedKey = key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str) => str.toUpperCase())
+        .replace(/_/g, ' ');
+      return { label: formattedKey, value: String(value) };
+    });
+
+    const dateStr = new Date().toLocaleDateString("es-ES", {
+      day: "2-digit", month: "long", year: "numeric"
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Informe MetaBox - ${toolName || "Simulación"}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+          
+          body { 
+            font-family: 'Inter', sans-serif; 
+            color: #1e293b; 
+            margin: 0; 
+            padding: 40px; 
+            background: #ffffff; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+          }
+          .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 3px solid #c4de4e; 
+            padding-bottom: 20px; 
+            margin-bottom: 40px; 
+          }
+          .logo { 
+            font-family: 'Playfair Display', serif;
+            font-size: 28px; 
+            font-weight: 700; 
+            color: #0f172a; 
+            letter-spacing: 1px; 
+            text-transform: uppercase; 
+          }
+          .header-info {
+            text-align: right;
+            font-size: 12px;
+            color: #64748b;
+          }
+          .title-section { margin-bottom: 40px; }
+          .title-section h1 { 
+            font-family: 'Playfair Display', serif;
+            font-size: 36px; 
+            font-weight: 700; 
+            margin: 0; 
+            color: #0f172a; 
+            line-height: 1.2;
+          }
+          .title-section p { 
+            font-size: 14px; 
+            color: #64748b; 
+            margin: 8px 0 0 0; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-weight: 600;
+          }
+          .grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+            margin-bottom: 40px; 
+          }
+          .card { 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 24px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          }
+          .card-label { 
+            font-size: 11px; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            font-weight: 800; 
+            letter-spacing: 1px;
+            margin-bottom: 8px; 
+          }
+          .card-value { 
+            font-size: 24px; 
+            font-weight: 800; 
+            color: #0f172a; 
+          }
+          .table-container {
+            margin-bottom: 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+          }
+          .table { width: 100%; border-collapse: collapse; }
+          .table th, .table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+          .table th { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 800; background: #f8fafc; }
+          .table td { font-size: 15px; color: #1e293b; }
+          .table tr:last-child td { border-bottom: none; }
+          .footer { 
+            text-align: center; 
+            font-size: 11px; 
+            color: #94a3b8; 
+            margin-top: 60px; 
+            border-top: 1px solid #e2e8f0; 
+            padding-top: 20px; 
+            line-height: 1.6;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">MetaBox</div>
+          <div class="header-info">
+            <strong>Informe Financiero Ejecutivo</strong><br>
+            Generado el ${dateStr}
+          </div>
+        </div>
+
+        <div class="title-section">
+          <h1>${toolName || "Simulación Financiera"}</h1>
+          <p>Resultados proyectados y análisis de viabilidad</p>
+        </div>
+
+        <div class="grid">
+          ${formattedData.slice(0, 3).map(item => `
+            <div class="card">
+              <div class="card-label">${item.label}</div>
+              <div class="card-value">${item.value}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Parámetro / Concepto</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${formattedData.map(item => `
+                <tr>
+                  <td style="font-weight: 600; color: #475569;">${item.label}</td>
+                  <td>${item.value}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          <strong>METABOX</strong> — Tu futuro, en tus manos.<br>
+          Documento generado de forma 100% privada en tu navegador. Las cifras presentadas son estimaciones matemáticas y no constituyen asesoramiento financiero oficial.
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 800);
+    };
   };
 
-  const currentDateFormatted = new Date().toLocaleDateString("es-ES", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  }).replace(".", "");
-
-  const cleanEntries = useMemo(() => {
-    if (!summaryData) return [];
-    return Object.entries(summaryData).filter(([key, val]) => {
-      const valStr = String(val);
-      return !valStr.startsWith("[{") && !valStr.startsWith("{");
-    });
-  }, [summaryData]);
-
   return (
-    <>
-      <div className="export-bar no-print" style={{ marginTop: "2.5rem", padding: "1.25rem", borderRadius: "1.1rem", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", ...fontBody }}>
-        <button onClick={handlePrintPDF} type="button" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: T.lime, color: "#12200A", border: "none", padding: "0.75rem 1.2rem", borderRadius: "0.8rem", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", ...fontDisplay }}>
-          <FileDown size={18} strokeWidth={2.5} aria-hidden="true" />
-          <span>Generar Informe PDF Ejecutivo</span>
-        </button>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: T.textMuted, fontSize: "0.85rem" }}>
-          <ShieldCheck size={18} color={T.lime} aria-hidden="true" />
-          <span>Procesamiento 100% privado en tu navegador</span>
-        </div>
+    <div className="export-bar no-print" style={{ marginTop: "2.5rem", padding: "1.25rem", borderRadius: "1.1rem", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", ...fontBody }}>
+      <button onClick={handlePrintPDF} type="button" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: T.lime, color: "#12200A", border: "none", padding: "0.75rem 1.2rem", borderRadius: "0.8rem", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", ...fontDisplay }}>
+        <FileDown size={18} strokeWidth={2.5} aria-hidden="true" />
+        <span>Descargar Informe PDF</span>
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: T.textMuted, fontSize: "0.85rem" }}>
+        <ShieldCheck size={18} color={T.lime} aria-hidden="true" />
+        <span>Informe premium generado 100% en tu navegador</span>
       </div>
-
-      <div 
-        id="metabox-report-content" 
-        style={{ display: "none", fontFamily: "'Georgia', serif", backgroundColor: "#ffffff", color: "#111c1f", padding: "16px" }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#111c1f", color: "#f5f2ea", padding: "14px 18px", borderRadius: "10px", borderBottom: "3px solid #c4de4e" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "6px", backgroundColor: "rgba(196, 222, 78, 0.2)", border: "1px solid rgba(196, 222, 78, 0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#c4de4e", fontSize: "14px" }}>
-              🛡️
-            </div>
-            <div>
-              <h1 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "1px", margin: 0, textTransform: "uppercase" }}>
-                METABOX
-              </h1>
-              <span style={{ fontSize: "9px", color: "#c4de4e", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, display: "block" }}>
-                REPORTE FINANCIERO EJECUTIVO
-              </span>
-            </div>
-          </div>
-          <div style={{ textAlign: "right", fontFamily: "sans-serif" }}>
-            <div style={{ fontSize: "10px", color: "#f5f2ea", backgroundColor: "#1a292c", padding: "4px 9px", borderRadius: "6px", border: "1px solid rgba(245, 242, 234, 0.1)" }}>
-              📅 <strong>{currentDateFormatted}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: "12px", marginBottom: "12px", borderBottom: "1px solid #e5e7eb", paddingBottom: "10px" }}>
-          <span style={{ fontSize: "9px", fontWeight: 700, color: "#5c7a1e", textTransform: "uppercase", letterSpacing: "1px", fontFamily: "sans-serif", display: "block" }}>
-            — {toolName ? toolName.toUpperCase() : "SIMULACIÓN FINANCIERA"} —
-          </span>
-          <h2 style={{ fontSize: "21px", fontWeight: 800, color: "#111c1f", margin: "3px 0 3px 0", lineHeight: 1.1 }}>
-            Estabilidad hoy, <span style={{ fontStyle: "italic", fontWeight: 400, color: "#9e7d3b" }}>tranquilidad mañana.</span>
-          </h2>
-          <p style={{ fontSize: "10px", color: "#374151", fontFamily: "sans-serif", margin: 0, lineHeight: 1.3 }}>
-            Informe proyectado con rigor matemático para asegurar tu cobertura ante imprevistos.
-          </p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "12px", fontFamily: "sans-serif" }}>
-          {cleanEntries.length > 0 ? (
-            cleanEntries.slice(0, 3).map(([key, value]) => (
-              <div key={key} style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", color: "#475569", display: "block", marginBottom: "3px" }}>
-                  {key}
-                </span>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>
-                  {String(value)}
-                </span>
-              </div>
-            ))
-          ) : (
-            <>
-              <div style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "9px", fontWeight: 700, color: "#475569", display: "block" }}>GASTO MENSUAL</span>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>€ 1.100</span>
-              </div>
-              <div style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "9px", fontWeight: 700, color: "#475569", display: "block" }}>COBERTURA</span>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>6 meses</span>
-              </div>
-              <div style={{ padding: "11px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                <span style={{ fontSize: "9px", fontWeight: 700, color: "#475569", display: "block" }}>OBJETIVO TOTAL</span>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a" }}>€ 6.600</span>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div style={{ padding: "12px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "12px", fontFamily: "sans-serif", textAlign: "center" }}>
-          <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", color: "#475569", display: "block", marginBottom: "3px" }}>
-            TIEMPO PARA EL OBJETIVO
-          </span>
-          <div style={{ fontSize: "26px", fontWeight: 900, color: "#0f172a", marginBottom: "5px" }}>
-            49 <span style={{ fontSize: "12px", fontWeight: 500, color: "#374151" }}>meses</span>
-          </div>
-          
-          <div style={{ width: "100%", backgroundColor: "#cbd5e1", height: "6px", borderRadius: "3px", overflow: "hidden", maxWidth: "320px", margin: "0 auto 4px auto" }}>
-            <div style={{ backgroundColor: "#4b6321", height: "100%", width: "12%" }}></div>
-          </div>
-          <span style={{ fontSize: "10px", fontWeight: 700, color: "#1e293b", display: "block" }}>12% conseguido</span>
-        </div>
-
-        <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "12px", fontFamily: "sans-serif" }}>
-          <h4 style={{ fontSize: "10px", fontWeight: 700, color: "#0f172a", textTransform: "uppercase", margin: "0 0 2px 0" }}>Proyección de ahorro</h4>
-          <p style={{ fontSize: "9px", color: "#475569", margin: "0 0 6px 0" }}>Evolución estimada con la aportación actual.</p>
-
-          <div style={{ width: "100%", height: "50px" }}>
-            <svg style={{ width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 400 50" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5c7a1e" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#5c7a1e" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <line x1="0" y1="12" x2="400" y2="12" stroke="#0f172a" strokeOpacity="0.06" strokeDasharray="2" />
-              <line x1="0" y1="30" x2="400" y2="30" stroke="#0f172a" strokeOpacity="0.06" strokeDasharray="2" />
-
-              <polygon points="0,42 100,35 200,26 300,16 400,8 400,45 0,45" fill="url(#grad2)" />
-              <polyline points="0,42 100,35 200,26 300,16 400,8" fill="none" stroke="#5c7a1e" strokeWidth="2.2" />
-            </svg>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px", fontWeight: 600, color: "#334155", marginTop: "3px" }}>
-            <span>Mes 0</span><span>Mes 12</span><span>Mes 24</span><span>Mes 36</span><span>Mes 48</span>
-          </div>
-        </div>
-
-        <div style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: "#111c1f", color: "#f5f2ea", display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", fontFamily: "sans-serif" }}>
-          <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: "1px solid rgba(245, 242, 234, 0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", flexShrink: 0 }}>
-            !
-          </div>
-          <div style={{ fontSize: "10px" }}>
-            <strong style={{ color: "#c4de4e", display: "block", marginBottom: "1px" }}>Prioriza tus metas financieras principales.</strong>
-            <span style={{ color: "#cbd5e1" }}>Es la base para una vida financiera sana y libre de deudas.</span>
-          </div>
-        </div>
-
-        <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "8px", color: "#475569", fontFamily: "sans-serif" }}>
-          <span><strong>METABOX</strong> — Tu futuro, en tus manos</span>
-          <span style={{ fontStyle: "italic", color: "#9e7d3b" }}>Pequeños pasos, grandes resultados</span>
-        </div>
-      </div>
-
-      <style jsx global>{`
-        @media print {
-          @page { size: A4 portrait; margin: 6mm; }
-          body * { visibility: hidden !important; }
-          .no-print, .no-print * { display: none !important; visibility: hidden !important; }
-          #metabox-report-content, #metabox-report-content * { 
-            visibility: visible !important; 
-            display: block !important; 
-          }
-          #metabox-report-content {
-            position: absolute !important; 
-            left: 0 !important; 
-            top: 0 !important; 
-            width: 100% !important; 
-            height: 100% !important; 
-            margin: 0 !important; 
-            padding: 12px !important; 
-            background-color: #ffffff !important; 
-            color: #111c1f !important; 
-            border: none !important; 
-            border-radius: 0 !important; 
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
-            box-shadow: none !important;
-            overflow: hidden !important;
-          }
-        }
-      `}</style>
-    </>
+    </div>
   );
-            }
-
+              }
 function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -273,7 +292,6 @@ function QuickSmartCapture({ onValueExtracted }) {
     setStatus("Analizando imagen en tu dispositivo...");
 
     const reader = new FileReader();
-    // 👇 BUG CORREGIDO AQUÍ: 'event' cambiado por 'readerEvent' 👇
     reader.onload = (readerEvent) => {
       const img = new Image();
       img.onload = () => {
@@ -412,4 +430,4 @@ export default function ToolClient({ slug }) {
       <ToolClientContent slug={slug} />
     </Suspense>
   );
-      }
+                     }
