@@ -74,76 +74,319 @@ class ToolErrorBoundary extends Component {
     );
   }
 }
-
 function PremiumExecutiveReportExporter({ toolName, summaryData, slug }) {
   const handlePrintPDF = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      alert("Por favor, permite las ventanas emergentes en tu navegador para poder descargar el PDF.");
+      alert("Por favor, permite las ventanas emergentes para descargar el PDF.");
       return;
     }
 
-    // Funciones auxiliares para leer datos de forma segura
-    const getNum = (keys) => {
-      for (const k of keys) { if (summaryData[k] !== undefined && summaryData[k] !== "") return parseFloat(String(summaryData[k]).replace(/[^0-9.-]+/g, "")) || 0; }
-      return 0;
+    const findParam = (possibleKeys) => {
+      const keys = Object.keys(summaryData || {});
+      for (const pk of possibleKeys) {
+        const foundKey = keys.find(k => k.toLowerCase() === pk.toLowerCase() || k.toLowerCase().includes(pk.toLowerCase()));
+        if (foundKey && summaryData[foundKey] !== undefined && summaryData[foundKey] !== "") {
+          return summaryData[foundKey];
+        }
+      }
+      return null;
     };
-    const getStr = (keys) => {
-      for (const k of keys) { if (summaryData[k] !== undefined && summaryData[k] !== "") return String(summaryData[k]); }
-      return "";
-    };
+
+    const getNum = (keys) => parseFloat(String(findParam(keys) || "0").replace(/[^0-9.-]+/g, "")) || 0;
+    const getStr = (keys) => findParam(keys) || "";
     const eur = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
 
-    // Motor de Análisis Personalizado
     let p1 = "";
     let p2 = "";
-    
+    let heroTitle = "Resultado de la Simulación";
+    let heroValue = "";
+
+    // 🧠 MOTOR DE ANÁLISIS DINÁMICO (22 HERRAMIENTAS)
     if (slug === "ahorro-concierto-viaje") {
-      const artist = getStr(["Artist", "artist", "Artista o grupo"]) || "tu artista";
-      const city = getStr(["City", "city", "Ciudad del concierto"]) || "tu ciudad";
-      const people = getNum(["People", "people", "Personas que van"]) || 1;
-      const ticketPrice = getNum(["Ticket Price", "ticketPrice", "Precio por entrada"]);
-      const transport = getNum(["Transport", "transport", "Viaje por persona (ida y vuelta)"]);
-      const hotel = getNum(["Hotel", "hotel", "Hotel por noche (habitación)"]);
-      const nights = getNum(["Nights", "nights", "Noches de alojamiento"]) || 2;
-      const extras = getNum(["Extras", "extras"]);
-      const months = getNum(["Months", "months", "Meses hasta el concierto"]) || 8;
-      const saved = getNum(["Saved", "saved", "Ya ahorrado para este plan"]);
+      const artist = getStr(["Artist", "Artista"]) || "tu artista";
+      const city = getStr(["City", "Ciudad"]) || "tu ciudad";
+      const people = getNum(["People", "Personas"]) || 1;
+      const months = getNum(["Months", "Meses"]) || 8;
+      const saved = getNum(["Saved", "Ahorrado"]);
+      const ticketPrice = getNum(["Ticket Price", "Precio entrada"]);
+      const transport = getNum(["Transport", "Viaje"]);
+      const hotel = getNum(["Hotel"]);
+      const nights = getNum(["Nights", "Noches"]) || 2;
+      const extras = getNum(["Extras"]);
       
       const rooms = Math.max(1, Math.ceil(people / 2));
       const total = (ticketPrice * people) + (transport * people) + (hotel * nights * rooms) + extras;
       const remaining = Math.max(total - saved, 0);
       const monthly = remaining === 0 ? 0 : Math.ceil(remaining / months);
 
-      p1 = `Tu plan para ver a ${artist} en ${city} tiene un coste total estimado de ${eur(total)}. Teniendo en cuenta que ya has ahorrado ${eur(saved)}, te faltan ${eur(remaining)} para cubrir todos los gastos (entradas, viaje, alojamiento y extras). Para llegar a tiempo sin agobios, necesitas apartar ${eur(monthly)} al mes durante los próximos ${months} meses.`;
-      
-      if (remaining === 0) {
-        p2 = "¡Excelente noticia! Ya tienes el presupuesto completo cubierto. Te recomendamos reservar los vuelos y el alojamiento cuanto antes para evitar subidas de precio de última hora, y guardar un pequeño margen extra (10-15%) para gastos imprevistos durante el evento, como comidas o merchandising.";
-      } else if (months <= 2) {
-        p2 = "El margen de tiempo es muy ajustado, lo que eleva considerablemente la cuota mensual. Si te resulta inviable, considera ajustar los extras o buscar un alojamiento más económico compartiendo más habitaciones. Planificar con más antelación siempre reduce el impacto financiero y te permite encontrar mejores ofertas.";
-      } else {
-        p2 = "Para asegurar el éxito de este plan, te recomendamos automatizar el ahorro mediante una transferencia programada a una cuenta separada el mismo día que cobras. Además, revisa tus gastos variables (como las salidas de fin de semana) para encontrar ese margen extra sin que suponga un gran sacrificio.";
-      }
+      heroTitle = "Ahorro Mensual Necesario";
+      heroValue = remaining === 0 ? "¡Cubierto!" : eur(monthly);
+      p1 = `Tu plan para ver a ${artist} en ${city} tiene un coste total estimado de ${eur(total)}. Ya has ahorrado ${eur(saved)}, por lo que te faltan ${eur(remaining)}. Para llegar a tiempo necesitas apartar ${heroValue} al mes durante ${months} meses.`;
+      p2 = remaining === 0 ? "¡Excelente! Ya tienes el presupuesto completo. Te recomendamos reservar los vuelos y el alojamiento cuanto antes y guardar un 10% extra para imprevistos." : "Automatiza el ahorro mediante una transferencia programada el mismo día que cobras y revisa tus gastos variables para encontrar ese margen extra.";
+
     } else if (slug === "interes-compuesto-aportaciones") {
-      const capital = getNum(["Capital inicial", "montoInicial"]);
-      const aportacion = getNum(["Aportación mensual", "aportacion"]);
-      const interes = getNum(["Interés anual estimado", "interes"]);
-      const anos = getNum(["Años", "anos"]);
-      
-      p1 = `Has simulado una inversión a ${anos} años con un capital inicial de ${eur(capital)} y aportaciones mensuales de ${eur(aportacion)}, asumiendo una rentabilidad anual del ${interes}%. Gracias al poder del interés compuesto, tu capital final se multiplicará de forma exponencial, demostrando que el tiempo en el mercado es tu mejor aliado.`;
-      p2 = "El factor más determinante en esta herramienta no es la cantidad inicial, sino la constancia de las aportaciones mensuales y el tiempo. Te recomendamos mantener la disciplina incluso en meses complicados y reinvertir los beneficios. Recuerda que rentabilidades pasadas no garantizan rentabilidades futuras.";
+      const initial = getNum(["Initial", "Capital inicial"]);
+      const monthly = getNum(["Monthly", "Aportación"]);
+      const rate = getNum(["Rate", "Interés"]);
+      const years = getNum(["Years", "Años"]);
+      const r = (rate / 100) / 12;
+      const n = years * 12;
+      let finalCapital = r > 0 ? initial * Math.pow(1 + r, n) + monthly * ((Math.pow(1 + r, n) - 1) / r) : initial + (monthly * n);
+      const totalAportado = initial + (monthly * n);
+
+      heroTitle = "Capital Final Estimado";
+      heroValue = eur(finalCapital);
+      p1 = `Has simulado una inversión a ${years} años con ${eur(initial)} iniciales y aportaciones de ${eur(monthly)}/mes al ${rate}% anual. Tu capital final será de ${heroValue}.`;
+      p2 = `De ese total, ${eur(totalAportado)} son tu dinero y ${eur(finalCapital - totalAportado)} son intereses generados. El factor más determinante es el tiempo y la constancia, no la cantidad inicial.`;
+
     } else if (slug === "fondo-de-emergencia") {
-      const gastos = getNum(["Gastos fijos mensuales", "gastos"]);
-      const meses = getNum(["Meses de cobertura", "meses"]);
-      const total = gastos * meses;
+      const expenses = getNum(["Simple Expenses", "Gastos"]);
+      const months = getNum(["Months Target", "Meses"]);
+      const current = getNum(["Current", "Ahorrado"]);
+      const goal = expenses * months;
+
+      heroTitle = "Fondo de Emergencia Ideal";
+      heroValue = eur(goal);
+      p1 = `Con gastos fijos de ${eur(expenses)}, tu fondo ideal es de ${heroValue} para cubrir ${months} meses. Tienes ${eur(current)} (${goal > 0 ? Math.round((current/goal)*100) : 0}% del objetivo).`;
+      p2 = "Mantén este dinero en un producto de alta liquidez y bajo riesgo (cuenta remunerada o fondo monetario). No lo inviertas en activos volátiles, ya que su función es protegerte, no rentabilizarse.";
+
+    } else if (slug === "simulador-amortizacion-hipoteca") {
+      const amount = getNum(["Loan Amount", "Capital"]);
+      const rate = getNum(["Interest Rate", "Interés"]);
+      const years = getNum(["Remaining Years", "Años"]);
+      const extra = getNum(["Extra Payment", "Pago"]);
+
+      heroTitle = "Capital Amortizado";
+      heroValue = eur(extra);
+      p1 = `Has analizado una hipoteca pendiente de ${eur(amount)} a ${years} años al ${rate}%. Con el pago extra de ${heroValue}, reducirás directamente los intereses totales que pagarás al banco.`;
+      p2 = "Amortizar capital en los primeros años de la hipoteca es muy eficiente, ya que es cuando se paga mayor proporción de intereses. Revisa siempre las comisiones de amortización parcial de tu banco.";
+
+    } else if (slug === "calculadora-objetivo-ahorro") {
+      const goal = getNum(["Goal", "Objetivo"]);
+      const current = getNum(["Current", "Ahorrado"]);
+      const monthly = getNum(["Monthly", "Aportación"]);
+      const remaining = Math.max(goal - current, 0);
+      const months = monthly > 0 ? Math.ceil(remaining / monthly) : 0;
+
+      heroTitle = "Tiempo para Lograrlo";
+      heroValue = months > 0 ? `${months} meses` : "¡Meta alcanzada!";
+      p1 = `Tu objetivo es de ${eur(goal)}. Tienes ${eur(current)}, faltan ${eur(remaining)}. Con ${eur(monthly)}/mes, alcanzarás tu meta en ${heroValue}.`;
+      p2 = "Si algún mes no puedes aportar la cantidad estipulada, intenta compensarlo al mes siguiente. La constancia es más importante que la velocidad.";
+
+    } else if (slug === "ahorro-para-un-viaje") {
+      const destination = getStr(["Destination", "Destino"]) || "tu destino";
+      const budget = getNum(["Budget", "Presupuesto"]);
+      const months = getNum(["Months", "Meses"]) || 1;
+      const monthly = budget / months;
+
+      heroTitle = "Ahorro Mensual para el Viaje";
+      heroValue = eur(monthly);
+      p1 = `Para tu viaje a ${destination} con un presupuesto de ${eur(budget)} en ${months} meses, necesitas ahorrar ${heroValue} al mes.`;
+      p2 = "Te recomendamos reservar los vuelos y el alojamiento con antelación para asegurar el precio. Lleva siempre un fondo extra para emergencias en el extranjero.";
+
+    } else if (slug === "calculadora-cuota-prestamo") {
+      const amount = getNum(["Amount", "Capital"]);
+      const rate = getNum(["Rate", "Interés"]);
+      const years = getNum(["Years", "Años"]);
       
-      p1 = `Con unos gastos fijos mensuales de ${eur(gastos)}, tu fondo de emergencia ideal asciende a ${eur(total)} para cubrir imprevistos durante ${meses} meses. Este colchón financiero es la base de cualquier estrategia de salud económica, ya que te protege de tener que endeudarte ante situaciones como pérdida de empleo o averías urgentes.`;
-      p2 = "Te sugerimos mantener este dinero en un producto de alta liquidez y bajo riesgo (como una cuenta remunerada o un fondo monetario) para que esté accesible en menos de 24 horas, pero que al mismo tiempo genere una pequeña rentabilidad para combatir la inflación. No inviertas este fondo en activos volátiles.";
+      const monthlyRate = (rate / 100) / 12;
+      const n = years * 12;
+      const cuota = monthlyRate > 0 ? (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n)) : amount / n;
+
+      heroTitle = "Cuota Mensual del Préstamo";
+      heroValue = eur(cuota);
+      p1 = `Para un préstamo de ${eur(amount)} a ${years} años con un interés del ${rate}%, tu cuota mensual será de ${heroValue}.`;
+      p2 = "Antes de firmar, asegúrate de que esta cuota no supere el 30-35% de tus ingresos netos mensuales. Revisa también las comisiones de apertura y cancelación anticipada.";
+
+    } else if (slug === "reto-de-ahorro-semanal") {
+      const weeks = getNum(["Weeks", "Semanas"]) || 52;
+      const initial = getNum(["Initial", "Base"]) || 1;
+      const total = (weeks * (weeks + 1) / 2) * initial;
+
+      heroTitle = "Total Ahorrado en el Reto";
+      heroValue = eur(total);
+      p1 = `Con un reto de ${weeks} semanas empezando con ${eur(initial)}, habrás ahorrado un total de ${heroValue}.`;
+      p2 = "Este método es ideal para crear el hábito. Si el reto se hace muy cuesta arriba al final, puedes invertir el orden (empezar por las semanas más caras y terminar con las más baratas).";
+
+    } else if (slug === "gasto-diario-a-mensual-anual") {
+      const daily = getNum(["Daily", "Diario"]);
+      const monthly = daily * 30;
+      const yearly = daily * 365;
+
+      heroTitle = "Gasto Anual Estimado";
+      heroValue = eur(yearly);
+      p1 = `Con un gasto diario de ${eur(daily)}, al mes estás gastando ${eur(monthly)} y al año ${heroValue}.`;
+      p2 = "Los pequeños gastos diarios son los que más impactan en el presupuesto anual. Intenta reducirlos un 20% y verás cómo tu capacidad de ahorro aumenta drásticamente.";
+
+    } else if (slug === "comparador-escenarios-ahorro") {
+      const a = getNum(["ScenarioA", "Escenario A"]);
+      const b = getNum(["ScenarioB", "Escenario B"]);
+      const diff = Math.abs(a - b);
+      const better = a > b ? "A" : "B";
+
+      heroTitle = "Diferencia entre Escenarios";
+      heroValue = eur(diff);
+      p1 = `Has comparado dos formas de ahorrar. El escenario ${better} es más favorable por una diferencia de ${heroValue} al final del periodo.`;
+      p2 = "Asegúrate de que en ambos escenarios estás teniendo en cuenta la inflación y la rentabilidad neta (después de impuestos y comisiones).";
+
+    } else if (slug === "regla-50-30-20-calculadora") {
+      const income = getNum(["Income", "Ingreso"]);
+      const needs = income * 0.5;
+      const wants = income * 0.3;
+      const savings = income * 0.2;
+
+      heroTitle = "Ahorro Sugerido (20%)";
+      heroValue = eur(savings);
+      p1 = `Con un ingreso de ${eur(income)}, la regla 50/30/20 sugiere destinar ${eur(needs)} a necesidades, ${eur(wants)} a deseos y ${heroValue} a ahorro/inversión.`;
+      p2 = "Si el 50% para necesidades se te queda corto (por ejemplo, por el alquiler), intenta recortar del 30% de deseos, pero nunca del 20% de ahorro.";
+
+    } else if (slug === "porcentaje-de-ahorro") {
+      const income = getNum(["Income", "Ingreso"]);
+      const savings = getNum(["Savings", "Ahorro"]);
+      const pct = income > 0 ? Math.round((savings / income) * 100) : 0;
+
+      heroTitle = "Tu Tasa de Ahorro";
+      heroValue = `${pct}%`;
+      p1 = `Ahorras ${eur(savings)} de un ingreso de ${eur(income)}, lo que representa un ${pct}% de tu sueldo.`;
+      p2 = "Los expertos recomiendan una tasa de ahorro mínima del 15-20%. Si estás por debajo, empieza por pequeñas metas del 5% e incrementa gradualmente.";
+
+    } else if (slug === "ahorro-compra-grande-coche-vivienda") {
+      const goal = getNum(["Goal", "Objetivo"]);
+      const current = getNum(["Current", "Ahorrado"]);
+      const monthly = getNum(["Monthly", "Aportación"]);
+      const remaining = Math.max(goal - current, 0);
+      const months = monthly > 0 ? Math.ceil(remaining / monthly) : 0;
+
+      heroTitle = "Tiempo para la Compra";
+      heroValue = months > 0 ? `${months} meses` : "¡Listo para comprar!";
+      p1 = `Para tu gran compra de ${eur(goal)}, tienes ${eur(current)} y te faltan ${eur(remaining)}. Ahorrando ${eur(monthly)}/mes, lo lograrás en ${heroValue}.`;
+      p2 = "Para compras grandes, considera si es mejor seguir ahorrando o si una financiación con un tipo de interés bajo te permitiría no esperar. Evalúa el coste total de la financiación.";
+
+    } else if (slug === "ahorro-por-redondeo") {
+      const monthly = getNum(["Monthly", "Mensual"]) || 50;
+      const yearly = monthly * 12;
+
+      heroTitle = "Ahorro Anual por Redondeo";
+      heroValue = eur(yearly);
+      p1 = `Ahorrando ${eur(monthly)} al mes mediante el redondeo de tus compras, al año acumularás ${heroValue}.`;
+      p2 = "El redondeo es un ahorro invisible. Lo mejor es mover ese dinero a una cuenta de ahorro o inversión a final de mes para que no se quede en la cuenta corriente y se gaste.";
+
+    } else if (slug === "planificador-ahorro-anual") {
+      const goal = getNum(["Goal", "Objetivo"]);
+      const saved = getNum(["Saved", "Ahorrado"]);
+      const remaining = Math.max(goal - saved, 0);
+
+      heroTitle = "Falta por Ahorrar";
+      heroValue = eur(remaining);
+      p1 = `Para tu objetivo anual de ${eur(goal)}, llevas ${eur(saved)} y te faltan ${heroValue}.`;
+      p2 = "Usa los meses flojos (como enero o septiembre) para ajustar el ahorro y aprovecha los meses con pagas extras para adelantar. El objetivo es que el plan sea flexible.";
+
+    } else if (slug === "reparto-gastos-en-grupo") {
+      const total = getNum(["Total", "Gasto total"]);
+      const people = getNum(["People", "Personas"]) || 1;
+      const split = total / people;
+
+      heroTitle = "Pago por Persona";
+      heroValue = eur(split);
+      p1 = `El gasto total es de ${eur(total)}. Dividido entre ${people} personas, cada uno debe pagar ${heroValue}.`;
+      p2 = "Para evitar conflictos, es recomendable usar aplicaciones de reparto de gastos (como Bizum o Splitwise) donde cada uno apunta lo que ha pagado y se calcula el balance exacto.";
+
+    } else if (slug === "presupuesto-diario-de-viaje") {
+      const total = getNum(["Total", "Presupuesto"]);
+      const days = getNum(["Days", "Días"]) || 1;
+      const daily = total / days;
+
+      heroTitle = "Presupuesto Diario de Viaje";
+      heroValue = eur(daily);
+      p1 = `Con un presupuesto de ${eur(total)} para ${days} días, puedes gastar ${heroValue} al día.`;
+      p2 = "Intenta gastar menos de la mitad del presupuesto diario en los primeros días. Así te aseguras tener fondos para imprevistos o para darte un capricho el último día.";
+
+    } else if (slug === "ahorro-para-navidad") {
+      const budget = getNum(["Budget", "Presupuesto"]);
+      const months = getNum(["Months", "Meses"]) || 1;
+      const monthly = budget / months;
+
+      heroTitle = "Ahorro Mensual para Navidad";
+      heroValue = eur(monthly);
+      p1 = `Para un presupuesto de Navidad de ${eur(budget)}, necesitas ahorrar ${heroValue} al mes durante los próximos ${months} meses.`;
+      p2 = "Las Navidades suelen traer gastos imprevistos (regalos, cenas, viajes). Empieza a ahorrar en verano o en septiembre para no depender de la paga extra.";
+
+    } else if (slug === "conversor-de-moneda-viajes") {
+      const amount = getNum(["Amount", "Monto"]);
+      const rate = getNum(["Rate", "Cambio"]);
+      const result = amount * rate;
+
+      heroTitle = "Resultado de la Conversión";
+      heroValue = eur(result);
+      p1 = `Has convertido ${eur(amount)} al tipo de cambio de ${rate}. El resultado es ${heroValue}.`;
+      p2 = "Al viajar al extranjero, compara siempre el tipo de cambio de tu banco con el de las casas de cambio o las tarjetas sin comisiones (como Revolut o Wise) para no perder dinero.";
+
+    } else if (slug === "calculadora-de-propina") {
+      const total = getNum(["Total", "Cuenta"]);
+      const tip = getNum(["Tip", "Propina"]) || 10;
+      const people = getNum(["People", "Personas"]) || 1;
+      const tipAmount = (total * tip) / 100;
+      const finalTotal = total + tipAmount;
+      const perPerson = finalTotal / people;
+
+      heroTitle = "Total con Propina";
+      heroValue = eur(finalTotal);
+      p1 = `Cuenta de ${eur(total)} con un ${tip}% de propina (${eur(tipAmount)}). Total a pagar: ${heroValue}, que son ${eur(perPerson)} por persona.`;
+      p2 = "En España, la propina es voluntaria y culturalmente suele ser del 5-10% en restaurantes. En otros países (como EE.UU.) es obligatoria y puede ser del 15-20%.";
+
+    } else if (slug === "cuanto-necesito-ganar-ingreso-minimo") {
+      const expenses = getNum(["Expenses", "Gastos"]);
+      const savings = getNum(["Savings", "Ahorro"]);
+      const total = expenses + savings;
+
+      heroTitle = "Ingreso Neto Mínimo";
+      heroValue = eur(total);
+      p1 = `Para cubrir gastos de ${eur(expenses)} y ahorrar ${eur(savings)}, necesitas un ingreso neto mínimo de ${heroValue}.`;
+      p2 = "Ten en cuenta que este cálculo es sobre el salario neto (después de impuestos). Para saber el bruto, divide el neto entre 0,80 (aproximadamente) si estás en España.";
+
     } else {
-      // Fallback genérico inteligente para el resto de herramientas
-      p1 = `Este informe ejecutivo detalla los resultados de tu simulación en la herramienta "${toolName}". Los parámetros que has configurado reflejan un escenario financiero personalizado, permitiéndote visualizar de forma clara el impacto de tus decisiones actuales a medio y largo plazo.`;
-      p2 = "La planificación financiera no es un evento estático, sino un proceso dinámico. Te recomendamos revisar estas cifras periódicamente, actualizarlas según cómo evolucione tu situación personal o laboral, y ajustar tus metas para mantener siempre el control de tus finanzas.";
-    }
+      heroTitle = "Simulación Financiera";
+      heroValue = toolName;
+      p1 = `Este informe ejecutivo detalla los resultados de tu simulación en la herramienta "${toolName}". Los parámetros configurados reflejan un escenario financiero personalizado, permitiéndote visualizar de forma clara el impacto de tus decisiones actuales a medio y largo plazo.`;
+      p2 = "La planificación financiera no es un evento estático, sino un proceso dinámico. Te recomendamos revisar estas cifras periódicamente, actualizarlas según cómo evolucione tu situación personal o laboral, y ajustar tus metas.";
+                                   }
+    
+    const DICT = {
+      initial: "Capital Inicial", monthly: "Aportación Mensual", rate: "Interés Anual (%)", years: "Años",
+      "simple expenses": "Gastos Fijos Mensuales", "months target": "Meses de Cobertura", current: "Ahorrado Actualmente",
+      "loan amount": "Capital Pendiente", "interest rate": "Tipo de Interés (%)", "remaining years": "Años Restantes",
+      "extra payment": "Pago Extra", "amortization type": "Tipo de Amortización", "commission rate": "Comisión (%)",
+      income: "Ingreso Mensual", selected: "Categorías", goal: "Objetivo", extra: "Ahorro Extra",
+      artist: "Artista", city: "Ciudad", people: "Personas", "ticket price": "Precio Entrada", transport: "Viaje",
+      hotel: "Hotel/Noche", nights: "Noches", extras: "Extras", months: "Meses", saved: "Ahorrado",
+      gastos: "Gastos Mensuales", meses: "Meses de Cobertura", "capital inicial": "Capital Inicial",
+      "aportación mensual": "Aportación Mensual", "interés anual": "Interés Anual", años: "Años",
+      montoinicial: "Capital Inicial", monto: "Monto", ingreso: "Ingreso", destination: "Destino", budget: "Presupuesto",
+      weeks: "Semanas", daily: "Gasto Diario", scenarioa: "Escenario A", scenariob: "Escenario B", savings: "Ahorro",
+      amount: "Cantidad", total: "Total", days: "Días", tip: "Propina (%)", expenses: "Gastos"
+    };
+
+    const isMoneyKey = (key) => {
+      const k = key.toLowerCase();
+      return k.includes("initial") || k.includes("monthly") || k.includes("expenses") || k.includes("current") || 
+             k.includes("amount") || k.includes("payment") || k.includes("income") || k.includes("goal") || 
+             k.includes("extra") || k.includes("saved") || k.includes("gastos") || k.includes("capital") || 
+             k.includes("aportación") || k.includes("monto") || k.includes("precio") || k.includes("viaje") || 
+             k.includes("hotel") || k.includes("extras") || k.includes("budget") || k.includes("total") || 
+             k.includes("presupuesto") || k.includes("savings") || k.includes("ahorro");
+    };
+
+    const formatValue = (key, val) => {
+      const num = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
+      if (!isNaN(num) && isMoneyKey(key)) return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(num);
+      if (key.toLowerCase().includes("rate") || key.toLowerCase().includes("interés")) return `${val}%`;
+      if (key.toLowerCase().includes("years") || key.toLowerCase().includes("años")) return `${val} años`;
+      if (key.toLowerCase().includes("months") || key.toLowerCase().includes("meses")) return `${val} meses`;
+      if (key.toLowerCase().includes("weeks") || key.toLowerCase().includes("semanas")) return `${val} sem.`;
+      if (key.toLowerCase().includes("people")) return `${val} pers.`;
+      return val;
+    };
 
     const cleanEntries = Object.entries(summaryData || {}).filter(([key, val]) => {
       const valStr = String(val);
@@ -151,8 +394,9 @@ function PremiumExecutiveReportExporter({ toolName, summaryData, slug }) {
     });
 
     const formattedData = cleanEntries.map(([key, value]) => {
-      const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()).replace(/_/g, ' ');
-      return { label: formattedKey, value: String(value) };
+      const lowerKey = key.toLowerCase();
+      const label = DICT[lowerKey] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+      return { label, value: formatValue(key, value) };
     });
 
     const dateStr = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
@@ -166,38 +410,52 @@ function PremiumExecutiveReportExporter({ toolName, summaryData, slug }) {
         <title>Informe MetaBox - ${toolName}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
-          body { font-family: 'Inter', sans-serif; color: #1e293b; margin: 0; padding: 40px; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #c4de4e; padding-bottom: 20px; margin-bottom: 40px; }
+          
+          @page { margin: 20mm; }
+          body { font-family: 'Inter', sans-serif; color: #1e293b; margin: 0; padding: 0; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #c4de4e; padding-bottom: 15px; margin-bottom: 30px; }
           .logo { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: #0f172a; letter-spacing: 1px; text-transform: uppercase; }
-          .header-info { text-align: right; font-size: 12px; color: #64748b; }
-          .title-section { margin-bottom: 30px; }
-          .title-section h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; margin: 0; color: #0f172a; line-height: 1.2; }
-          .title-section p { font-size: 14px; color: #64748b; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-          .analysis-section { margin-bottom: 40px; background: #f8fafc; padding: 30px; border-radius: 12px; border-left: 4px solid #c4de4e; }
-          .analysis-section h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: #0f172a; margin-top: 0; margin-bottom: 15px; }
-          .analysis-section p { font-size: 15px; line-height: 1.7; color: #334155; margin-bottom: 15px; text-align: justify; }
+          .header-info { text-align: right; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+          
+          .title-section { margin-bottom: 25px; }
+          .title-section h1 { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 700; margin: 0; color: #0f172a; line-height: 1.1; }
+          .title-section p { font-size: 13px; color: #64748b; margin: 5px 0 0 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+          .hero { background: #0f172a; color: #ffffff; padding: 30px; border-radius: 12px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+          .hero-label { font-size: 13px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 5px; }
+          .hero-value { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #c4de4e; margin: 0; line-height: 1; }
+          
+          .analysis-section { margin-bottom: 30px; }
+          .analysis-section h2 { font-family: 'Playfair Display', serif; font-size: 20px; color: #0f172a; margin-top: 0; margin-bottom: 12px; }
+          .analysis-section p { font-size: 14px; line-height: 1.6; color: #334155; margin-bottom: 12px; text-align: justify; }
           .analysis-section p:last-child { margin-bottom: 0; }
-          .table-container { margin-bottom: 40px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+
+          .table-container { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; page-break-inside: avoid; }
           .table { width: 100%; border-collapse: collapse; }
-          .table th, .table td { padding: 14px 24px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-          .table th { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 800; background: #f8fafc; }
-          .table td { font-size: 15px; color: #1e293b; }
+          .table th, .table td { padding: 12px 20px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+          .table th { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 800; background: #f8fafc; letter-spacing: 0.5px; }
+          .table td { font-size: 14px; color: #1e293b; font-weight: 500; }
           .table tr:last-child td { border-bottom: none; }
-          .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; line-height: 1.6; }
+          
+          .footer { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; line-height: 1.6; page-break-inside: avoid; }
         </style>
       </head>
       <body>
         <div class="header">
           <div class="logo">MetaBox</div>
-          <div class="header-info">
-            <strong>Informe Financiero Ejecutivo</strong><br>
-            Generado el ${dateStr}
-          </div>
+          <div class="header-info"><strong>Informe Financiero Ejecutivo</strong><br>Generado el ${dateStr}</div>
         </div>
 
         <div class="title-section">
           <h1>${toolName}</h1>
           <p>Análisis de simulación y proyección</p>
+        </div>
+
+        <div class="hero">
+          <div>
+            <div class="hero-label">${heroTitle}</div>
+            <h2 class="hero-value">${heroValue}</h2>
+          </div>
         </div>
 
         <div class="analysis-section">
@@ -211,14 +469,14 @@ function PremiumExecutiveReportExporter({ toolName, summaryData, slug }) {
             <thead>
               <tr>
                 <th>Parámetro Introducido</th>
-                <th>Valor</th>
+                <th style="text-align: right;">Valor</th>
               </tr>
             </thead>
             <tbody>
               ${formattedData.map(item => `
                 <tr>
-                  <td style="font-weight: 600; color: #475569;">${item.label}</td>
-                  <td>${item.value}</td>
+                  <td style="color: #475569;">${item.label}</td>
+                  <td style="text-align: right; font-weight: 600;">${item.value}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -255,7 +513,7 @@ function PremiumExecutiveReportExporter({ toolName, summaryData, slug }) {
       </div>
     </div>
   );
-      }
+  }
 function QuickSmartCapture({ onValueExtracted }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
