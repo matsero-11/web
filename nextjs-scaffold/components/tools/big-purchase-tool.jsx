@@ -130,7 +130,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1000;
   });
 
-  // SLIDER DE MESES AUMENTADO A 120 (10 AÑOS)
   const [monthsLeft, setMonthsLeft] = useState(() => {
     const p = initialParams?.monthsLeft;
     return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 18;
@@ -204,13 +203,13 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
 
-  // DATOS PARA EL GRÁFICO CIRCULAR
+  // DATOS PARA EL GRÁFICO CIRCULAR (Arreglado para que no falle si hay valores a 0)
   const pieData = safeBudget <= 0 
     ? [{ name: "Empty", value: 1 }] 
     : [
-        { name: "Ahorrado", value: Math.min(current, safeBudget) },
+        { name: "Ahorrado", value: Math.max(current, 0) },
         { name: "Restante", value: Math.max(remaining, 0) }
-      ].filter(d => d.value > 0);
+      ];
 
   // DATOS PARA LA NUEVA GRÁFICA DE PROYECCIÓN MENSUAL
   const projectionData = useMemo(() => {
@@ -300,14 +299,17 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
                   animationDuration={500}
                   cornerRadius={6}
                 >
-                  {safeBudget > 0 ? (
-                    <>
-                      <Cell fill="url(#gradientLime)" />
-                      {remaining > 0 && <Cell fill="url(#gradientRing)" />}
-                    </>
-                  ) : (
-                    <Cell fill={T.surfaceAlt} />
-                  )}
+                  {/* Renderizado seguro de celdas para no romper Recharts */}
+                  {pieData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={
+                        entry.name === "Empty" ? T.surfaceAlt :
+                        entry.name === "Ahorrado" ? "url(#gradientLime)" : 
+                        "url(#gradientRing)"
+                      } 
+                    />
+                  ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
@@ -390,7 +392,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         <div className="flex flex-col gap-6">
           <DecimalSliderRow label="Presupuesto" value={budget} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={500} unit="€" accent="lime" setValue={setBudget} />
           <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={100} unit="€" accent="lavender" setValue={setCurrent} />
-          {/* Slider de meses ampliado a 120 */}
           <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={120} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
