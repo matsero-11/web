@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { Helmet } from "react-helmet-async";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR, useAnimatedNumber } from "@/lib/hooks";
@@ -11,12 +10,8 @@ import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
-const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
-const BarChart = dynamic(() => import("recharts").then((mod) => mod.BarChart), { ssr: false });
-const Bar = dynamic(() => import("recharts").then((mod) => mod.Bar), { ssr: false });
-const Cell = dynamic(() => import("recharts").then((mod) => mod.Cell), { ssr: false });
-const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), { ssr: false });
-const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
+// IMPORTACIÓN CORRECTA (Sin dynamic para que Recharts funcione)
+import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip } from "recharts";
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -54,7 +49,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   const handleBlur = () => {
     const parsed = parseFloat(textVal.replace(",", "."));
     if (isNaN(parsed)) {
-      setValue(min); // Si borra todo, vuelve al mínimo
+      setValue(min);
       setTextVal(String(min));
     } else {
       setValue(parsed);
@@ -148,7 +143,7 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
   const toggleMonth = (i) => {
     const next = new Set(lowMonths);
     if (next.has(i)) next.delete(i);
-    else if (next.size < 11) next.add(i); // Evitamos que los 12 meses sean flojos
+    else if (next.size < 11) next.add(i);
     setLowMonthsArray([...next]);
   };
 
@@ -177,8 +172,6 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
   const pageTitle = "Planificador de ahorro anual: reparte tu meta entre los 12 meses | MetaBox";
   const pageDescription = "Organiza tu objetivo de ahorro anual marcando meses flojos. El planificador recalcula el resto de meses automáticamente con soporte de decimales.";
-  
-  // CORRECCIÓN DE SEO CRÍTICA: La URL debe coincidir con el slug del registro
   const pageUrl = "https://metabox-web.vercel.app/herramientas/planificador-ahorro-anual";
 
   return (
@@ -244,6 +237,8 @@ function AnnualPlannerTool({ onBack, onNavigate, initialParams = {}, onStateChan
                 </linearGradient>
               </defs>
               <XAxis dataKey="mes" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} />
+              {/* AÑADIDO EL YAXIS OCULTO PARA QUE EL GRÁFICO CALCULE LA ALTURA */}
+              <YAxis hide />
               <Tooltip
                 formatter={(value) => [`${value} €`, "Ahorro"]}
                 contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "12px", fontSize: "12px", color: T.text, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
