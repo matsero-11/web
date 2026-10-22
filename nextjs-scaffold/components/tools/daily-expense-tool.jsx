@@ -12,7 +12,6 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -31,10 +30,10 @@ const FAQS = [
 
 const DEFAULT_ITEMS = [{ id: "1", name: "Café", amount: 1.5 }];
 
-// SLIDER HÍBRIDO BLINDADO
+// SLIDER BLINDADO CON MÁXIMO ESTÁTICO DE 1000€
 function DailySlider({ label, value, onChange }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-  const ABSOLUTE_MAX = MAX_FINANCIAL_LIMIT || 10000000;
+  const MAX_DAILY_SLIDER = 1000;
 
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
@@ -55,9 +54,8 @@ function DailySlider({ label, value, onChange }) {
       onChange(0);
       setTextVal("0");
     } else {
-      const clamped = Math.min(Math.max(parsed, 0), ABSOLUTE_MAX);
-      onChange(clamped);
-      setTextVal(String(clamped));
+      onChange(parsed);
+      setTextVal(String(parsed));
     }
   };
 
@@ -67,10 +65,8 @@ function DailySlider({ label, value, onChange }) {
     setTextVal(String(val));
   };
 
-  const safeValue = isNaN(value) ? 0 : Math.max(0, Math.min(value, ABSOLUTE_MAX));
-  // El máximo del slider se adapta al valor para que no se atasque en 0
-  const dynamicMax = Math.max(safeValue * 2, 50); 
-  const sliderPos = Math.min(safeValue, dynamicMax);
+  const safeValue = isNaN(value) ? 0 : value;
+  const sliderPos = Math.min(safeValue, MAX_DAILY_SLIDER);
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -92,7 +88,7 @@ function DailySlider({ label, value, onChange }) {
       <input
         type="range"
         min={0}
-        max={dynamicMax}
+        max={MAX_DAILY_SLIDER}
         step={0.1}
         value={sliderPos}
         onChange={handleSliderChange}
@@ -102,6 +98,7 @@ function DailySlider({ label, value, onChange }) {
     </div>
   );
 }
+
 function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [items, setItems] = useState(() => {
     const p = initialParams?.items;
@@ -155,8 +152,6 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
 
   const pageTitle = "De gasto diario a gasto anual: calculadora de pequeños gastos | MetaBox";
   const pageDescription = "Desglosa tus gastos diarios pequeños (café, transporte, tabaco...) y descubre cuánto suman realmente al mes y al año. Gratis y sin registro.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO
   const pageUrl = "https://metabox-web.vercel.app/herramientas/gasto-diario-a-mensual-anual";
 
   return (
@@ -164,14 +159,7 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content="cuánto gasto al día, calculadora gasto diario a anual, cuánto gasto en café al año, pequeños gastos que suman" />
         <link rel="canonical" href={pageUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -262,7 +250,7 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={barData} layout="vertical" margin={{ top: 10, right: 16, left: 8, bottom: 10 }}>
               <XAxis type="number" hide domain={[0, "auto"]} />
-              <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
+              <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} width={60} />
               <Tooltip
                 contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
                 formatter={(v) => [fmtEUR(v), "Total"]}
