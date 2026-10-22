@@ -1,9 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Shuffle,
-} from "lucide-react";
+import { Shuffle } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -34,7 +32,6 @@ function shuffleWithSeed(array, seed) {
   return arr;
 }
 
-// SLIDER FLUIDO Y SIN ATASCOS
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.5, unit = "€", accent = "lavender", subtitle, useDynamicMax = true }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
@@ -107,7 +104,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.5, unit =
       />
     </div>
   );
-    }
+}
 function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [weeks, setWeeks] = useState(() => {
     const p = initialParams?.weeks;
@@ -131,7 +128,8 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
     return initialParams?.shuffleMode === "true";
   });
 
-  const [shuffleSeed] = useState(() => {
+  // LA SEMILLA AHORA ES UN ESTADO PARA PODER CAMBIARLA AL PULSAR EL BOTÓN
+  const [shuffleSeed, setShuffleSeed] = useState(() => {
     const p = initialParams?.shuffleSeed;
     return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : Math.floor(Math.random() * 100000);
   });
@@ -203,13 +201,15 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
   const onTrack = done.size >= weeksElapsed;
 
   const toggleShuffle = () => {
+    if (!shuffleMode) {
+      // Si vamos a activar el modo aleatorio, generamos una nueva semilla para que sea verdaderamente aleatorio
+      setShuffleSeed(Math.floor(Math.random() * 100000));
+    }
     setShuffleMode((s) => !s);
   };
 
   const pageTitle = "Reto de ahorro de 26 o 52 semanas gratis | MetaBox";
   const pageDescription = "Sigue un reto de ahorro progresivo semana a semana, con modo aleatorio opcional, seguimiento real por fecha y 26 o 52 semanas a elegir. Gratis y sin registro.";
-  
-  // CORRECCIÓN DE SEO: URL exacta al slug del registro
   const pageUrl = "https://metabox-web.vercel.app/herramientas/reto-de-ahorro-semanal";
 
   return (
@@ -309,14 +309,16 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
         </div>
         <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorImporte" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
                   <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} interval={weeks > 26 ? 6 : 3} />
+              <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} minTickGap={15} />
+              {/* Añadido un margen superior al YAxis y domain para que la curva no se pegue arriba */}
+              <YAxis hide domain={[0, totalGoal > 0 ? totalGoal * 1.1 : 100]} />
               <Tooltip formatter={(value) => [`${value} €`, "Ahorro semanal"]} contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
               <Area type="monotone" dataKey="importe" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
             </AreaChart>
