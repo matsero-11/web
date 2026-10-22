@@ -3,17 +3,11 @@ import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Plus, X } from "lucide-react";
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, AdviceBlock } from "@/components/ui";
+import { Card, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -37,6 +31,77 @@ const FAQS = [
 
 const DEFAULT_ITEMS = [{ id: "1", name: "Café", amount: 1.5 }];
 
+// SLIDER HÍBRIDO BLINDADO
+function DailySlider({ label, value, onChange }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const ABSOLUTE_MAX = MAX_FINANCIAL_LIMIT || 10000000;
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) onChange(parsed);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      onChange(0);
+      setTextVal("0");
+    } else {
+      const clamped = Math.min(Math.max(parsed, 0), ABSOLUTE_MAX);
+      onChange(clamped);
+      setTextVal(String(clamped));
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    onChange(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? 0 : Math.max(0, Math.min(value, ABSOLUTE_MAX));
+  // El máximo del slider se adapta al valor para que no se atasque en 0
+  const dynamicMax = Math.max(safeValue * 2, 50); 
+  const sliderPos = Math.min(safeValue, dynamicMax);
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: T.lime, fontSize: "0.95rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={dynamicMax}
+        step={0.1}
+        value={sliderPos}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor: T.lime }}
+      />
+    </div>
+  );
+}
 function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [items, setItems] = useState(() => {
     const p = initialParams?.items;
@@ -89,34 +154,24 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
   const biggestItem = [...items].sort((a, b) => b.amount - a.amount)[0];
 
   const pageTitle = "De gasto diario a gasto anual: calculadora de pequeños gastos | MetaBox";
-  const pageDescription =
-    "Desglosa tus gastos diarios pequeños (café, transporte, tabaco...) y descubre cuánto suman realmente al mes y al año. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/daily";
+  const pageDescription = "Desglosa tus gastos diarios pequeños (café, transporte, tabaco...) y descubre cuánto suman realmente al mes y al año. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/gasto-diario-a-mensual-anual";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="cuánto gasto al día, calculadora gasto diario a anual, cuánto gasto en café al año, pequeños gastos que suman"
-        />
+        <meta name="keywords" content="cuánto gasto al día, calculadora gasto diario a anual, cuánto gasto en café al año, pequeños gastos que suman" />
         <link rel="canonical" href={pageUrl} />
-
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/daily.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/daily.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -164,13 +219,9 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
         <div className="flex flex-col gap-6">
           {items.map((it) => (
             <div key={it.id} style={{ position: "relative" }}>
-              <SliderControl
+              <DailySlider
                 label={it.name}
                 value={it.amount}
-                min={0}
-                max={MAX_FINANCIAL_LIMIT}
-                step={0.5}
-                unit="€"
                 onChange={(v) => updateAmount(it.id, v)}
               />
               {items.length > 1 && (
@@ -209,7 +260,7 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+            <BarChart data={barData} layout="vertical" margin={{ top: 10, right: 16, left: 8, bottom: 10 }}>
               <XAxis type="number" hide domain={[0, "auto"]} />
               <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
               <Tooltip
@@ -237,7 +288,6 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
       />
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["roundup", "budget"]} onNavigate={onNavigate} primaryId="roundup" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -257,4 +307,3 @@ function DailyExpenseTool({ onBack, onNavigate, initialParams = {}, onStateChang
 }
 
 export default DailyExpenseTool;
-                
