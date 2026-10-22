@@ -2,18 +2,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
+  Car, Home as HomeIcon, ShoppingBag,
 } from "lucide-react";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, SliderControl, Chip, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -29,21 +25,24 @@ const PURCHASE_TYPES = [
 const FAQS = [
   {
     q: "¿Cuánto necesito ahorrar de entrada para un coche o una vivienda?",
-    a: "Para un coche depende del modelo y si lo financias; para una vivienda, lo habitual es que los bancos exijan al menos un 20% de entrada más gastos de compraventa. Ajusta el presupuesto en la herramienta según tu caso concreto.",
+    a: "Para un coche depende del modelo y si lo financias; para una vivienda, lo habitual es que los bancos exijan al menos un 20% de entrada más gastos de compraventa.",
   },
   {
     q: "¿Es mejor ahorrar más al mes o alargar el plazo?",
-    a: "Alargar el plazo reduce el esfuerzo mensual pero retrasa la compra; ahorrar más al mes acelera la fecha pero exige más disciplina. Prueba distintos plazos en el slider para ver qué cuota mensual te resulta cómoda.",
+    a: "Alargar el plazo reduce el esfuerzo mensual pero retrasa la compra; ahorrar más al mes acelera la fecha pero exige más disciplina.",
   },
   {
     q: "¿Me conviene ahorrar todo o financiar una parte?",
-    a: "Depende de tu situación: financiar reduce el esfuerzo de ahorro inicial pero añade intereses al coste total. Usa el comparador de esta herramienta para ver la diferencia exacta en euros entre ambas opciones.",
+    a: "Financiar reduce el esfuerzo de ahorro inicial pero añade intereses al coste total. Usa el comparador para ver la diferencia exacta.",
   },
 ];
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+// COMPONENTE DE SLIDER CON ESCALA CÚBICA (A PRUEBA DE BOMBAS)
+function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-  const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT);
+  
+  // Forzamos el límite a 10 millones
+  const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
 
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
@@ -55,9 +54,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) {
-      setValue(parsed);
-    }
+    if (!isNaN(parsed)) setValue(parsed);
   };
 
   const handleBlur = () => {
@@ -73,18 +70,22 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   };
 
   const handleSliderChange = (e) => {
-    const p = parseFloat(e.target.value);
-    const expMax = Math.log(MAX_LIMIT + 1);
-    const val = Math.exp((p / 1000) * expMax) - 1;
+    const pos = parseFloat(e.target.value); // Posición de 0 a 1000
+    // Fórmula cúbica: hace que el slider sea preciso al principio y rápido al final
+    const ratio = pos / 1000;
+    const val = min + (MAX_LIMIT - min) * Math.pow(ratio, 3);
+    
+    // Redondeo al step más cercano
     const steppedVal = Math.round(val / step) * step;
     
     setValue(steppedVal);
     setTextVal(String(steppedVal));
   };
 
-  const currentVal = isNaN(value) ? 0 : Math.max(min, Math.min(value, MAX_LIMIT));
-  const expMax = Math.log(MAX_LIMIT + 1);
-  const sliderPosition = currentVal > 0 ? (Math.log(currentVal + 1) / expMax) * 1000 : 0;
+  // Calculamos la posición del slider (0 a 1000)
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, MAX_LIMIT));
+  const ratio = Math.pow((safeValue - min) / (MAX_LIMIT - min), 1/3);
+  const sliderPos = ratio * 1000;
 
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
@@ -100,7 +101,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             onChange={handleInputChange}
             onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "100px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
@@ -111,7 +112,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
         min={0}
         max={1000}
         step={1}
-        value={sliderPosition}
+        value={sliderPos}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
@@ -165,10 +166,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   useEffect(() => {
     if (typeof onStateChange === "function") {
       onStateChange({
-        type,
-        budget,
-        current,
-        monthsLeft,
+        type, budget, current, monthsLeft,
         showFinancing: showFinancing ? "true" : null,
         financePct: showFinancing ? financePct : null,
         financeRate: showFinancing ? financeRate : null,
@@ -183,10 +181,9 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     if (info) setBudget(info.defaultBudget);
   };
 
-  // CONTROL DE ERRORES MATEMÁTICOS
   const safeBudget = Math.max(budget, 0);
   const remaining = Math.max(safeBudget - current, 0);
-  const safeMonths = Math.max(monthsLeft, 1); // Evitamos división por cero o negativa
+  const safeMonths = Math.max(monthsLeft, 1);
   
   const requiredMonthly = remaining / safeMonths;
   const animatedRequired = useAnimatedNumber(requiredMonthly);
@@ -211,8 +208,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const combinedMonthly = cashMonthly + loanPayment;
 
   const pageTitle = "Cuánto ahorrar al mes para un coche, vivienda o compra grande | MetaBox";
-  const pageDescription =
-    "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
+  const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
 
   return (
@@ -262,7 +258,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
               <Pie
                 data={[
                   { name: "Ahorrado", value: Math.min(current, safeBudget) },
-                  { name: "Restante", value: Math.max(remaining, 0.01) }, // Evita que el gráfico se rompa si el restante es 0
+                  { name: "Restante", value: Math.max(remaining, 0.01) },
                 ]}
                 dataKey="value"
                 innerRadius="70%"
@@ -278,6 +274,10 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
                 <Cell fill={T.lime} />
                 <Cell fill={T.border} />
               </Pie>
+              <Tooltip
+                contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
+                formatter={(v, name) => [fmtEUR(v), name === "Restante" ? "Restante" : "Ahorrado"]}
+              />
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
@@ -314,8 +314,29 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Presupuesto" value={budget} min={200} max={MAX_FINANCIAL_LIMIT} step={500} unit="€" accent="lime" setValue={setBudget} />
-          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lavender" setValue={setCurrent} />
+          {/* Slider con mínimo ajustado a 0 para que se pueda poner al principio */}
+          <DecimalSliderRow 
+            label="Presupuesto" 
+            value={budget} 
+            min={0} 
+            max={MAX_FINANCIAL_LIMIT || 10000000} 
+            step={500} 
+            unit="€" 
+            accent="lime" 
+            setValue={setBudget} 
+          />
+          
+          <DecimalSliderRow 
+            label="Ya ahorrado" 
+            value={current} 
+            min={0} 
+            max={MAX_FINANCIAL_LIMIT || 10000000} 
+            step={100} 
+            unit="€" 
+            accent="lavender" 
+            setValue={setCurrent} 
+          />
+          
           <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
