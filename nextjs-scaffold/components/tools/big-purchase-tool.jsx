@@ -1,11 +1,10 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
+import { Car, Home as HomeIcon, ShoppingBag } from "lucide-react";
 import {
-  Car, Home as HomeIcon, ShoppingBag,
-} from "lucide-react";
-import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -70,7 +69,6 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
   const handleSliderChange = (e) => {
     const pos = parseFloat(e.target.value);
     const ratio = pos / 1000;
-    // Fórmula Cúbica: Precisión al principio, velocidad al final
     const val = min + (MAX_LIMIT - min) * Math.pow(ratio, 3);
     const steppedVal = Math.round(val / step) * step;
     
@@ -114,7 +112,6 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
     </div>
   );
 }
-
 function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [type, setType] = useState(() => {
     const p = initialParams?.type;
@@ -133,6 +130,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1000;
   });
 
+  // SLIDER DE MESES AUMENTADO A 120 (10 AÑOS)
   const [monthsLeft, setMonthsLeft] = useState(() => {
     const p = initialParams?.monthsLeft;
     return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 18;
@@ -206,13 +204,32 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
 
-  // Lógica del gráfico (Evita el trocito verde al 0%)
+  // DATOS PARA EL GRÁFICO CIRCULAR
   const pieData = safeBudget <= 0 
     ? [{ name: "Empty", value: 1 }] 
     : [
         { name: "Ahorrado", value: Math.min(current, safeBudget) },
         { name: "Restante", value: Math.max(remaining, 0) }
-      ].filter(d => d.value > 0); // Filtramos valores a 0 para que no se dibujen
+      ].filter(d => d.value > 0);
+
+  // DATOS PARA LA NUEVA GRÁFICA DE PROYECCIÓN MENSUAL
+  const projectionData = useMemo(() => {
+    if (safeBudget === 0) return [];
+    const data = [];
+    let accumulated = Math.min(current, safeBudget);
+    
+    data.push({ mes: 0, ahorrado: accumulated, meta: safeBudget });
+    
+    for (let i = 1; i <= monthsLeft; i++) {
+      if (accumulated >= safeBudget) {
+        data.push({ mes: i, ahorrado: safeBudget, meta: safeBudget });
+      } else {
+        accumulated += requiredMonthly;
+        data.push({ mes: i, ahorrado: Math.min(accumulated, safeBudget), meta: safeBudget });
+      }
+    }
+    return data;
+  }, [safeBudget, current, monthsLeft, requiredMonthly]);
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -254,57 +271,104 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         ))}
       </div>
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ height: "180px", position: "relative" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                innerRadius="70%"
-                outerRadius="95%"
-                startAngle={90}
-                endAngle={-270}
-                paddingAngle={pieData.length > 1 ? 3 : 0} // Quitamos el hueco si solo hay 1 dato
-                stroke="none"
-                isAnimationActive={true}
-                animationDuration={500}
-                cornerRadius={6}
-              >
-                {safeBudget > 0 ? (
-                  <>
-                    <Cell fill={T.lime} />
-                    {remaining > 0 && <Cell fill={T.border} />}
-                  </>
-                ) : (
-                  <Cell fill={T.surfaceAlt} />
-                )}
-              </Pie>
-              <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
-                formatter={(v, name) => [fmtEUR(v), name === "Restante" ? "Restante" : "Ahorrado"]}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            {safeBudget === 0 ? (
-              <span style={{ fontSize: "2rem", color: T.textMuted }}>—</span>
-            ) : isGoalAchieved ? (
-               <span style={{ fontSize: "2.5rem" }}>🏆</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* GRÁFICO CIRCULAR PREMIUM */}
+        <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+          <div style={{ height: "160px", position: "relative" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <defs>
+                  <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor={T.lavender} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={T.coral} stopOpacity={0.8} />
+                  </linearGradient>
+                  <linearGradient id="gradientLime" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor={T.lime} stopOpacity={1} />
+                    <stop offset="100%" stopColor="#a4c52c" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  innerRadius="70%"
+                  outerRadius="95%"
+                  startAngle={90}
+                  endAngle={-270}
+                  paddingAngle={pieData.length > 1 ? 3 : 0}
+                  stroke="none"
+                  isAnimationActive={true}
+                  animationDuration={500}
+                  cornerRadius={6}
+                >
+                  {safeBudget > 0 ? (
+                    <>
+                      <Cell fill="url(#gradientLime)" />
+                      {remaining > 0 && <Cell fill="url(#gradientRing)" />}
+                    </>
+                  ) : (
+                    <Cell fill={T.surfaceAlt} />
+                  )}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
+                  formatter={(v, name) => [fmtEUR(v), name === "Restante" ? "Restante" : "Ahorrado"]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+              {safeBudget === 0 ? (
+                <span style={{ fontSize: "2rem", color: T.textMuted }}>—</span>
+              ) : isGoalAchieved ? (
+                 <span style={{ fontSize: "2.5rem" }}>🏆</span>
+              ) : (
+                <>
+                  <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
+                  <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>cubierto</div>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>Necesitas ahorrar al mes</div>
+          <div style={{ ...fontDisplay, color: isGoalAchieved ? T.lavender : T.lime, fontSize: "2.2rem", fontWeight: 700, margin: "0.2rem 0" }}>
+            {safeBudget === 0 ? "—" : isGoalAchieved ? "¡Listo!" : fmtEUR(animatedRequired)}
+          </div>
+        </Card>
+
+        {/* NUEVA GRÁFICA DE PROYECCIÓN MENSUAL */}
+        <Card style={{ paddingTop: "1.2rem", paddingBottom: "1.2rem", display: "flex", flexDirection: "column" }}>
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+            Proyección de tu ahorro
+          </div>
+          <div style={{ flex: 1, minHeight: "160px" }}>
+            {safeBudget > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={projectionData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorAhorro" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="mes" hide />
+                  <YAxis hide domain={[0, safeBudget]} />
+                  <Tooltip 
+                    formatter={(value, name) => [fmtEUR(value), name === "ahorrado" ? "Ahorro" : "Meta"]}
+                    labelFormatter={(label) => label === 0 ? "Hoy" : `Mes ${label}`}
+                    contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }}
+                  />
+                  <Area type="monotone" dataKey="meta" stroke={T.lavender} strokeDasharray="4 4" fill="none" strokeWidth={2} />
+                  <Area type="monotone" dataKey="ahorrado" stroke={T.lime} strokeWidth={3} fill="url(#colorAhorro)" />
+                </AreaChart>
+              </ResponsiveContainer>
             ) : (
-              <>
-                <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
-                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>cubierto</div>
-              </>
+              <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
+                Introduce un presupuesto para ver la proyección
+              </div>
             )}
           </div>
-        </div>
-        
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>Necesitas ahorrar al mes</div>
-        <div style={{ ...fontDisplay, color: isGoalAchieved ? T.lavender : T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
-          {safeBudget === 0 ? "—" : isGoalAchieved ? "¡Listo!" : fmtEUR(animatedRequired)}
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       <AdviceBlock
         text={
@@ -324,29 +388,10 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow 
-            label="Presupuesto" 
-            value={budget} 
-            min={0} 
-            max={MAX_FINANCIAL_LIMIT || 10000000} 
-            step={500} 
-            unit="€" 
-            accent="lime" 
-            setValue={setBudget} 
-          />
-          
-          <DecimalSliderRow 
-            label="Ya ahorrado" 
-            value={current} 
-            min={0} 
-            max={MAX_FINANCIAL_LIMIT || 10000000} 
-            step={100} 
-            unit="€" 
-            accent="lavender" 
-            setValue={setCurrent} 
-          />
-          
-          <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
+          <DecimalSliderRow label="Presupuesto" value={budget} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={500} unit="€" accent="lime" setValue={setBudget} />
+          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={100} unit="€" accent="lavender" setValue={setCurrent} />
+          {/* Slider de meses ampliado a 120 */}
+          <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={120} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
 
