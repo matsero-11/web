@@ -32,7 +32,6 @@ function shuffleWithSeed(array, seed) {
   return arr;
 }
 
-// SLIDER BLINDADO: Caja de texto para millones, slider visual para los primeros 1.000€
 function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lavender", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
@@ -108,7 +107,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
       </div>
     </div>
   );
-  }
+}
 function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [weeks, setWeeks] = useState(() => {
     const p = initialParams?.weeks;
@@ -191,19 +190,17 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
     setDoneArray([...next]);
   };
 
-  // NUEVO CÁLCULO: ACUMULADO EN LUGAR DE SEMANA A SEMANA
-  const chartData = useMemo(() => {
-    let acc = 0;
-    return Array.from({ length: weeks }, (_, i) => {
-      const val = weekAmount(i + 1);
-      acc += val;
-      return {
-        semana: `S${i + 1}`,
-        importe: val,
-        acumulado: acc
-      };
-    });
-  }, [weeks, orderedAmounts]);
+  // CÁLCULO DIRECTO DEL ACUMULADO (Sin useMemo para evitar fallos)
+  let acc = 0;
+  const chartData = Array.from({ length: weeks }, (_, i) => {
+    const val = weekAmount(i + 1);
+    acc += val;
+    return {
+      semana: `S${i + 1}`,
+      importe: val,
+      acumulado: acc
+    };
+  });
 
   const weeksElapsed = startDate
     ? Math.min(Math.max(Math.floor((Date.now() - new Date(startDate).getTime()) / (7 * 24 * 60 * 60 * 1000)), 0), weeks)
@@ -211,7 +208,6 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
   const onTrack = done.size >= weeksElapsed;
 
   const toggleShuffle = () => {
-    // Siempre que se pulsa, cambia la semilla para que baraje de nuevo
     setShuffleSeed(Math.floor(Math.random() * 100000));
     setShuffleMode((s) => !s);
   };
@@ -322,9 +318,9 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
               </defs>
               <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} minTickGap={15} />
               <YAxis hide domain={[0, totalGoal * 1.05]} />
+              {/* TOOLTIP SIMPLIFICADO PARA EVITAR ERRORES */}
               <Tooltip 
-                formatter={(value, name, props) => [`${fmtEUR(value)}`, "Acumulado"]}
-                labelFormatter={(label, payload) => payload && payload.length > 0 ? `${label} (+${fmtEUR(payload[0].payload.importe)})` : label}
+                formatter={(value) => [fmtEUR(value), "Ahorro acumulado"]}
                 contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} 
               />
               <Area type="monotone" dataKey="acumulado" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
