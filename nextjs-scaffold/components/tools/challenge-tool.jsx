@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Shuffle } from "lucide-react";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -114,13 +114,12 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
     setDoneArray([...next]);
   };
 
-  // Gráfico acumulado directo
-  let currentAcc = 0;
-  const chartData = Array.from({ length: weeks }, (_, i) => {
-    const amount = weekAmount(i + 1);
-    currentAcc += amount;
-    return { semana: `S${i + 1}`, acumulado: currentAcc };
-  });
+  // DATOS PARA EL GRÁFICO DE BARRAS (Semana a semana, sin acumulado)
+  const chartData = Array.from({ length: weeks }, (_, i) => ({
+    semana: i + 1,
+    importe: weekAmount(i + 1),
+    isDone: done.has(i + 1)
+  }));
 
   const weeksElapsed = startDate
     ? Math.min(Math.max(Math.floor((Date.now() - new Date(startDate).getTime()) / (7 * 24 * 60 * 60 * 1000)), 0), weeks)
@@ -193,16 +192,13 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
             🎉 ¡Reto de ahorro completado al 100%!
           </div>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
-            Has completado todas las {weeks} semanas y acumulado un total de {fmtEUR(totalGoal)}. ¡Impresionante disciplina!
-          </div>
         </div>
       )}
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div className="flex items-center justify-between" style={{ marginBottom: "0.8rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
-            Evolución del ahorro acumulado
+            Ahorro por semana
           </div>
           <button
             onClick={toggleShuffle}
@@ -219,21 +215,21 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
         </div>
         <div style={{ width: "100%", height: "180px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorImporte" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
-                  <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <BarChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
               <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} minTickGap={15} />
-              <YAxis hide domain={[0, totalGoal * 1.05]} />
+              <YAxis hide domain={[0, 'dataMax']} />
               <Tooltip 
-                formatter={(value) => [fmtEUR(value), "Acumulado"]}
+                formatter={(value) => [fmtEUR(value), "Ahorro"]}
+                labelFormatter={(label) => `Semana ${label}`}
                 contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} 
+                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
               />
-              <Area type="monotone" dataKey="acumulado" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
-            </AreaChart>
+              <Bar dataKey="importe" radius={[2, 2, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.isDone ? T.lime : T.lavender} />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </Card>
@@ -259,7 +255,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
             value={baseAmount} 
             min={1} 
             max={MAX_FINANCIAL_LIMIT} 
-            step={100} 
+            step={1000} 
             unit="€" 
             onChange={setBaseAmount} 
             accent="lavender" 
@@ -312,3 +308,4 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
 }
 
 export default ChallengeTool;
+
