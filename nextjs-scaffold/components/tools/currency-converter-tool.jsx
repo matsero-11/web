@@ -26,7 +26,7 @@ const FAQS = [
   },
 ];
 
-// INPUT SIMPLE (SIN SLIDER) PARA EVITAR CUALQUIER FALLO
+// INPUT SIMPLE Y ESTILIZADO (SIN SLIDER)
 function ValueInput({ label, value, setValue, unit }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
 
@@ -58,7 +58,7 @@ function ValueInput({ label, value, setValue, unit }) {
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
         <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-3 py-1.5 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
           <input
             type="text"
             inputMode="decimal"
@@ -66,7 +66,7 @@ function ValueInput({ label, value, setValue, unit }) {
             onChange={handleInputChange}
             onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: T.lime, fontSize: "0.95rem", width: "110px", outline: "none" }}
+            style={{ ...fontBody, color: T.lime, fontSize: "1rem", width: "120px", outline: "none" }}
           />
           {unit && <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>}
         </div>
@@ -208,18 +208,27 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
+          
+          {/* DISEÑO ARREGLADO: Fila con los dos inputs y el botón en medio */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%" }}>
             <input
               value={fromLabel}
               onChange={(e) => setFromLabel(e.target.value.toUpperCase().slice(0, 4))}
               placeholder="EUR"
-              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none" }}
+              style={{ 
+                ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, 
+                borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none",
+                fontSize: "1rem", fontWeight: 600
+              }}
             />
 
             <button
               onClick={handleSwap}
               style={{
-                background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "50%", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.lime, transition: "transform 0.3s ease", transform: isRotated ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0,
+                background: T.limeSoft, border: `1px solid ${T.lime}`, borderRadius: "50%", 
+                width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", 
+                cursor: "pointer", color: T.lime, transition: "transform 0.3s ease", 
+                transform: isRotated ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0,
               }}
             >
               <Repeat size={18} />
@@ -229,7 +238,11 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
               value={toLabel}
               onChange={(e) => setToLabel(e.target.value.toUpperCase().slice(0, 4))}
               placeholder="USD"
-              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none" }}
+              style={{ 
+                ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, 
+                borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none",
+                fontSize: "1rem", fontWeight: 600
+              }}
             />
           </div>
 
