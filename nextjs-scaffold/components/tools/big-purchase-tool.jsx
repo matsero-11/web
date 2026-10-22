@@ -36,79 +36,6 @@ const FAQS = [
   },
 ];
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
-  const [textVal, setTextVal] = useState(String(value ?? 0));
-  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
-
-  useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
-  }, [value]);
-
-  const handleInputChange = (e) => {
-    const raw = e.target.value;
-    setTextVal(raw);
-    const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) setValue(parsed);
-  };
-
-  const handleBlur = () => {
-    const parsed = parseFloat(textVal.replace(",", "."));
-    if (isNaN(parsed)) {
-      setValue(min);
-      setTextVal(String(min));
-    } else {
-      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
-      setValue(clamped);
-      setTextVal(String(clamped));
-    }
-  };
-
-  const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
-  };
-
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
-  
-  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 5000, min + 1000) : max;
-  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
-
-  const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
-  return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex justify-between items-baseline">
-        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={textVal}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "100px", outline: "none" }}
-          />
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
-        </div>
-      </div>
-      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
-      <input
-        type="range"
-        min={min}
-        max={dynamicMax}
-        step={step}
-        value={sliderPos}
-        onChange={handleSliderChange}
-        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
-        style={{ accentColor }}
-      />
-    </div>
-  );
-}
 function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [type, setType] = useState(() => {
     const p = initialParams?.type;
@@ -223,8 +150,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     }
     return data;
   }, [safeBudget, current, monthsLeft, requiredMonthly]);
-
-  return (
+    return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
@@ -330,7 +256,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
           </div>
         </Card>
 
-        {/* GRÁFICA DE PROYECCIÓN MENSUAL */}
+        {/* GRÁFICA DE PROYECCIÓN MENSUAL (ARREGLADA) */}
         <Card style={{ paddingTop: "1.2rem", paddingBottom: "1.2rem", display: "flex", flexDirection: "column" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Proyección de tu ahorro
@@ -346,7 +272,8 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="mes" hide />
-                  <YAxis hide domain={[0, safeBudget]} />
+                  {/* Ajuste del eje Y para que no se vea el bloque verde macizo */}
+                  <YAxis hide domain={[0, Math.max(safeBudget * 1.2, 100)]} />
                   <Tooltip 
                     formatter={(value, name) => [fmtEUR(value), name === "ahorrado" ? "Ahorro" : "Meta"]}
                     labelFormatter={(label) => label === 0 ? "Hoy" : `Mes ${label}`}
@@ -383,10 +310,39 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          {/* SLIDERS CORREGIDOS Y BLINDADOS */}
-          <DecimalSliderRow label="Presupuesto" value={budget} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={500} unit="€" accent="lime" setValue={setBudget} useDynamicMax={true} />
-          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={100} unit="€" accent="lavender" setValue={setCurrent} useDynamicMax={true} />
-          <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={120} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
+          {/* SLIDERS NATIVOS CON EL MÁXIMO FINANCIERO EXACTO */}
+          <SliderControl 
+            label="Presupuesto" 
+            value={budget} 
+            min={0} 
+            max={MAX_FINANCIAL_LIMIT} 
+            step={1000} 
+            unit="€" 
+            onChange={setBudget} 
+            accent="lime" 
+          />
+          
+          <SliderControl 
+            label="Ya ahorrado" 
+            value={current} 
+            min={0} 
+            max={MAX_FINANCIAL_LIMIT} 
+            step={1000} 
+            unit="€" 
+            onChange={setCurrent} 
+            accent="lavender" 
+          />
+          
+          <SliderControl 
+            label="Meses para conseguirlo" 
+            value={monthsLeft} 
+            min={1} 
+            max={120} 
+            step={1} 
+            unit="meses" 
+            onChange={setMonthsLeft} 
+            accent="lavender" 
+          />
         </div>
       </Card>
 
