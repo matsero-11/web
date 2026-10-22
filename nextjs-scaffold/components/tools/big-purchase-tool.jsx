@@ -59,6 +59,17 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     }
   };
 
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      setValue(min); // Fallback seguro si se borra todo
+      setTextVal(String(min));
+    } else {
+      setValue(parsed);
+      setTextVal(String(parsed));
+    }
+  };
+
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
@@ -77,15 +88,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             inputMode="decimal"
             value={textVal}
             onChange={handleInputChange}
-            onBlur={() => {
-              const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) {
-                setTextVal(String(value ?? 0));
-              } else {
-                setValue(parsed);
-                setTextVal(String(parsed));
-              }
-            }}
+            onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
             style={{
               ...fontBody,
@@ -208,7 +211,9 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const pageTitle = "Cuánto ahorrar al mes para un coche, vivienda o compra grande | MetaBox";
   const pageDescription =
     "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/bigpurchase";
+  
+  // CORRECCIÓN CRÍTICA DE SEO: Cambiada la URL para que coincida con el slug real del registro
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -225,14 +230,8 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/bigpurchase.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/bigpurchase.png" />
 
         <script type="application/ld+json">
           {JSON.stringify({
@@ -269,40 +268,42 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
       </div>
 
       <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ height: "170px", position: "relative" }}>
+        <div style={{ height: "180px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={[
                   { name: "Ahorrado", value: current },
-                  { name: "Restante", value: remaining },
+                  { name: "Restante", value: Math.max(remaining, 0.01) }, // Evitamos que Recharts colapse si es 0
                 ]}
                 dataKey="value"
-                innerRadius="65%"
+                innerRadius="70%"
                 outerRadius="95%"
                 startAngle={90}
                 endAngle={-270}
-                paddingAngle={2}
+                paddingAngle={3}
                 stroke="none"
                 isAnimationActive={true}
-                animationDuration={400}
+                animationDuration={500}
+                cornerRadius={6} // Bordes redondeados para el anillo
               >
                 <Cell fill={T.lime} />
-                <Cell fill={T.surfaceAlt} />
+                <Cell fill={T.border} />
               </Pie>
               <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                formatter={(v) => fmtEUR(v)}
+                contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
+                formatter={(v, name) => [fmtEUR(v), name === "Restante" ? "Restante" : "Ahorrado"]}
               />
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.9rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>cubierto</div>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>cubierto</div>
           </div>
         </div>
+        
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>Necesitas ahorrar al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700, margin: "0.2rem 0" }}>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
           {monthsLeft > 0 ? fmtEUR(animatedRequired) : "—"}
         </div>
       </Card>
@@ -314,6 +315,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
           borderRadius: "0.8rem",
           padding: "1rem",
           textAlign: "center",
+          boxShadow: `0 4px 15px ${T.lime}20`
         }}>
           <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
             🎉 ¡Objetivo de compra cumplido!
@@ -360,14 +362,14 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.4rem" }}>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Solo ahorrando</div>
               <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
                 {monthsLeft > 0 ? fmtEUR(requiredMonthly) : "—"}
               </div>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>al mes · sin intereses</div>
             </div>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Financiando {financePct}%</div>
               <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
                 {fmtEUR(combinedMonthly)}
@@ -378,8 +380,8 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
             </div>
           </div>
 
-          <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem", textAlign: "center", marginTop: "1rem" }}>
-            Financiar te cuesta {fmtEUR(interestCost)} extra en intereses a lo largo del préstamo
+          <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem", textAlign: "center", marginTop: "1rem", background: `${T.coral}15`, padding: "0.6rem", borderRadius: "0.5rem" }}>
+            Financiar te cuesta <strong>{fmtEUR(interestCost)}</strong> extra en intereses a lo largo del préstamo
           </div>
         </Card>
       )}
@@ -423,4 +425,3 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default BigPurchaseTool;
-                
