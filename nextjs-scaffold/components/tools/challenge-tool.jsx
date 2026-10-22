@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, ProgressBar, Chip, AdviceBlock } from "@/components/ui";
+import { Card, ProgressBar, Chip, AdviceBlock, SliderControl } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -32,82 +32,6 @@ function shuffleWithSeed(array, seed) {
   return arr;
 }
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lavender", subtitle }) {
-  const [textVal, setTextVal] = useState(String(value ?? 0));
-  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
-
-  useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
-  }, [value]);
-
-  const handleInputChange = (e) => {
-    const raw = e.target.value;
-    setTextVal(raw);
-    const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) setValue(parsed);
-  };
-
-  const handleBlur = () => {
-    const parsed = parseFloat(textVal.replace(",", "."));
-    if (isNaN(parsed)) {
-      setValue(min);
-      setTextVal(String(min));
-    } else {
-      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
-      setValue(clamped);
-      setTextVal(String(clamped));
-    }
-  };
-
-  const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
-  };
-
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
-  
-  const sliderMax = 1000;
-  const sliderPos = Math.min(safeValue, sliderMax);
-  const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
-  return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex justify-between items-baseline">
-        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={textVal}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
-          />
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
-        </div>
-      </div>
-      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
-      <input
-        type="range"
-        min={min}
-        max={sliderMax}
-        step={step}
-        value={sliderPos}
-        onChange={handleSliderChange}
-        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
-        style={{ accentColor }}
-      />
-      <div style={{ display: "flex", justifyContent: "space-between", ...fontBody, fontSize: "0.65rem", color: T.textMuted }}>
-        <span>{min} €</span>
-        <span>{sliderMax} €+</span>
-      </div>
-    </div>
-  );
-}
 function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [weeks, setWeeks] = useState(() => {
     const p = initialParams?.weeks;
@@ -190,16 +114,12 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
     setDoneArray([...next]);
   };
 
-  // CÁLCULO DIRECTO DEL ACUMULADO (Sin useMemo para evitar fallos)
-  let acc = 0;
+  // Gráfico acumulado directo
+  let currentAcc = 0;
   const chartData = Array.from({ length: weeks }, (_, i) => {
-    const val = weekAmount(i + 1);
-    acc += val;
-    return {
-      semana: `S${i + 1}`,
-      importe: val,
-      acumulado: acc
-    };
+    const amount = weekAmount(i + 1);
+    currentAcc += amount;
+    return { semana: `S${i + 1}`, acumulado: currentAcc };
   });
 
   const weeksElapsed = startDate
@@ -208,7 +128,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
   const onTrack = done.size >= weeksElapsed;
 
   const toggleShuffle = () => {
-    setShuffleSeed(Math.floor(Math.random() * 100000));
+    if (!shuffleMode) setShuffleSeed(Math.floor(Math.random() * 100000));
     setShuffleMode((s) => !s);
   };
 
@@ -221,15 +141,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content="reto de ahorro 52 semanas, reto de ahorro 26 semanas, cómo hacer el reto de las 52 semanas, calculadora reto de ahorro, reto de ahorro aleatorio" />
         <link rel="canonical" href={pageUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/challenge.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -294,20 +206,18 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
           </div>
           <button
             onClick={toggleShuffle}
-            title="Activar/desactivar orden aleatorio"
             style={{
               display: "flex", alignItems: "center", gap: "0.3rem",
               background: shuffleMode ? T.limeSoft : "transparent",
               border: `1px solid ${shuffleMode ? T.lime : T.border}`,
               borderRadius: "999px", padding: "0.35rem 0.7rem", cursor: "pointer",
               color: shuffleMode ? T.lime : T.textMuted, fontSize: "0.75rem", ...fontBody,
-              transition: "all 0.2s ease",
             }}
           >
             <Shuffle size={12} /> Aleatorio
           </button>
         </div>
-        <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
+        <div style={{ width: "100%", height: "180px" }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
               <defs>
@@ -318,9 +228,8 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
               </defs>
               <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} minTickGap={15} />
               <YAxis hide domain={[0, totalGoal * 1.05]} />
-              {/* TOOLTIP SIMPLIFICADO PARA EVITAR ERRORES */}
               <Tooltip 
-                formatter={(value) => [fmtEUR(value), "Ahorro acumulado"]}
+                formatter={(value) => [fmtEUR(value), "Acumulado"]}
                 contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} 
               />
               <Area type="monotone" dataKey="acumulado" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
@@ -345,15 +254,15 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
             <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
             <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
           </div>
-          <DecimalSliderRow 
+          <SliderControl 
             label="Incremento semanal base" 
             value={baseAmount} 
             min={1} 
             max={MAX_FINANCIAL_LIMIT} 
-            step={1} 
+            step={100} 
             unit="€" 
+            onChange={setBaseAmount} 
             accent="lavender" 
-            setValue={setBaseAmount} 
           />
         </div>
       </Card>
