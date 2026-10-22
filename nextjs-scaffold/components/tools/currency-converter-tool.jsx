@@ -4,10 +4,10 @@ import { Helmet } from "react-helmet-async";
 import { Repeat } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, AdviceBlock, Chip } from "@/components/ui";
+import { Card, AdviceBlock, Chip, SliderControl } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { usePersistentState } from "@/lib/persistence";
-import { CopySummaryButton } from "@/components/ExportActions";
+import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
 import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
@@ -27,7 +27,8 @@ const FAQS = [
   },
 ];
 
-function DecimalRateRow({ label, value, setValue, min = 0.0001, max = 10000, unit = "" }) {
+// Input simple para el tipo de cambio (sin slider para evitar atascos)
+function RateInput({ label, value, setValue, unit }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
 
   useEffect(() => {
@@ -40,15 +41,18 @@ function DecimalRateRow({ label, value, setValue, min = 0.0001, max = 10000, uni
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) {
-      setValue(parsed);
-    }
+    if (!isNaN(parsed)) setValue(parsed);
   };
 
-  const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      setValue(0.0001);
+      setTextVal("0.0001");
+    } else {
+      setValue(parsed);
+      setTextVal(String(parsed));
+    }
   };
 
   return (
@@ -61,41 +65,16 @@ function DecimalRateRow({ label, value, setValue, min = 0.0001, max = 10000, uni
             inputMode="decimal"
             value={textVal}
             onChange={handleInputChange}
-            onBlur={() => {
-              const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) {
-                setTextVal(String(value ?? 0));
-              } else {
-                setValue(parsed);
-                setTextVal(String(parsed));
-              }
-            }}
+            onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
-            style={{
-              ...fontBody,
-              color: T.lavender,
-              fontSize: "0.9rem",
-              width: "100px",
-              outline: "none",
-            }}
+            style={{ ...fontBody, color: T.lavender, fontSize: "0.9rem", width: "100px", outline: "none" }}
           />
           {unit && <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>}
         </div>
       </div>
-      <input
-        type="range"
-        min={min}
-        max={Math.max(max, value || 0, 10)}
-        step={value > 100 ? 1 : value > 10 ? 0.1 : 0.0001}
-        value={isNaN(value) ? 0 : value}
-        onChange={handleSliderChange}
-        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
-        style={{ accentColor: T.lavender }}
-      />
     </div>
   );
 }
-
 function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [amount, setAmount] = useState(() => {
     const p = initialParams?.amount;
@@ -160,34 +139,24 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
   };
 
   const pageTitle = "Conversor de moneda para viajes con tipo de cambio manual | MetaBox";
-  const pageDescription =
-    "Convierte entre divisas al instante introduciendo el tipo de cambio del día y guarda tus pares de monedas favoritos para acceder rápido la próxima vez. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/currency";
+  const pageDescription = "Convierte entre divisas al instante introduciendo el tipo de cambio del día y guarda tus pares de monedas favoritos para acceder rápido la próxima vez. Gratis y sin registro.";
+  
+  // SEO CORREGIDO: URL exacta al slug del registro
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/conversor-de-moneda-viajes";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="conversor de moneda para viajes, calculadora tipo de cambio, convertir euros a dólares, presupuesto de viaje en divisas"
-        />
+        <meta name="keywords" content="conversor de moneda para viajes, calculadora tipo de cambio, convertir euros a dólares, presupuesto de viaje en divisas" />
         <link rel="canonical" href={pageUrl} />
-
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/currency.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/currency.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -294,21 +263,23 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
             />
           </div>
 
-          <DecimalRateRow
-            label={`Importe en ${fromLabel || "origen"}`}
-            value={amount}
-            setValue={setAmount}
-            min={0}
-            max={MAX_FINANCIAL_LIMIT}
-            unit={fromLabel}
+          {/* SLIDER NATIVO PARA EL IMPORTE (SIN ATASCOS) */}
+          <SliderControl 
+            label={`Importe en ${fromLabel || "origen"}`} 
+            value={amount} 
+            min={0} 
+            max={MAX_FINANCIAL_LIMIT} 
+            step={100} 
+            unit={fromLabel} 
+            onChange={setAmount} 
+            accent="lime" 
           />
 
-          <DecimalRateRow
+          {/* INPUT SIMPLE PARA EL TIPO DE CAMBIO (SIN SLIDER) */}
+          <RateInput
             label="Tipo de cambio"
             value={rate}
             setValue={setRate}
-            min={0.0001}
-            max={MAX_FINANCIAL_LIMIT}
             unit={`1 ${fromLabel} = X ${toLabel}`}
           />
 
@@ -332,9 +303,17 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
 
       <RelatedTools ids={["trip", "tripdaily"]} onNavigate={onNavigate} primaryId="trip" />
 
-      <div className="flex justify-center pt-2">
+      <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() => `${amount} ${fromLabel} = ${converted.toFixed(2)} ${toLabel} (tipo de cambio: ${rate}).`}
+        />
+        <ExportCSVButton
+          filename="conversor-de-moneda"
+          getRows={() => [
+            { concepto: "Importe original", valor: `${amount} ${fromLabel}` },
+            { concepto: "Tipo de cambio", valor: rate.toFixed(4) },
+            { concepto: "Importe convertido", valor: `${converted.toFixed(2)} ${toLabel}` }
+          ]}
         />
       </div>
 
@@ -348,4 +327,3 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
 }
 
 export default CurrencyConverterTool;
-          
