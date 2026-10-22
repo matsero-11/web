@@ -36,8 +36,8 @@ const FAQS = [
   },
 ];
 
-// SLIDER DINÁMICO: El máximo se adapta al valor actual para que sea fácil de arrastrar
-function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle }) {
+// SLIDER HÍBRIDO: Se mueve fluido con el dedo y se expande hasta 10M
+function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
 
@@ -74,8 +74,8 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
 
   const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
   
-  // EL TRUCO: El máximo visual del slider es el doble del valor actual (o 5000 por defecto)
-  const dynamicMax = Math.max(safeValue * 2, 5000, min + 1000);
+  // El secreto: El slider crece dinámicamente si el valor sube
+  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 5000, min + 1000) : max;
   const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
 
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
@@ -209,7 +209,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         { name: "Restante", value: Math.max(remaining, 0) }
       ];
 
-  // DATOS PARA LA GRÁFICA DE PROYECCIÓN
+  // DATOS PARA LA NUEVA GRÁFICA DE PROYECCIÓN MENSUAL
   const projectionData = useMemo(() => {
     if (safeBudget === 0) return [];
     const data = [];
@@ -334,12 +334,12 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
           </div>
         </Card>
 
-        {/* GRÁFICA DE PROYECCIÓN MENSUAL (ARREGLADA) */}
+        {/* GRÁFICA DE PROYECCIÓN MENSUAL */}
         <Card style={{ paddingTop: "1.2rem", paddingBottom: "1.2rem", display: "flex", flexDirection: "column" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Proyección de tu ahorro
           </div>
-          {/* ALTURA FIJA PARA QUE RECHARTS NO FALLE */}
+          {/* ALTURA FIJA PARA QUE RECHARTS NO SE ROMPA */}
           <div style={{ width: "100%", height: "180px" }}>
             {safeBudget > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -388,8 +388,8 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Presupuesto" value={budget} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={500} unit="€" accent="lime" setValue={setBudget} />
-          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={100} unit="€" accent="lavender" setValue={setCurrent} />
+          <DecimalSliderRow label="Presupuesto" value={budget} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={500} unit="€" accent="lime" setValue={setBudget} useDynamicMax={true} />
+          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT || 10000000} step={100} unit="€" accent="lavender" setValue={setCurrent} useDynamicMax={true} />
           <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={120} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
