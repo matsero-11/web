@@ -3,14 +3,13 @@ import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Repeat } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
-import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, AdviceBlock, Chip, SliderControl } from "@/components/ui";
+import { useAnimatedNumber } from "@/lib/hooks";
+import { Card, AdviceBlock, Chip } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -27,8 +26,8 @@ const FAQS = [
   },
 ];
 
-// Input simple para el tipo de cambio (sin slider para evitar atascos)
-function RateInput({ label, value, setValue, unit }) {
+// INPUT SIMPLE (SIN SLIDER) PARA EVITAR CUALQUIER FALLO
+function ValueInput({ label, value, setValue, unit }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
 
   useEffect(() => {
@@ -47,8 +46,8 @@ function RateInput({ label, value, setValue, unit }) {
   const handleBlur = () => {
     const parsed = parseFloat(textVal.replace(",", "."));
     if (isNaN(parsed)) {
-      setValue(0.0001);
-      setTextVal("0.0001");
+      setValue(0);
+      setTextVal("0");
     } else {
       setValue(parsed);
       setTextVal(String(parsed));
@@ -67,7 +66,7 @@ function RateInput({ label, value, setValue, unit }) {
             onChange={handleInputChange}
             onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: T.lavender, fontSize: "0.9rem", width: "100px", outline: "none" }}
+            style={{ ...fontBody, color: T.lime, fontSize: "0.95rem", width: "110px", outline: "none" }}
           />
           {unit && <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>}
         </div>
@@ -75,6 +74,7 @@ function RateInput({ label, value, setValue, unit }) {
     </div>
   );
 }
+
 function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [amount, setAmount] = useState(() => {
     const p = initialParams?.amount;
@@ -140,8 +140,6 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
 
   const pageTitle = "Conversor de moneda para viajes con tipo de cambio manual | MetaBox";
   const pageDescription = "Convierte entre divisas al instante introduciendo el tipo de cambio del día y guarda tus pares de monedas favoritos para acceder rápido la próxima vez. Gratis y sin registro.";
-  
-  // SEO CORREGIDO: URL exacta al slug del registro
   const pageUrl = "https://metabox-web.vercel.app/herramientas/conversor-de-moneda-viajes";
 
   return (
@@ -149,14 +147,7 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content="conversor de moneda para viajes, calculadora tipo de cambio, convertir euros a dólares, presupuesto de viaje en divisas" />
         <link rel="canonical" href={pageUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -222,32 +213,14 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
               value={fromLabel}
               onChange={(e) => setFromLabel(e.target.value.toUpperCase().slice(0, 4))}
               placeholder="EUR"
-              aria-label="Moneda de origen"
-              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none", transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
+              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none" }}
             />
 
             <button
               onClick={handleSwap}
-              title="Invertir monedas"
               style={{
-                background: T.surfaceAlt,
-                border: `1px solid ${T.border}`,
-                borderRadius: "50%",
-                width: "44px",
-                height: "44px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: T.lime,
-                transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease",
-                transform: isRotated ? "rotate(180deg)" : "rotate(0deg)",
-                flexShrink: 0,
+                background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "50%", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.lime, transition: "transform 0.3s ease", transform: isRotated ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = T.limeSoft; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = T.surfaceAlt; }}
             >
               <Repeat size={18} />
             </button>
@@ -256,27 +229,18 @@ function CurrencyConverterTool({ onBack, onNavigate, initialParams = {}, onState
               value={toLabel}
               onChange={(e) => setToLabel(e.target.value.toUpperCase().slice(0, 4))}
               placeholder="USD"
-              aria-label="Moneda de destino"
-              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none", transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = T.lime; e.currentTarget.style.boxShadow = `0 0 0 3px ${T.limeSoft}`; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
+              style={{ ...fontBody, flex: 1, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.75rem", color: T.text, textAlign: "center", outline: "none" }}
             />
           </div>
 
-          {/* SLIDER NATIVO PARA EL IMPORTE (SIN ATASCOS) */}
-          <SliderControl 
+          <ValueInput 
             label={`Importe en ${fromLabel || "origen"}`} 
             value={amount} 
-            min={0} 
-            max={MAX_FINANCIAL_LIMIT} 
-            step={100} 
+            setValue={setAmount} 
             unit={fromLabel} 
-            onChange={setAmount} 
-            accent="lime" 
           />
 
-          {/* INPUT SIMPLE PARA EL TIPO DE CAMBIO (SIN SLIDER) */}
-          <RateInput
+          <ValueInput
             label="Tipo de cambio"
             value={rate}
             setValue={setRate}
