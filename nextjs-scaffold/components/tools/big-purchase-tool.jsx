@@ -36,10 +36,10 @@ const FAQS = [
   },
 ];
 
-// SLIDER CON ESCALA CÚBICA (0 a 10 Millones, suave y sin atascos)
+// SLIDER DINÁMICO: El máximo se adapta al valor actual para que sea fácil de arrastrar
 function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-  const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
+  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
 
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
@@ -60,25 +60,24 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
       setValue(min);
       setTextVal(String(min));
     } else {
-      const clamped = Math.min(Math.max(parsed, min), MAX_LIMIT);
+      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
       setValue(clamped);
       setTextVal(String(clamped));
     }
   };
 
   const handleSliderChange = (e) => {
-    const pos = parseFloat(e.target.value);
-    const ratio = pos / 1000;
-    const val = min + (MAX_LIMIT - min) * Math.pow(ratio, 3);
-    const steppedVal = Math.round(val / step) * step;
-    
-    setValue(steppedVal);
-    setTextVal(String(steppedVal));
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
   };
 
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, MAX_LIMIT));
-  const ratio = Math.pow((safeValue - min) / (MAX_LIMIT - min), 1/3);
-  const sliderPos = ratio * 1000;
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
+  
+  // EL TRUCO: El máximo visual del slider es el doble del valor actual (o 5000 por defecto)
+  const dynamicMax = Math.max(safeValue * 2, 5000, min + 1000);
+  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
+
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
   return (
@@ -101,9 +100,9 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
       {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
       <input
         type="range"
-        min={0}
-        max={1000}
-        step={1}
+        min={min}
+        max={dynamicMax}
+        step={step}
         value={sliderPos}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
@@ -172,7 +171,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     if (info) setBudget(info.defaultBudget);
   };
 
-  // MATEMÁTICAS SEGURAS
   const safeBudget = Math.max(budget, 0);
   const remaining = Math.max(safeBudget - current, 0);
   const safeMonths = Math.max(monthsLeft, 1);
@@ -203,7 +201,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
 
-  // DATOS PARA EL GRÁFICO CIRCULAR (Arreglado para que no falle si hay valores a 0)
+  // DATOS PARA EL GRÁFICO CIRCULAR
   const pieData = safeBudget <= 0 
     ? [{ name: "Empty", value: 1 }] 
     : [
@@ -211,7 +209,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         { name: "Restante", value: Math.max(remaining, 0) }
       ];
 
-  // DATOS PARA LA NUEVA GRÁFICA DE PROYECCIÓN MENSUAL
+  // DATOS PARA LA GRÁFICA DE PROYECCIÓN
   const projectionData = useMemo(() => {
     if (safeBudget === 0) return [];
     const data = [];
@@ -299,7 +297,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
                   animationDuration={500}
                   cornerRadius={6}
                 >
-                  {/* Renderizado seguro de celdas para no romper Recharts */}
                   {pieData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
@@ -337,12 +334,13 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
           </div>
         </Card>
 
-        {/* NUEVA GRÁFICA DE PROYECCIÓN MENSUAL */}
+        {/* GRÁFICA DE PROYECCIÓN MENSUAL (ARREGLADA) */}
         <Card style={{ paddingTop: "1.2rem", paddingBottom: "1.2rem", display: "flex", flexDirection: "column" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Proyección de tu ahorro
           </div>
-          <div style={{ flex: 1, minHeight: "160px" }}>
+          {/* ALTURA FIJA PARA QUE RECHARTS NO FALLE */}
+          <div style={{ width: "100%", height: "180px" }}>
             {safeBudget > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={projectionData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
