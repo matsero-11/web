@@ -2,12 +2,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  ComposedChart, Line
+  ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, AdviceBlock, Button } from "@/components/ui";
+import { Card, AdviceBlock, Button, SliderControl } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -20,81 +19,6 @@ const FAQS = [
   { q: "¿Este cálculo garantiza esa rentabilidad?", a: "No. Es una simulación orientativa con un interés anual estimado y constante; la rentabilidad real de cualquier producto financiero puede variar y no está garantizada." },
   { q: "¿Por qué el valor ajustado a inflación es más bajo que el saldo total?", a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques." },
 ];
-
-// SLIDER CON MÁXIMO DINÁMICO EXTREMO
-function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle }) {
-  const [textVal, setTextVal] = useState(String(value ?? 0));
-  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
-
-  useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
-  }, [value]);
-
-  const handleInputChange = (e) => {
-    const raw = e.target.value;
-    setTextVal(raw);
-    const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) setValue(parsed);
-  };
-
-  const handleBlur = () => {
-    const parsed = parseFloat(textVal.replace(",", "."));
-    if (isNaN(parsed)) {
-      setValue(min);
-      setTextVal(String(min));
-    } else {
-      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
-      setValue(clamped);
-      setTextVal(String(clamped));
-    }
-  };
-
-  const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
-  };
-
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
-  
-  // EL TRUCO DEFINITIVO: El máximo es siempre el doble del valor actual (con un mínimo de 10.000)
-  const dynamicMax = Math.max(safeValue * 2, 10000);
-  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
-  const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
-  return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex justify-between items-baseline">
-        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={textVal}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
-          />
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
-        </div>
-      </div>
-      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
-      <input
-        type="range"
-        min={min}
-        max={dynamicMax}
-        step={step}
-        value={sliderPos}
-        onChange={handleSliderChange}
-        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
-        style={{ accentColor }}
-      />
-    </div>
-  );
-}
 
 function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [initial, setInitial] = useState(() => {
@@ -188,7 +112,6 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content="calculadora de interés compuesto, simulador interés compuesto, cómo funciona el interés compuesto, interés compuesto mensual, interés compuesto ajustado a inflación" />
         <link rel="canonical" href={pageUrl} />
         <script type="application/ld+json">
           {JSON.stringify({
@@ -261,7 +184,6 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
               />
               <Area type="monotone" dataKey="saldo" stroke={T.lime} strokeWidth={2} fill="url(#fillSaldo)" />
               <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={2} strokeDasharray="4 3" dot={false} />
-              {/* LÍNEA DE INTERESES AÑADIDA AQUÍ */}
               <Line type="monotone" dataKey="intereses" stroke={T.coral} strokeWidth={2} dot={false} />
               {showInflation && (
                 <Line type="monotone" dataKey="real" stroke="#00F0FF" strokeWidth={1.5} strokeDasharray="2 2" dot={false} />
@@ -283,7 +205,16 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Poder adquisitivo real
           </div>
-          <DecimalSliderRow label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" accent="lavender" setValue={setInflationRate} />
+          <SliderControl 
+            label="Inflación media anual estimada" 
+            value={inflationRate} 
+            min={0} 
+            max={10} 
+            step={0.1} 
+            unit="%" 
+            onChange={setInflationRate} 
+            accent="lavender" 
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
             <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Euros nominales</div>
@@ -312,11 +243,11 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lime" setValue={setInitial} />
-          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} />
-          <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} />
-          {/* AÑOS AMPLIADOS HASTA 70 */}
-          <DecimalSliderRow label="Años" value={years} min={1} max={70} step={1} unit="años" accent="lavender" setValue={setYears} />
+          {/* NATIVOS Y FLUIDOS */}
+          <SliderControl label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" onChange={setInitial} accent="lime" />
+          <SliderControl label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" onChange={setMonthly} accent="lavender" />
+          <SliderControl label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" onChange={setRate} accent="lime" />
+          <SliderControl label="Años" value={years} min={1} max={70} step={1} unit="años" onChange={setYears} accent="lavender" />
         </div>
       </Card>
 
@@ -353,4 +284,3 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 }
 
 export default CompoundInterestTool;
-
