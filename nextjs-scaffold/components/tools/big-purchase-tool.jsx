@@ -37,11 +37,9 @@ const FAQS = [
   },
 ];
 
-// COMPONENTE DE SLIDER CON ESCALA CÚBICA (A PRUEBA DE BOMBAS)
+// SLIDER CON ESCALA CÚBICA (0 a 10 Millones, suave y sin atascos)
 function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-  
-  // Forzamos el límite a 10 millones
   const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
 
   useEffect(() => {
@@ -70,23 +68,19 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
   };
 
   const handleSliderChange = (e) => {
-    const pos = parseFloat(e.target.value); // Posición de 0 a 1000
-    // Fórmula cúbica: hace que el slider sea preciso al principio y rápido al final
+    const pos = parseFloat(e.target.value);
     const ratio = pos / 1000;
+    // Fórmula Cúbica: Precisión al principio, velocidad al final
     const val = min + (MAX_LIMIT - min) * Math.pow(ratio, 3);
-    
-    // Redondeo al step más cercano
     const steppedVal = Math.round(val / step) * step;
     
     setValue(steppedVal);
     setTextVal(String(steppedVal));
   };
 
-  // Calculamos la posición del slider (0 a 1000)
   const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, MAX_LIMIT));
   const ratio = Math.pow((safeValue - min) / (MAX_LIMIT - min), 1/3);
   const sliderPos = ratio * 1000;
-
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
   return (
@@ -181,6 +175,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
     if (info) setBudget(info.defaultBudget);
   };
 
+  // MATEMÁTICAS SEGURAS
   const safeBudget = Math.max(budget, 0);
   const remaining = Math.max(safeBudget - current, 0);
   const safeMonths = Math.max(monthsLeft, 1);
@@ -210,6 +205,14 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const pageTitle = "Cuánto ahorrar al mes para un coche, vivienda o compra grande | MetaBox";
   const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
+
+  // Lógica del gráfico (Evita el trocito verde al 0%)
+  const pieData = safeBudget <= 0 
+    ? [{ name: "Empty", value: 1 }] 
+    : [
+        { name: "Ahorrado", value: Math.min(current, safeBudget) },
+        { name: "Restante", value: Math.max(remaining, 0) }
+      ].filter(d => d.value > 0); // Filtramos valores a 0 para que no se dibujen
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -256,23 +259,26 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={[
-                  { name: "Ahorrado", value: Math.min(current, safeBudget) },
-                  { name: "Restante", value: Math.max(remaining, 0.01) },
-                ]}
+                data={pieData}
                 dataKey="value"
                 innerRadius="70%"
                 outerRadius="95%"
                 startAngle={90}
                 endAngle={-270}
-                paddingAngle={3}
+                paddingAngle={pieData.length > 1 ? 3 : 0} // Quitamos el hueco si solo hay 1 dato
                 stroke="none"
                 isAnimationActive={true}
                 animationDuration={500}
                 cornerRadius={6}
               >
-                <Cell fill={T.lime} />
-                <Cell fill={T.border} />
+                {safeBudget > 0 ? (
+                  <>
+                    <Cell fill={T.lime} />
+                    {remaining > 0 && <Cell fill={T.border} />}
+                  </>
+                ) : (
+                  <Cell fill={T.surfaceAlt} />
+                )}
               </Pie>
               <Tooltip
                 contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
@@ -281,7 +287,9 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            {isGoalAchieved ? (
+            {safeBudget === 0 ? (
+              <span style={{ fontSize: "2rem", color: T.textMuted }}>—</span>
+            ) : isGoalAchieved ? (
                <span style={{ fontSize: "2.5rem" }}>🏆</span>
             ) : (
               <>
@@ -294,13 +302,15 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>Necesitas ahorrar al mes</div>
         <div style={{ ...fontDisplay, color: isGoalAchieved ? T.lavender : T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
-          {isGoalAchieved ? "¡Listo!" : (safeMonths > 0 ? fmtEUR(animatedRequired) : "—")}
+          {safeBudget === 0 ? "—" : isGoalAchieved ? "¡Listo!" : fmtEUR(animatedRequired)}
         </div>
       </Card>
 
       <AdviceBlock
         text={
-          isGoalAchieved
+          safeBudget === 0
+            ? "Introduce un presupuesto en la calculadora para saber cuánto necesitas ahorrar cada mes."
+            : isGoalAchieved
             ? "¡Felicidades! Ya tienes todo el dinero ahorrado para esta compra. Es el momento perfecto para empezar a buscar ofertas y dar el paso final sin endeudarte."
             : type === "vivienda"
             ? "Recuerda: los bancos suelen exigir al menos un 20% de entrada sobre el precio de la vivienda, más gastos de compraventa."
@@ -314,7 +324,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          {/* Slider con mínimo ajustado a 0 para que se pueda poner al principio */}
           <DecimalSliderRow 
             label="Presupuesto" 
             value={budget} 
@@ -341,7 +350,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
         </div>
       </Card>
 
-      {!isGoalAchieved && (
+      {!isGoalAchieved && safeBudget > 0 && (
         !showFinancing ? (
           <Button variant="ghost" onClick={() => setShowFinancing(true)}>
             ¿Y si financio una parte? Comparar con ahorrar todo
