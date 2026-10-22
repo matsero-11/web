@@ -43,6 +43,7 @@ const FAQS = [
 
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
+  const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT);
 
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
@@ -62,19 +63,28 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
   const handleBlur = () => {
     const parsed = parseFloat(textVal.replace(",", "."));
     if (isNaN(parsed)) {
-      setValue(min); // Fallback seguro si se borra todo
+      setValue(min);
       setTextVal(String(min));
     } else {
-      setValue(parsed);
-      setTextVal(String(parsed));
+      const clamped = Math.min(Math.max(parsed, min), MAX_LIMIT);
+      setValue(clamped);
+      setTextVal(String(clamped));
     }
   };
 
   const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
+    const p = parseFloat(e.target.value);
+    const expMax = Math.log(MAX_LIMIT + 1);
+    const val = Math.exp((p / 1000) * expMax) - 1;
+    const steppedVal = Math.round(val / step) * step;
+    
+    setValue(steppedVal);
+    setTextVal(String(steppedVal));
   };
+
+  const currentVal = isNaN(value) ? 0 : Math.max(min, Math.min(value, MAX_LIMIT));
+  const expMax = Math.log(MAX_LIMIT + 1);
+  const sliderPosition = currentVal > 0 ? (Math.log(currentVal + 1) / expMax) * 1000 : 0;
 
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
@@ -90,13 +100,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             onChange={handleInputChange}
             onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
-            style={{
-              ...fontBody,
-              color: accentColor,
-              fontSize: "0.9rem",
-              width: "85px",
-              outline: "none",
-            }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
@@ -104,10 +108,10 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
       {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
       <input
         type="range"
-        min={min}
-        max={Math.max(max, value || 0, 100)}
-        step={step}
-        value={isNaN(value) ? 0 : value}
+        min={0}
+        max={1000}
+        step={1}
+        value={sliderPosition}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
@@ -176,26 +180,24 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const changeType = (id) => {
     setType(id);
     const info = PURCHASE_TYPES.find((t) => t.id === id);
-    if (info) {
-      setBudget(info.defaultBudget);
-      setCurrent((c) => Math.min(c, info.defaultBudget));
-    }
+    if (info) setBudget(info.defaultBudget);
   };
 
-  useEffect(() => {
-    if (current > budget) setCurrent(budget);
-  }, [budget, current]);
-
-  const remaining = Math.max(budget - current, 0);
-  const requiredMonthly = monthsLeft > 0 ? remaining / monthsLeft : remaining;
+  // CONTROL DE ERRORES MATEMÁTICOS
+  const safeBudget = Math.max(budget, 0);
+  const remaining = Math.max(safeBudget - current, 0);
+  const safeMonths = Math.max(monthsLeft, 1); // Evitamos división por cero o negativa
+  
+  const requiredMonthly = remaining / safeMonths;
   const animatedRequired = useAnimatedNumber(requiredMonthly);
-  const pct = budget > 0 ? (current / budget) * 100 : 0;
+  
+  const pct = safeBudget > 0 ? (current / safeBudget) * 100 : 0;
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
-  const isGoalAchieved = current >= budget && budget > 0;
+  const isGoalAchieved = current >= safeBudget && safeBudget > 0;
 
   const financedAmount = remaining * (financePct / 100);
   const cashNeeded = remaining - financedAmount;
-  const cashMonthly = monthsLeft > 0 ? cashNeeded / monthsLeft : cashNeeded;
+  const cashMonthly = cashNeeded / safeMonths;
 
   const loanPayment = useMemo(() => {
     const monthlyRate = financeRate / 100 / 12;
@@ -211,8 +213,6 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const pageTitle = "Cuánto ahorrar al mes para un coche, vivienda o compra grande | MetaBox";
   const pageDescription =
     "Calcula cuánto tienes que ahorrar cada mes para comprarte un coche, dar la entrada de una vivienda o cualquier compra grande, y compara ahorrar todo frente a financiar una parte. Gratis y sin registro.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO: Cambiada la URL para que coincida con el slug real del registro
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-compra-grande-coche-vivienda";
 
   return (
@@ -220,19 +220,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="cuánto ahorrar para un coche, ahorro entrada vivienda, calculadora compra grande, cuánto ahorrar al mes para comprar coche, financiar o ahorrar"
-        />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -273,8 +261,8 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
             <PieChart>
               <Pie
                 data={[
-                  { name: "Ahorrado", value: current },
-                  { name: "Restante", value: Math.max(remaining, 0.01) }, // Evitamos que Recharts colapse si es 0
+                  { name: "Ahorrado", value: Math.min(current, safeBudget) },
+                  { name: "Restante", value: Math.max(remaining, 0.01) }, // Evita que el gráfico se rompa si el restante es 0
                 ]}
                 dataKey="value"
                 innerRadius="70%"
@@ -285,51 +273,37 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
                 stroke="none"
                 isAnimationActive={true}
                 animationDuration={500}
-                cornerRadius={6} // Bordes redondeados para el anillo
+                cornerRadius={6}
               >
                 <Cell fill={T.lime} />
                 <Cell fill={T.border} />
               </Pie>
-              <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
-                formatter={(v, name) => [fmtEUR(v), name === "Restante" ? "Restante" : "Ahorrado"]}
-              />
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>cubierto</div>
+            {isGoalAchieved ? (
+               <span style={{ fontSize: "2.5rem" }}>🏆</span>
+            ) : (
+              <>
+                <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{animatedPct.toFixed(0)}%</div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>cubierto</div>
+              </>
+            )}
           </div>
         </div>
         
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>Necesitas ahorrar al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
-          {monthsLeft > 0 ? fmtEUR(animatedRequired) : "—"}
+        <div style={{ ...fontDisplay, color: isGoalAchieved ? T.lavender : T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.2rem 0" }}>
+          {isGoalAchieved ? "¡Listo!" : (safeMonths > 0 ? fmtEUR(animatedRequired) : "—")}
         </div>
       </Card>
 
-      {isGoalAchieved && (
-        <div style={{
-          background: `linear-gradient(135deg, ${T.lime}15, ${T.lavender}15)`,
-          border: `1px solid ${T.lime}`,
-          borderRadius: "0.8rem",
-          padding: "1rem",
-          textAlign: "center",
-          boxShadow: `0 4px 15px ${T.lime}20`
-        }}>
-          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.05rem", fontWeight: 700 }}>
-            🎉 ¡Objetivo de compra cumplido!
-          </div>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
-            Ya tienes ahorrado el presupuesto completo para tu {typeInfo.label.toLowerCase()}. ¡Es hora de dar el paso!
-          </div>
-        </div>
-      )}
-
       <AdviceBlock
         text={
-          type === "vivienda"
-            ? "Recuerda: los bancos suelen exigir al menos un 20% de entrada sobre el precio de la vivienda, más gastos de compraventa (impuestos, notaría, gestoría) aparte de esa entrada."
+          isGoalAchieved
+            ? "¡Felicidades! Ya tienes todo el dinero ahorrado para esta compra. Es el momento perfecto para empezar a buscar ofertas y dar el paso final sin endeudarte."
+            : type === "vivienda"
+            ? "Recuerda: los bancos suelen exigir al menos un 20% de entrada sobre el precio de la vivienda, más gastos de compraventa."
             : requiredMonthly > 800
             ? "La cuota mensual es alta. Alargar el plazo aunque sea un año puede bajarla de forma importante — pruébalo con el slider."
             : pct >= 50
@@ -341,60 +315,61 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <DecimalSliderRow label="Presupuesto" value={budget} min={200} max={MAX_FINANCIAL_LIMIT} step={500} unit="€" accent="lime" setValue={setBudget} />
-          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={Math.max(budget, MAX_FINANCIAL_LIMIT)} step={100} unit="€" accent="lavender" setValue={setCurrent} />
-          <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={0} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
+          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lavender" setValue={setCurrent} />
+          <SliderControl label="Meses para conseguirlo" value={monthsLeft} min={1} max={60} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
         </div>
       </Card>
 
-      {!showFinancing ? (
-        <Button variant="ghost" onClick={() => setShowFinancing(true)}>
-          ¿Y si financio una parte? Comparar con ahorrar todo
-        </Button>
-      ) : (
-        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
-            Ahorrar todo vs. financiar una parte
-          </div>
-          <div className="flex flex-col gap-6">
-            <SliderControl label="Porcentaje a financiar" value={financePct} min={0} max={90} step={5} unit="%" onChange={setFinancePct} accent="lavender" />
-            <SliderControl label="TAE estimada del préstamo" value={financeRate} min={0} max={20} step={0.1} unit="%" onChange={setFinanceRate} accent="lavender" />
-            <SliderControl label="Plazo del préstamo" value={financeMonths} min={6} max={96} step={1} unit="meses" onChange={setFinanceMonths} accent="lavender" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.4rem" }}>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
-              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Solo ahorrando</div>
-              <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
-                {monthsLeft > 0 ? fmtEUR(requiredMonthly) : "—"}
-              </div>
-              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>al mes · sin intereses</div>
+      {!isGoalAchieved && (
+        !showFinancing ? (
+          <Button variant="ghost" onClick={() => setShowFinancing(true)}>
+            ¿Y si financio una parte? Comparar con ahorrar todo
+          </Button>
+        ) : (
+          <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+            <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
+              Ahorrar todo vs. financiar una parte
             </div>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
-              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Financiando {financePct}%</div>
-              <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
-                {fmtEUR(combinedMonthly)}
+            <div className="flex flex-col gap-6">
+              <SliderControl label="Porcentaje a financiar" value={financePct} min={0} max={90} step={5} unit="%" onChange={setFinancePct} accent="lavender" />
+              <SliderControl label="TAE estimada del préstamo" value={financeRate} min={0} max={20} step={0.1} unit="%" onChange={setFinanceRate} accent="lavender" />
+              <SliderControl label="Plazo del préstamo" value={financeMonths} min={6} max={96} step={1} unit="meses" onChange={setFinanceMonths} accent="lavender" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.4rem" }}>
+              <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Solo ahorrando</div>
+                <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
+                  {safeMonths > 0 ? fmtEUR(requiredMonthly) : "—"}
+                </div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>al mes · sin intereses</div>
               </div>
-              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>
-                {fmtEUR(cashMonthly)} ahorro + {fmtEUR(loanPayment)} cuota
+              <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Financiando {financePct}%</div>
+                <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
+                  {fmtEUR(combinedMonthly)}
+                </div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginTop: "0.2rem" }}>
+                  {fmtEUR(cashMonthly)} ahorro + {fmtEUR(loanPayment)} cuota
+                </div>
               </div>
             </div>
-          </div>
 
-          <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem", textAlign: "center", marginTop: "1rem", background: `${T.coral}15`, padding: "0.6rem", borderRadius: "0.5rem" }}>
-            Financiar te cuesta <strong>{fmtEUR(interestCost)}</strong> extra en intereses a lo largo del préstamo
-          </div>
-        </Card>
+            <div style={{ ...fontBody, color: T.coral, fontSize: "0.85rem", textAlign: "center", marginTop: "1rem", background: `${T.coral}15`, padding: "0.6rem", borderRadius: "0.5rem" }}>
+              Financiar te cuesta <strong>{fmtEUR(interestCost)}</strong> extra en intereses a lo largo del préstamo
+            </div>
+          </Card>
+        )
       )}
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["savings", "loan"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             `Ahorro para ${typeInfo.label}: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${monthsLeft} meses → necesitas ${fmtEUR(requiredMonthly)}/mes.` +
-            (showFinancing ? ` Financiando ${financePct}%: ${fmtEUR(combinedMonthly)}/mes (${fmtEUR(interestCost)} en intereses).` : "")
+            (showFinancing && !isGoalAchieved ? ` Financiando ${financePct}%: ${fmtEUR(combinedMonthly)}/mes (${fmtEUR(interestCost)} en intereses).` : "")
           }
         />
         <ExportCSVButton
@@ -406,7 +381,7 @@ function BigPurchaseTool({ onBack, onNavigate, initialParams = {}, onStateChange
             { concepto: "Restante", valor: remaining.toFixed(2) },
             { concepto: "Plazo objetivo (meses)", valor: monthsLeft },
             { concepto: "Ahorro mensual necesario", valor: requiredMonthly.toFixed(2) },
-            ...(showFinancing ? [
+            ...(showFinancing && !isGoalAchieved ? [
               { concepto: "Porcentaje financiado", valor: `${financePct}%` },
               { concepto: "Cuota mensual del préstamo", valor: loanPayment.toFixed(2) },
               { concepto: "Intereses totales", valor: interestCost.toFixed(2) }
