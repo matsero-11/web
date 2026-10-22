@@ -2,12 +2,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  ComposedChart, Line
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Line
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -21,7 +20,6 @@ const FAQS = [
   { q: "¿Por qué el valor ajustado a inflación es más bajo que el saldo total?", a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques." },
 ];
 
-// COMPONENTE DE SLIDER BLINDADO
 function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
@@ -168,8 +166,6 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
   const pageTitle = "Calculadora de interés compuesto: simula el crecimiento de tu dinero | MetaBox";
   const pageDescription = "Simula cuánto puede crecer tu capital con el interés compuesto, incluyendo el valor real ajustado a inflación, según tu aportación, tipo de interés y plazo. Gráfica interactiva y gratis.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO: URL coincidente con el registro
   const pageUrl = "https://metabox-web.vercel.app/herramientas/interes-compuesto-aportaciones";
 
   return (
@@ -179,13 +175,6 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
         <meta name="description" content={pageDescription} />
         <meta name="keywords" content="calculadora de interés compuesto, simulador interés compuesto, cómo funciona el interés compuesto, interés compuesto mensual, interés compuesto ajustado a inflación" />
         <link rel="canonical" href={pageUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/interest.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -238,7 +227,7 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillSaldo" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
@@ -246,18 +235,21 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
                 </linearGradient>
               </defs>
               <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={20} />
-              <YAxis hide domain={[0, 'dataMax']} />
+              <YAxis hide />
               <Tooltip
                 contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
-                formatter={(v, name) => [fmtEUR(v), name === "saldo" ? "Saldo total" : name === "aportado" ? "Aportado" : "Valor real (inflación)"]}
+                formatter={(v, name) => {
+                  const label = name === "saldo" ? "Saldo total" : name === "aportado" ? "Aportado" : "Valor real";
+                  return [fmtEUR(Number(v) || 0), label];
+                }}
                 labelFormatter={(l) => `Mes ${l}`}
               />
               <Area type="monotone" dataKey="saldo" stroke={T.lime} strokeWidth={2} fill="url(#fillSaldo)" />
-              <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={2} strokeDasharray="4 3" dot={false} />
+              <Area type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={2} fill="none" strokeDasharray="4 3" />
               {showInflation && (
-                <Line type="monotone" dataKey="real" stroke={T.coral} strokeWidth={2} strokeDasharray="2 2" dot={false} />
+                <Area type="monotone" dataKey="real" stroke={T.coral} strokeWidth={2} fill="none" strokeDasharray="2 2" />
               )}
-            </ComposedChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center", marginTop: "0.6rem" }}>
