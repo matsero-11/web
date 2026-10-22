@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, ProgressBar, Chip, AdviceBlock } from "@/components/ui";
+import { Card, ProgressBar, Chip, AdviceBlock, SliderControl } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -32,79 +32,6 @@ function shuffleWithSeed(array, seed) {
   return arr;
 }
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 0.5, unit = "€", accent = "lavender", subtitle, useDynamicMax = true }) {
-  const [textVal, setTextVal] = useState(String(value ?? 0));
-  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
-
-  useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) {
-      setTextVal(String(value ?? 0));
-    }
-  }, [value]);
-
-  const handleInputChange = (e) => {
-    const raw = e.target.value;
-    setTextVal(raw);
-    const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) setValue(parsed);
-  };
-
-  const handleBlur = () => {
-    const parsed = parseFloat(textVal.replace(",", "."));
-    if (isNaN(parsed)) {
-      setValue(min);
-      setTextVal(String(min));
-    } else {
-      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
-      setValue(clamped);
-      setTextVal(String(clamped));
-    }
-  };
-
-  const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
-  };
-
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
-  
-  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 100, min + 10) : max;
-  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
-
-  const accentColor = accent === "lavender" ? T.lavender : T.lime;
-
-  return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex justify-between items-baseline">
-        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
-        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={textVal}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
-          />
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
-        </div>
-      </div>
-      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
-      <input
-        type="range"
-        min={min}
-        max={dynamicMax}
-        step={step}
-        value={sliderPos}
-        onChange={handleSliderChange}
-        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
-        style={{ accentColor }}
-      />
-    </div>
-  );
-}
 function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [weeks, setWeeks] = useState(() => {
     const p = initialParams?.weeks;
@@ -128,7 +55,6 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
     return initialParams?.shuffleMode === "true";
   });
 
-  // LA SEMILLA AHORA ES UN ESTADO PARA PODER CAMBIARLA AL PULSAR EL BOTÓN
   const [shuffleSeed, setShuffleSeed] = useState(() => {
     const p = initialParams?.shuffleSeed;
     return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : Math.floor(Math.random() * 100000);
@@ -202,7 +128,6 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
 
   const toggleShuffle = () => {
     if (!shuffleMode) {
-      // Si vamos a activar el modo aleatorio, generamos una nueva semilla para que sea verdaderamente aleatorio
       setShuffleSeed(Math.floor(Math.random() * 100000));
     }
     setShuffleMode((s) => !s);
@@ -211,8 +136,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
   const pageTitle = "Reto de ahorro de 26 o 52 semanas gratis | MetaBox";
   const pageDescription = "Sigue un reto de ahorro progresivo semana a semana, con modo aleatorio opcional, seguimiento real por fecha y 26 o 52 semanas a elegir. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/reto-de-ahorro-semanal";
-
-  return (
+    return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
@@ -226,10 +150,6 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
         <meta property="og:image" content="https://metabox-web.vercel.app/og/challenge.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/challenge.png" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -309,7 +229,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
         </div>
         <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorImporte" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
@@ -317,8 +237,8 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
                 </linearGradient>
               </defs>
               <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} minTickGap={15} />
-              {/* Añadido un margen superior al YAxis y domain para que la curva no se pegue arriba */}
-              <YAxis hide domain={[0, totalGoal > 0 ? totalGoal * 1.1 : 100]} />
+              {/* EL TRUCO: Dominio dinámico para que la gráfica no se aplaste */}
+              <YAxis hide domain={[0, Math.max(totalGoal, 100)]} />
               <Tooltip formatter={(value) => [`${value} €`, "Ahorro semanal"]} contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
               <Area type="monotone" dataKey="importe" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
             </AreaChart>
@@ -342,7 +262,17 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
             <Chip label="26 semanas" active={weeks === 26} onClick={() => setWeeks(26)} />
             <Chip label="52 semanas" active={weeks === 52} onClick={() => setWeeks(52)} />
           </div>
-          <DecimalSliderRow label="Incremento semanal base" value={baseAmount} min={1} max={MAX_FINANCIAL_LIMIT} step={0.5} unit="€" accent="lavender" setValue={setBaseAmount} />
+          {/* USAMOS EL SLIDER NATIVO CON UN STEP ADECUADO PARA EL MAX DE 10M */}
+          <SliderControl 
+            label="Incremento semanal base" 
+            value={baseAmount} 
+            min={1} 
+            max={MAX_FINANCIAL_LIMIT || 10000000} 
+            step={100} 
+            unit="€" 
+            onChange={setBaseAmount} 
+            accent="lavender" 
+          />
         </div>
       </Card>
 
