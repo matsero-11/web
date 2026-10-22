@@ -31,6 +31,8 @@ const EXPENSE_CATEGORIES = [
   { id: "otros", label: "Otros", icon: MoreHorizontal, default: 60, maxPct: 10 },
 ];
 
+const PIE_COLORS = [T.lime, T.lavender, T.coral, "#00F0FF", "#FFD700", "#FF003C", "#7000FF", "#00FF87"];
+
 const FAQS = [
   { q: "¿Qué porcentaje de mis ingresos debería destinar a cada categoría?", a: "No hay una regla única, pero muchas personas usan como referencia el 50% en necesidades, el 30% en deseos y el 20% en ahorro. Ajusta cada categoría según tu situación real con los sliders." },
   { q: "¿Qué hago si mis gastos superan mis ingresos?", a: "Revisa el desglose por categoría y prioriza recortar primero en las partidas más flexibles, como ocio o suscripciones, antes de tocar gastos fijos como vivienda o transporte." },
@@ -184,7 +186,7 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
 
   const chartData = activeCats
     .map((c) => ({ name: c.label, importe: amounts[c.id] || 0 }))
-    .sort((a, b) => b.importe - a.importe);
+    .filter((d) => d.importe > 0); // Filtramos los que sean 0 para que no salgan en la tarta
 
   const saveSnapshot = () => {
     const snapshot = {
@@ -197,8 +199,6 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
 
   const pageTitle = "Presupuesto mensual por categorías: organiza tus gastos | MetaBox";
   const pageDescription = "Organiza tu presupuesto mensual por categorías, compáralas con referencias razonables de gasto, añade categorías propias y guarda tu histórico mes a mes. Gratis y sin registro.";
-  
-  // SEO CORREGIDO: Coincide con el slug del registro
   const pageUrl = "https://metabox-web.vercel.app/herramientas/presupuesto-mensual-categorias";
 
   return (
@@ -323,26 +323,46 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
         <DecimalSliderRow label="Ingresos mensuales" value={income} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lavender" setValue={setIncome} />
       </Card>
 
+      {/* NUEVO GRÁFICO DE TARTA (Donut) PARA EL DESGLOSE */}
       {activeCats.length > 0 && (
         <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
             Desglose por categoría
           </div>
-          <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
+          <div style={{ width: "100%", height: "200px" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorGasto" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={T.lime} stopOpacity={0.9}/>
-                    <stop offset="95%" stopColor={T.lime} stopOpacity={0.3}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis hide /> {/* Eje Y oculto para que Recharts calcule bien */}
-                <Tooltip formatter={(value) => [`${value} €`, "Gasto"]} contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
-                <Bar dataKey="importe" fill="url(#colorGasto)" radius={[6, 6, 0, 0]} animationDuration={300} />
-              </BarChart>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="importe"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  stroke="none"
+                  cornerRadius={4}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value) => [fmtEUR(value), "Gasto"]} 
+                  contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} 
+                />
+              </PieChart>
             </ResponsiveContainer>
+          </div>
+          {/* Leyenda de colores */}
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.6rem", marginTop: "0.8rem" }}>
+            {chartData.map((entry, index) => (
+              <div key={entry.name} style={{ display: "flex", alignItems: "center", gap: "0.3rem", ...fontBody, fontSize: "0.75rem", color: T.text }}>
+                <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}></span>
+                {entry.name}
+              </div>
+            ))}
           </div>
         </Card>
       )}
