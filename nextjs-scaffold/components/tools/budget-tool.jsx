@@ -37,23 +37,44 @@ const FAQS = [
   { q: "¿Para qué sirve guardar el mes en el histórico?", a: "Al guardar una foto de tu presupuesto cada mes, puedes ver cómo evoluciona tu disponible real a lo largo del tiempo, en vez de mirar solo el mes actual de forma aislada." },
 ];
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+function DecimalSliderRow({ label, value, setValue, min, max, step = 50, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
+  const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
+
   useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) setTextVal(String(value ?? 0));
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
   }, [value]);
+
   const handleInputChange = (e) => {
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
     if (!isNaN(parsed)) setValue(parsed);
   };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      setValue(min);
+      setTextVal(String(min));
+    } else {
+      const clamped = Math.min(Math.max(parsed, min), MAX_LIMIT);
+      setValue(clamped);
+      setTextVal(String(clamped));
+    }
+  };
+
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
     setTextVal(String(val));
   };
+
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, MAX_LIMIT));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
@@ -64,11 +85,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             inputMode="decimal"
             value={textVal}
             onChange={handleInputChange}
-            onBlur={() => {
-              const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) setTextVal(String(value ?? 0));
-              else { setValue(parsed); setTextVal(String(parsed)); }
-            }}
+            onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
             style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
@@ -79,9 +96,9 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
       <input
         type="range"
         min={min}
-        max={Math.max(max, value || 0, 100)}
+        max={MAX_LIMIT}
         step={step}
-        value={isNaN(value) ? 0 : value}
+        value={safeValue}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
@@ -89,7 +106,6 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     </div>
   );
 }
-
 function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [selected, setSelected] = useState(() => {
     const p = initialParams?.selected;
@@ -181,7 +197,9 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
 
   const pageTitle = "Presupuesto mensual por categorías: organiza tus gastos | MetaBox";
   const pageDescription = "Organiza tu presupuesto mensual por categorías, compáralas con referencias razonables de gasto, añade categorías propias y guarda tu histórico mes a mes. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/budget";
+  
+  // SEO CORREGIDO: Coincide con el slug del registro
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/presupuesto-mensual-categorias";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -312,10 +330,17 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
           </div>
           <div style={{ width: "100%", height: "180px", marginTop: "0.4rem" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorGasto" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={T.lime} stopOpacity={0.9}/>
+                    <stop offset="95%" stopColor={T.lime} stopOpacity={0.3}/>
+                  </linearGradient>
+                </defs>
                 <XAxis dataKey="name" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip formatter={(value) => [`${value} €`, "Gasto"]} contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
-                <Bar dataKey="importe" fill={T.lime} radius={[4, 4, 0, 0]} animationDuration={300} />
+                <YAxis hide /> {/* Eje Y oculto para que Recharts calcule bien */}
+                <Tooltip formatter={(value) => [`${value} €`, "Gasto"]} contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
+                <Bar dataKey="importe" fill="url(#colorGasto)" radius={[6, 6, 0, 0]} animationDuration={300} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -354,7 +379,7 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
               <LineChart data={history} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="label" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
                 <YAxis hide />
-                <Tooltip contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }} formatter={(v) => [fmtEUR(v), "Disponible"]} />
+                <Tooltip contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }} formatter={(v) => [fmtEUR(v), "Disponible"]} />
                 <Line type="monotone" dataKey="available" stroke={T.lime} strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -386,4 +411,3 @@ function BudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
 }
 
 export default BudgetTool;
-    
