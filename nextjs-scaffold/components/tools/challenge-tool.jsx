@@ -2,18 +2,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck, Shuffle,
+  Shuffle,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, ProgressBar, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -38,23 +34,49 @@ function shuffleWithSeed(array, seed) {
   return arr;
 }
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+// SLIDER FLUIDO Y SIN ATASCOS
+function DecimalSliderRow({ label, value, setValue, min, max, step = 0.5, unit = "€", accent = "lavender", subtitle, useDynamicMax = true }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
+  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
+
   useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) setTextVal(String(value ?? 0));
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
   }, [value]);
+
   const handleInputChange = (e) => {
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
     if (!isNaN(parsed)) setValue(parsed);
   };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      setValue(min);
+      setTextVal(String(min));
+    } else {
+      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
+      setValue(clamped);
+      setTextVal(String(clamped));
+    }
+  };
+
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
     setTextVal(String(val));
   };
+
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
+  
+  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 100, min + 10) : max;
+  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
+
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
@@ -65,11 +87,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             inputMode="decimal"
             value={textVal}
             onChange={handleInputChange}
-            onBlur={() => {
-              const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) setTextVal(String(value ?? 0));
-              else { setValue(parsed); setTextVal(String(parsed)); }
-            }}
+            onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
             style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
@@ -80,17 +98,16 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
       <input
         type="range"
         min={min}
-        max={Math.max(max, value || 0, 100)}
+        max={dynamicMax}
         step={step}
-        value={isNaN(value) ? 0 : value}
+        value={sliderPos}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
       />
     </div>
   );
-}
-
+    }
 function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [weeks, setWeeks] = useState(() => {
     const p = initialParams?.weeks;
@@ -141,7 +158,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
   useEffect(() => {
     const filtered = doneArray.filter((w) => w <= weeks);
     if (filtered.length !== doneArray.length) setDoneArray(filtered);
-  }, [weeks]);
+  }, [weeks, doneArray]);
 
   useEffect(() => {
     if (!startDate) setStartDate(new Date().toISOString());
@@ -191,7 +208,9 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
 
   const pageTitle = "Reto de ahorro de 26 o 52 semanas gratis | MetaBox";
   const pageDescription = "Sigue un reto de ahorro progresivo semana a semana, con modo aleatorio opcional, seguimiento real por fecha y 26 o 52 semanas a elegir. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/challenge";
+  
+  // CORRECCIÓN DE SEO: URL exacta al slug del registro
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/reto-de-ahorro-semanal";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -282,6 +301,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
               border: `1px solid ${shuffleMode ? T.lime : T.border}`,
               borderRadius: "999px", padding: "0.35rem 0.7rem", cursor: "pointer",
               color: shuffleMode ? T.lime : T.textMuted, fontSize: "0.75rem", ...fontBody,
+              transition: "all 0.2s ease",
             }}
           >
             <Shuffle size={12} /> Aleatorio
@@ -292,12 +312,12 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorImporte" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={T.lime} stopOpacity={0.4}/>
+                  <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
                   <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis dataKey="semana" stroke={T.textMuted} fontSize={11} tickLine={false} axisLine={false} interval={weeks > 26 ? 6 : 3} />
-              <Tooltip formatter={(value) => [`${value} €`, "Ahorro semanal"]} contentStyle={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
+              <Tooltip formatter={(value) => [`${value} €`, "Ahorro semanal"]} contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "8px", fontSize: "12px", color: T.text }} />
               <Area type="monotone" dataKey="importe" stroke={T.lime} strokeWidth={2} fillOpacity={1} fill="url(#colorImporte)" animationDuration={400} />
             </AreaChart>
           </ResponsiveContainer>
@@ -343,6 +363,7 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
                   color: active ? T.lime : T.textMuted,
                   ...fontBody, fontSize: "0.72rem", fontWeight: 600,
                   cursor: "pointer", transition: "all 0.15s ease",
+                  boxShadow: active ? `0 4px 10px ${T.lime}20` : "none"
                 }}
               >
                 {w}
@@ -368,4 +389,3 @@ function ChallengeTool({ onBack, onNavigate, initialParams = {}, onStateChange }
 }
 
 export default ChallengeTool;
-                              
