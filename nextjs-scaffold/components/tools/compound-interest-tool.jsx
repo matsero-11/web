@@ -2,14 +2,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
-} from "lucide-react";
-import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
+  ComposedChart, Line
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -27,23 +21,48 @@ const FAQS = [
   { q: "¿Por qué el valor ajustado a inflación es más bajo que el saldo total?", a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques." },
 ];
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
+// COMPONENTE DE SLIDER BLINDADO
+function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
+  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
+
   useEffect(() => {
-    if (value !== parseFloat(textVal.replace(",", "."))) setTextVal(String(value ?? 0));
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
   }, [value]);
+
   const handleInputChange = (e) => {
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
     if (!isNaN(parsed)) setValue(parsed);
   };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      setValue(min);
+      setTextVal(String(min));
+    } else {
+      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
+      setValue(clamped);
+      setTextVal(String(clamped));
+    }
+  };
+
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
     setValue(val);
     setTextVal(String(val));
   };
+
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
+  
+  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 100, min + 10) : max;
+  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex justify-between items-baseline">
@@ -54,11 +73,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             inputMode="decimal"
             value={textVal}
             onChange={handleInputChange}
-            onBlur={() => {
-              const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) setTextVal(String(value ?? 0));
-              else { setValue(parsed); setTextVal(String(parsed)); }
-            }}
+            onBlur={handleBlur}
             className="bg-transparent text-right font-semibold"
             style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
           />
@@ -69,9 +84,9 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
       <input
         type="range"
         min={min}
-        max={Math.max(max, value || 0, 100)}
+        max={dynamicMax}
         step={step}
-        value={isNaN(value) ? 0 : value}
+        value={sliderPos}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
@@ -79,7 +94,6 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     </div>
   );
 }
-
 function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [initial, setInitial] = useState(() => {
     const p = initialParams?.initial;
@@ -132,6 +146,7 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
     let contributed = initial;
     const points = [{ mes: 0, saldo: initial, aportado: initial, real: initial }];
     const step = totalMonths > 96 ? Math.ceil(totalMonths / 96) : 1;
+    
     for (let m = 1; m <= totalMonths; m++) {
       balance = balance * (1 + monthlyRate) + monthly;
       contributed += monthly;
@@ -153,7 +168,9 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
   const pageTitle = "Calculadora de interés compuesto: simula el crecimiento de tu dinero | MetaBox";
   const pageDescription = "Simula cuánto puede crecer tu capital con el interés compuesto, incluyendo el valor real ajustado a inflación, según tu aportación, tipo de interés y plazo. Gráfica interactiva y gratis.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/interest";
+  
+  // CORRECCIÓN CRÍTICA DE SEO: URL coincidente con el registro
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/interes-compuesto-aportaciones";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -169,10 +186,6 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
         <meta property="og:image" content="https://metabox-web.vercel.app/og/interest.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/interest.png" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -225,24 +238,24 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillSaldo" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
                   <stop offset="100%" stopColor={T.lime} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis hide />
+              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={20} />
+              <YAxis hide domain={[0, 'dataMax']} />
               <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
                 formatter={(v, name) => [fmtEUR(v), name === "saldo" ? "Saldo total" : name === "aportado" ? "Aportado" : "Valor real (inflación)"]}
                 labelFormatter={(l) => `Mes ${l}`}
               />
               <Area type="monotone" dataKey="saldo" stroke={T.lime} strokeWidth={2} fill="url(#fillSaldo)" />
-              <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
+              <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={2} strokeDasharray="4 3" dot={false} />
               {showInflation && (
-                <Line type="monotone" dataKey="real" stroke={T.coral} strokeWidth={1.5} strokeDasharray="2 2" dot={false} />
+                <Line type="monotone" dataKey="real" stroke={T.coral} strokeWidth={2} strokeDasharray="2 2" dot={false} />
               )}
             </ComposedChart>
           </ResponsiveContainer>
@@ -261,13 +274,13 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Poder adquisitivo real
           </div>
-          <DecimalSliderRow label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" accent="lavender" setValue={setInflationRate} />
+          <DecimalSliderRow label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" accent="lavender" setValue={setInflationRate} useDynamicMax={false} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Euros nominales</div>
               <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.4rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(finalAmount)}</div>
             </div>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Poder adquisitivo real hoy</div>
               <div style={{ ...fontDisplay, color: T.coral, fontSize: "1.4rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedReal)}</div>
             </div>
@@ -290,10 +303,10 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lime" setValue={setInitial} />
-          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} />
-          <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} />
-          <DecimalSliderRow label="Años" value={years} min={1} max={40} step={1} unit="años" accent="lavender" setValue={setYears} />
+          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lime" setValue={setInitial} useDynamicMax={true} />
+          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} useDynamicMax={true} />
+          <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} useDynamicMax={false} />
+          <DecimalSliderRow label="Años" value={years} min={1} max={40} step={1} unit="años" accent="lavender" setValue={setYears} useDynamicMax={false} />
         </div>
       </Card>
 
@@ -330,4 +343,3 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 }
 
 export default CompoundInterestTool;
-      
