@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Line
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  ComposedChart, Line
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -20,7 +21,8 @@ const FAQS = [
   { q: "¿Por qué el valor ajustado a inflación es más bajo que el saldo total?", a: "Porque la inflación reduce el poder adquisitivo del dinero con el tiempo. El saldo total son los euros nominales que tendrás; el valor ajustado es lo que esos euros podrán comprar realmente al ritmo de inflación que indiques." },
 ];
 
-function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
+// SLIDER CON MÁXIMO DINÁMICO EXTREMO
+function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
 
@@ -57,7 +59,8 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
 
   const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
   
-  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 100, min + 10) : max;
+  // EL TRUCO DEFINITIVO: El máximo es siempre el doble del valor actual (con un mínimo de 10.000)
+  const dynamicMax = Math.max(safeValue * 2, 10000);
   const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
@@ -92,6 +95,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
     </div>
   );
 }
+
 function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [initial, setInitial] = useState(() => {
     const p = initialParams?.initial;
@@ -139,10 +143,10 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
   const monthlyInflation = inflationRate / 100 / 12;
   const totalMonths = years * 12;
 
-  const { finalAmount, totalContributed, finalReal, chartData } = useMemo(() => {
+  const { finalAmount, totalContributed, totalInterest, finalReal, chartData } = useMemo(() => {
     let balance = initial;
     let contributed = initial;
-    const points = [{ mes: 0, saldo: initial, aportado: initial, real: initial }];
+    const points = [{ mes: 0, saldo: initial, aportado: initial, intereses: 0, real: initial }];
     const step = totalMonths > 96 ? Math.ceil(totalMonths / 96) : 1;
     
     for (let m = 1; m <= totalMonths; m++) {
@@ -150,19 +154,30 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
       contributed += monthly;
       const realValue = balance / Math.pow(1 + monthlyInflation, m);
       if (m % step === 0 || m === totalMonths) {
-        points.push({ mes: m, saldo: balance, aportado: contributed, real: realValue });
+        points.push({ 
+          mes: m, 
+          saldo: balance, 
+          aportado: contributed, 
+          intereses: Math.max(balance - contributed, 0),
+          real: realValue 
+        });
       }
     }
     const realFinal = balance / Math.pow(1 + monthlyInflation, totalMonths);
-    return { finalAmount: balance, totalContributed: contributed, finalReal: realFinal, chartData: points };
+    return { 
+      finalAmount: balance, 
+      totalContributed: contributed, 
+      totalInterest: Math.max(balance - contributed, 0),
+      finalReal: realFinal, 
+      chartData: points 
+    };
   }, [initial, monthly, monthlyRate, monthlyInflation, totalMonths]);
 
-  const interestEarned = finalAmount - totalContributed;
   const purchasingPowerLost = finalAmount - finalReal;
   const animatedFinal = useAnimatedNumber(finalAmount);
-  const animatedInterest = useAnimatedNumber(Math.max(interestEarned, 0));
+  const animatedInterest = useAnimatedNumber(totalInterest);
   const animatedReal = useAnimatedNumber(finalReal);
-  const isInterestMilestoneReached = interestEarned >= totalContributed && totalContributed > 0;
+  const isInterestMilestoneReached = totalInterest >= totalContributed && totalContributed > 0;
 
   const pageTitle = "Calculadora de interés compuesto: simula el crecimiento de tu dinero | MetaBox";
   const pageDescription = "Simula cuánto puede crecer tu capital con el interés compuesto, incluyendo el valor real ajustado a inflación, según tu aportación, tipo de interés y plazo. Gráfica interactiva y gratis.";
@@ -225,9 +240,9 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
       )}
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
-        <div style={{ width: "100%", height: "190px" }}>
+        <div style={{ width: "100%", height: "200px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillSaldo" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={T.lime} stopOpacity={0.45} />
@@ -235,25 +250,27 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
                 </linearGradient>
               </defs>
               <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={20} />
-              <YAxis hide />
+              <YAxis hide domain={[0, 'auto']} />
               <Tooltip
                 contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}
                 formatter={(v, name) => {
-                  const label = name === "saldo" ? "Saldo total" : name === "aportado" ? "Aportado" : "Valor real";
-                  return [fmtEUR(Number(v) || 0), label];
+                  const labels = { saldo: "Saldo total", aportado: "Aportado", intereses: "Intereses", real: "Valor real" };
+                  return [fmtEUR(Number(v) || 0), labels[name] || name];
                 }}
                 labelFormatter={(l) => `Mes ${l}`}
               />
               <Area type="monotone" dataKey="saldo" stroke={T.lime} strokeWidth={2} fill="url(#fillSaldo)" />
-              <Area type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={2} fill="none" strokeDasharray="4 3" />
+              <Line type="monotone" dataKey="aportado" stroke={T.lavender} strokeWidth={2} strokeDasharray="4 3" dot={false} />
+              {/* LÍNEA DE INTERESES AÑADIDA AQUÍ */}
+              <Line type="monotone" dataKey="intereses" stroke={T.coral} strokeWidth={2} dot={false} />
               {showInflation && (
-                <Area type="monotone" dataKey="real" stroke={T.coral} strokeWidth={2} fill="none" strokeDasharray="2 2" />
+                <Line type="monotone" dataKey="real" stroke="#00F0FF" strokeWidth={1.5} strokeDasharray="2 2" dot={false} />
               )}
-            </AreaChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center", marginTop: "0.6rem" }}>
-          Lima: saldo total · Lavanda: solo lo aportado{showInflation ? " · Coral: valor real" : ""}
+          Lima: saldo total · Lavanda: aportado · Coral: intereses {showInflation ? " · Cian: valor real" : ""}
         </div>
       </Card>
 
@@ -266,7 +283,7 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Poder adquisitivo real
           </div>
-          <DecimalSliderRow label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" accent="lavender" setValue={setInflationRate} useDynamicMax={false} />
+          <DecimalSliderRow label="Inflación media anual estimada" value={inflationRate} min={0} max={10} step={0.1} unit="%" accent="lavender" setValue={setInflationRate} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
             <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Euros nominales</div>
@@ -274,7 +291,7 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
             </div>
             <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Poder adquisitivo real hoy</div>
-              <div style={{ ...fontDisplay, color: T.coral, fontSize: "1.4rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedReal)}</div>
+              <div style={{ ...fontDisplay, color: "#00F0FF", fontSize: "1.4rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedReal)}</div>
             </div>
           </div>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", textAlign: "center", marginTop: "0.9rem" }}>
@@ -285,7 +302,7 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
       <AdviceBlock
         text={
-          interestEarned > totalContributed * 0.5
+          totalInterest > totalContributed * 0.5
             ? "Los intereses ya pesan más de la mitad de lo aportado: cuanto más tiempo dejes crecer el capital, más se acelera esa diferencia."
             : years < 5
             ? "A pocos años, el interés compuesto pesa poco todavía. Prueba a alargar el plazo y verás cómo se separan las dos líneas."
@@ -295,10 +312,11 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lime" setValue={setInitial} useDynamicMax={true} />
-          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} useDynamicMax={true} />
-          <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} useDynamicMax={false} />
-          <DecimalSliderRow label="Años" value={years} min={1} max={40} step={1} unit="años" accent="lavender" setValue={setYears} useDynamicMax={false} />
+          <DecimalSliderRow label="Capital inicial" value={initial} min={0} max={MAX_FINANCIAL_LIMIT} step={100} unit="€" accent="lime" setValue={setInitial} />
+          <DecimalSliderRow label="Aportación mensual" value={monthly} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} />
+          <DecimalSliderRow label="Interés anual estimado" value={rate} min={0} max={12} step={0.1} unit="%" accent="lime" setValue={setRate} />
+          {/* AÑOS AMPLIADOS HASTA 70 */}
+          <DecimalSliderRow label="Años" value={years} min={1} max={70} step={1} unit="años" accent="lavender" setValue={setYears} />
         </div>
       </Card>
 
@@ -313,14 +331,14 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Interés compuesto: capital inicial ${fmtEUR(initial)}, aportación ${fmtEUR(monthly)}/mes al ${rate}% anual durante ${years} años → ${fmtEUR(finalAmount)} (${fmtEUR(interestEarned)} en intereses).` +
+            `Interés compuesto: capital inicial ${fmtEUR(initial)}, aportación ${fmtEUR(monthly)}/mes al ${rate}% anual durante ${years} años → ${fmtEUR(finalAmount)} (${fmtEUR(totalInterest)} en intereses).` +
             (showInflation ? ` Valor real ajustado a inflación: ${fmtEUR(finalReal)}.` : "")
           }
         />
         <ExportCSVButton
           filename="proyeccion-interes-compuesto"
           getRows={() =>
-            chartData.map((row) => ({ mes: row.mes, saldo: row.saldo.toFixed(2), aportado: row.aportado.toFixed(2), valor_real: row.real.toFixed(2) }))
+            chartData.map((row) => ({ mes: row.mes, saldo: row.saldo.toFixed(2), aportado: row.aportado.toFixed(2), intereses: row.intereses.toFixed(2), valor_real: row.real.toFixed(2) }))
           }
         />
       </div>
@@ -335,3 +353,4 @@ function CompoundInterestTool({ onBack, onNavigate, initialParams = {}, onStateC
 }
 
 export default CompoundInterestTool;
+
