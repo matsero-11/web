@@ -1,10 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Home as HomeIcon,
-  Tv, Utensils, Car,
-} from "lucide-react";
+import { Home as HomeIcon, Tv, Utensils, Car } from "lucide-react";
 import { T, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
 import { Card, Chip, AdviceBlock } from "@/components/ui";
@@ -37,11 +34,10 @@ const ESSENTIAL_CATEGORIES = [
   { id: "transporte", label: "Transporte", icon: Car, default: 100 },
 ];
 
-// SLIDER HÍBRIDO BLINDADO
-function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
+// SLIDER HTML PURO (A PRUEBA DE BOMBAS)
+function SafeSlider({ label, value, setValue, max, step = 1, unit = "€", accent = "lime" }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
-
+  
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
       setTextVal(String(value ?? 0));
@@ -58,27 +54,22 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
   const handleBlur = () => {
     const parsed = parseFloat(textVal.replace(",", "."));
     if (isNaN(parsed)) {
-      setValue(min);
-      setTextVal(String(min));
+      setValue(0);
+      setTextVal("0");
     } else {
-      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
-      setValue(clamped);
-      setTextVal(String(clamped));
+      setValue(parsed);
+      setTextVal(String(parsed));
     }
   };
 
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
-    if (!isNaN(val)) {
-      setValue(val);
-      setTextVal(String(val));
-    }
+    setValue(val);
+    setTextVal(String(val));
   };
 
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
-  
-  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 5000, min + 1000) : max;
-  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
+  // Si el valor es mayor que el máximo, el input range se clava al final.
+  const safeValue = isNaN(value) ? 0 : Math.max(0, Math.min(value, max));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
   return (
@@ -98,20 +89,20 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
       </div>
-      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
       <input
         type="range"
-        min={min}
-        max={dynamicMax}
+        min={0}
+        max={max}
         step={step}
-        value={sliderPos}
+        value={safeValue}
         onChange={handleSliderChange}
-        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
-        style={{ accentColor }}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor, accentColor } as React.CSSProperties}
       />
     </div>
   );
 }
+
 function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [monthsTarget, setMonthsTarget] = useState(() => {
     const p = initialParams?.monthsTarget;
@@ -169,7 +160,6 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
   );
   const expenses = useBreakdown ? breakdownTotal : simpleExpenses;
   
-  // SANITIZACIÓN PARA EVITAR QUE LA GRÁFICA SE ROMPA
   const safeExpenses = Number.isFinite(expenses) ? expenses : 0;
   const safeMonths = Number.isFinite(monthsTarget) ? monthsTarget : 0;
   const goal = Math.min(safeExpenses * safeMonths, MAX_FINANCIAL_LIMIT);
@@ -181,6 +171,9 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
   const pageTitle = "Calculadora de fondo de emergencia: cuánto ahorrar y en cuántos meses | MetaBox";
   const pageDescription = "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos esenciales desglosados por categoría, cuánto llevas ahorrado y en cuántos meses lo conseguirás. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/fondo-de-emergencia";
+
+  // Lógica para ocultar la gráfica si ya se ha superado el objetivo
+  const showProjection = safeCurrent <= safeGoal * 2;
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
@@ -220,7 +213,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           {!useBreakdown ? (
-            <DecimalSliderRow label="Gasto esencial mensual" value={simpleExpenses} min={300} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" setValue={setSimpleExpenses} useDynamicMax={true} />
+            <SafeSlider label="Gasto esencial mensual" value={simpleExpenses} max={10000} step={50} unit="€" setValue={setSimpleExpenses} />
           ) : (
             <div>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>
@@ -228,16 +221,14 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
               </div>
               <div className="flex flex-col gap-5">
                 {ESSENTIAL_CATEGORIES.map((c) => (
-                  <DecimalSliderRow
+                  <SafeSlider
                     key={c.id}
                     label={c.label}
                     value={breakdown[c.id] || 0}
-                    min={0}
-                    max={MAX_FINANCIAL_LIMIT}
+                    max={5000}
                     step={10}
                     unit="€"
                     setValue={(v) => setBreakdown((b) => ({ ...b, [c.id]: v }))}
-                    useDynamicMax={true}
                   />
                 ))}
               </div>
@@ -264,7 +255,10 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
         Objetivo calculado: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(safeGoal)}</span>
       </div>
 
-      <GoalProjection goal={safeGoal} current={safeCurrent} monthly={safeMonthly} extra={0} monthsSavedLabel="" />
+      {/* MOSTRAMOS LA GRÁFICA SOLO SI TIENE SENTIDO */}
+      {showProjection && (
+        <GoalProjection goal={safeGoal} current={safeCurrent} monthly={safeMonthly} extra={0} monthsSavedLabel="" />
+      )}
 
       <AdviceBlock
         text={
@@ -278,8 +272,8 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" setValue={setCurrent} useDynamicMax={true} />
-          <DecimalSliderRow label="Aportación mensual" value={monthly} min={10} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} useDynamicMax={true} />
+          <SafeSlider label="Ya ahorrado" value={current} max={100000} step={50} unit="€" setValue={setCurrent} />
+          <SafeSlider label="Aportación mensual" value={monthly} max={10000} step={10} unit="€" accent="lavender" setValue={setMonthly} />
         </div>
       </Card>
 
