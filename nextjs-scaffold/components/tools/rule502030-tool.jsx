@@ -77,7 +77,6 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
     </div>
   );
 }
-
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, value || 0, 100);
