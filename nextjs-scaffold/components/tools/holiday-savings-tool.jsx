@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus, X } from "lucide-react";
+import { Plus, X, PiggyBank, Gift, Sparkles, PartyPopper } from "lucide-react";
 import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
@@ -30,7 +30,14 @@ const FAQS = [
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-function MoneyInput({ value, onChange }) {
+const SUGGESTIONS = [
+  { name: "Lotería", amount: 40 },
+  { name: "Amigo invisible", amount: 20 },
+  { name: "Cena de empresa", amount: 50 },
+  { name: "Regalo pareja", amount: 100 },
+];
+
+function MoneyInput({ value, onChange, icon }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
 
   useEffect(() => {
@@ -58,7 +65,8 @@ function MoneyInput({ value, onChange }) {
   };
 
   return (
-    <div className="flex items-center justify-end bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-3 py-2 rounded-xl border border-[var(--border,rgba(255,255,255,0.08))]" style={{ width: "110px", flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.4rem 0.8rem", width: "110px", flexShrink: 0 }}>
+      {icon && <div style={{ marginRight: "0.4rem", color: T.textMuted }}>{icon}</div>}
       <input
         type="text"
         inputMode="decimal"
@@ -69,6 +77,46 @@ function MoneyInput({ value, onChange }) {
         style={{ ...fontBody, color: T.lime, fontSize: "1rem", width: "100%", outline: "none" }}
       />
       <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginLeft: "4px" }}>€</span>
+    </div>
+  );
+}
+
+function Snowfall() {
+  const flakes = Array.from({ length: 15 });
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 1, opacity: 0.4 }}>
+      <style>{`
+        @keyframes snow {
+          0% { transform: translateY(-20px) translateX(0px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(250px) translateX(20px) rotate(360deg); opacity: 0; }
+        }
+        .snowflake {
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+          filter: blur(1px);
+        }
+      `}</style>
+      {flakes.map((_, i) => {
+        const size = Math.random() * 4 + 2;
+        const left = Math.random() * 100;
+        const delay = Math.random() * 5;
+        const duration = Math.random() * 3 + 3;
+        return (
+          <div
+            key={i}
+            className="snowflake"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              left: `${left}%`,
+              top: `-10px`,
+              animation: `snow ${duration}s linear infinite`,
+              animationDelay: `${delay}s`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -100,6 +148,10 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
   });
 
   const [newName, setNewName] = useState("");
+  
+  // Estado para el efecto 3D
+  const cardRef = useRef(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0, hover: false });
 
   useEffect(() => {
     if (typeof onStateChange === "function") {
@@ -126,10 +178,9 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     setGifts((prev) => prev.map((g) => (g.id === id ? { ...g, name } : g)));
   };
 
-  const addGift = () => {
-    const name = newName.trim();
-    if (!name) return;
-    setGifts((prev) => [...prev, { id: `${Date.now()}`, name, amount: 50 }]);
+  const addGift = (name = newName, amount = 50) => {
+    if (!name.trim()) return;
+    setGifts((prev) => [...prev, { id: `${Date.now()}`, name: name.trim(), amount }]);
     setNewName("");
   };
 
@@ -137,77 +188,149 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     setGifts((prev) => prev.filter((g) => g.id !== id));
   };
 
+  // Cálculo del progreso y niveles
+  const progressPct = budget > 0 ? Math.min((current / budget) * 100, 100) : 0;
+  let levelText = "Novato Navideño";
+  let levelIcon = <Gift size={14} />;
+  if (progressPct >= 100) {
+    levelText = "¡Santa Claus Profesional!";
+    levelIcon = <PartyPopper size={14} color={T.lime} />;
+  } else if (progressPct >= 50) {
+    levelText = "Duende Ahorrador";
+    levelIcon = <Sparkles size={14} color={T.lime} />;
+  } else if (progressPct > 0) {
+    levelText = "Aprendiz de Reno";
+    levelIcon = <PiggyBank size={14} />;
+  }
+
+  // Manejadores para el Tilt 3D
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x, y, hover: true });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0, hover: false });
+  };
+
   const pageTitle = "Calculadora de ahorro para Navidad con lista de regalos | MetaBox";
   const pageDescription = "Haz tu lista de regalos y gastos de Navidad, suma el presupuesto total automáticamente y calcula cuánto ahorrar cada mes hasta diciembre. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-para-navidad";
 
+  // Estilos dinámicos para el 3D
+  const tiltStyle = tilt.hover
+    ? {
+        transform: `perspective(1000px) rotateX(${-tilt.y * 15}deg) rotateY(${tilt.x * 15}deg) scale3d(1.02, 1.02, 1.02)`,
+        transition: "transform 0.1s ease-out",
+      }
+    : {
+        transform: `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`,
+        transition: "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)",
+      };
+
+  const glareStyle = {
+    position: "absolute",
+    inset: 0,
+    borderRadius: "1.2rem",
+    pointerEvents: "none",
+    background: tilt.hover
+      ? `radial-gradient(circle at ${tilt.x * 100 + 50}% ${tilt.y * 100 + 50}%, rgba(255,255,255,0.15) 0%, transparent 60%)`
+      : "none",
+    transition: "background 0.1s ease-out",
+    zIndex: 10,
+  };
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
+      <style>{`
+        @keyframes float-christmas {
+          0% { transform: translate(0px, 0px) scale(1); }
+          50% { transform: translate(10px, -15px) scale(1.1); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+      `}</style>
+
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content="ahorro para Navidad, cuánto ahorrar para Navidad, lista de regalos de Navidad, calculadora presupuesto Navidad" />
         <link rel="canonical" href={pageUrl} />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "Ahorro para Navidad",
-            url: pageUrl,
-            applicationCategory: "FinanceApplication",
-            operatingSystem: "Any",
-            inLanguage: "es",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-            description: pageDescription,
-          })}
-        </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Ahorro para Navidad" subtitle="Haz tu lista de regalos y calculamos cuánto ahorrar al mes." onBack={onBack} />
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ height: "140px", position: "relative" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, value: 1 }))}
-                dataKey="value"
-                innerRadius="68%"
-                outerRadius="95%"
-                startAngle={90}
-                endAngle={-270}
-                paddingAngle={4}
-                stroke="none"
-                isAnimationActive={true}
-                animationDuration={500}
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Cell key={i} fill={i + 1 >= currentMonth ? T.lime : T.surfaceAlt} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{monthsLeft}</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{monthsLeft === 1 ? "mes" : "meses"}</div>
+      {/* TARJETA MÁGICA 3D CON NIEVE */}
+      <div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onTouchMove={handleMouseMove}
+        onTouchEnd={handleMouseLeave}
+        style={{ ...tiltStyle, width: "100%", position: "relative", zIndex: 1 }}
+      >
+        <Card glow result style={{ textAlign: "center", paddingTop: "1.5rem", paddingBottom: "1.5rem", position: "relative", overflow: "hidden" }}>
+          
+          {/* Luces de Fondo */}
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", opacity: 0.6, zIndex: 0 }}>
+            <div style={{ position: "absolute", top: "10%", left: "20%", width: "60px", height: "60px", borderRadius: "50%", background: T.lime, filter: "blur(25px)", animation: "float-christmas 6s ease-in-out infinite" }} />
+            <div style={{ position: "absolute", bottom: "20%", right: "15%", width: "80px", height: "80px", borderRadius: "50%", background: T.lavender, filter: "blur(30px)", animation: "float-christmas 8s ease-in-out infinite reverse" }} />
+            <div style={{ position: "absolute", top: "40%", right: "30%", width: "40px", height: "40px", borderRadius: "50%", background: T.coral, filter: "blur(20px)", animation: "float-christmas 5s ease-in-out infinite 2s" }} />
           </div>
+
+          {/* Nieve Cayendo */}
+          <Snowfall />
+          
+          <div style={glareStyle} />
+
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <div style={{ height: "140px", position: "relative" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, value: 1 }))}
+                    dataKey="value"
+                    innerRadius="68%"
+                    outerRadius="95%"
+                    startAngle={90}
+                    endAngle={-270}
+                    paddingAngle={4}
+                    stroke="none"
+                    isAnimationActive={true}
+                    animationDuration={500}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <Cell key={i} fill={i + 1 >= currentMonth ? T.lime : T.surfaceAlt} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{monthsLeft}</div>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{monthsLeft === 1 ? "mes" : "meses"}</div>
+              </div>
+            </div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>Ahorra al mes</div>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.6rem", fontWeight: 800, margin: "0.3rem 0", textShadow: "0 4px 12px rgba(196,222,78,0.3)" }}>
+              {fmtEUR(animatedRequired)}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* BARRA DE PROGRESO Y NIVEL */}
+      <div style={{ background: T.surfaceAlt, padding: "1rem", borderRadius: "1rem", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem" }}>
+          {levelIcon} {levelText}
         </div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>Ahorra al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
-          {fmtEUR(animatedRequired)}
+        <div style={{ flex: 1, minWidth: "150px", background: T.border, height: "8px", borderRadius: "4px", overflow: "hidden", position: "relative" }}>
+          <div style={{ width: `${progressPct}%`, height: "100%", background: progressPct === 100 ? T.lime : `linear-gradient(90deg, ${T.lavender}, ${T.lime})`, transition: "width 0.3s ease" }} />
         </div>
-      </Card>
+        <div style={{ ...fontBody, color: progressPct === 100 ? T.lime : T.textMuted, fontWeight: 700, fontSize: "0.85rem" }}>
+          {progressPct.toFixed(0)}%
+        </div>
+      </div>
 
       <AdviceBlock
         text={
@@ -217,73 +340,92 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         }
       />
 
-      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
-            Tu lista de Navidad
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
+            <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>Tu lista de Navidad</div>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.1rem", fontWeight: 700 }}>{fmtEUR(budget)}</div>
           </div>
-          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.1rem", fontWeight: 700 }}>{fmtEUR(budget)}</div>
-        </div>
-        
-        <div className="flex flex-col gap-3">
-          {gifts.map((g) => (
-            <div key={g.id} className="flex items-center gap-2" style={{ background: T.surface, padding: "0.5rem", borderRadius: "0.8rem", border: `1px solid ${T.border}` }}>
-              <input
-                value={g.name}
-                onChange={(e) => updateName(g.id, e.target.value)}
-                placeholder="Nombre"
-                style={{
-                  ...fontBody, flex: 1, minWidth: 0, background: "transparent", border: "none",
-                  padding: "0.4rem 0.5rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
-                }}
-              />
-              <MoneyInput value={g.amount} onChange={(v) => updateAmount(g.id, v)} />
-              <button
-                onClick={() => removeGift(g.id)}
-                aria-label={`Eliminar ${g.name}`}
-                style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.4rem", flexShrink: 0 }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-          ))}
-        </div>
+          
+          <div className="flex flex-col gap-2">
+            {gifts.map((g) => (
+              <div key={g.id} className="flex items-center gap-2" style={{ background: T.surface, padding: "0.4rem 0.6rem", borderRadius: "0.8rem", border: `1px solid ${T.border}` }}>
+                <input
+                  value={g.name}
+                  onChange={(e) => updateName(g.id, e.target.value)}
+                  placeholder="Nombre"
+                  style={{
+                    ...fontBody, flex: 1, minWidth: 0, background: "transparent", border: "none",
+                    padding: "0.4rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
+                  }}
+                />
+                <MoneyInput value={g.amount} onChange={(v) => updateAmount(g.id, v)} />
+                <button
+                  onClick={() => removeGift(g.id)}
+                  aria-label={`Eliminar ${g.name}`}
+                  style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.4rem", flexShrink: 0 }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
 
-        <div className="flex items-center gap-2" style={{ marginTop: "1rem" }}>
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addGift()}
-            placeholder="Añadir regalo o gasto (ej. Mamá)..."
-            style={{
-              ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
-              padding: "0.65rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none",
-            }}
-          />
-          <button onClick={addGift} aria-label="Añadir a la lista" style={{ background: T.lime, border: "none", borderRadius: "0.7rem", padding: "0.65rem 1rem", display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", flexShrink: 0, ...fontBody, fontWeight: 600, color: "#0a1214" }}>
-            <Plus size={18} /> Añadir
-          </button>
-        </div>
-      </Card>
-
-      <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div className="flex flex-col gap-6">
-          <div>
-            <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Mes actual</div>
-            <div className="grid grid-cols-4 gap-2">
-              {MONTHS.map((m, i) => (
-                <Chip key={m} label={m} active={currentMonth === i + 1} onClick={() => setCurrentMonth(i + 1)} />
+          <div className="flex items-center gap-2" style={{ marginTop: "1rem" }}>
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addGift()}
+              placeholder="Añadir (ej. Mamá)..."
+              style={{
+                ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+                padding: "0.65rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none",
+              }}
+            />
+            <button onClick={() => addGift()} aria-label="Añadir" style={{ background: T.lime, border: "none", borderRadius: "0.7rem", padding: "0.65rem 1rem", display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", flexShrink: 0, ...fontBody, fontWeight: 600, color: "#0a1214" }}>
+              <Plus size={18} /> Añadir
+            </button>
+          </div>
+          
+          {/* SUGERENCIAS RÁPIDAS */}
+          <div style={{ marginTop: "1rem" }}>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginBottom: "0.5rem" }}>Añadir rápido:</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s.name}
+                  onClick={() => addGift(s.name, s.amount)}
+                  style={{
+                    ...fontBody, background: T.surfaceAlt, border: `1px dashed ${T.border}`, borderRadius: "999px",
+                    padding: "0.3rem 0.6rem", fontSize: "0.75rem", color: T.textMuted, cursor: "pointer",
+                  }}
+                >
+                  + {s.name} ({s.amount}€)
+                </button>
               ))}
             </div>
           </div>
-          <div>
-             <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Ya ahorrado</div>
-             <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                <MoneyInput value={current} onChange={setCurrent} />
-             </div>
+        </Card>
+
+        <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
+          <div className="flex flex-col gap-6">
+            <div>
+              <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Mes actual</div>
+              <div className="grid grid-cols-4 gap-2">
+                {MONTHS.map((m, i) => (
+                  <Chip key={m} label={m} active={currentMonth === i + 1} onClick={() => setCurrentMonth(i + 1)} />
+                ))}
+              </div>
+            </div>
+            <div>
+               <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Ya ahorrado</div>
+               <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                  <MoneyInput value={current} onChange={setCurrent} icon={<PiggyBank size={18} />} />
+               </div>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       <AdSlot minHeight="0px" />
       <RelatedTools ids={["savings", "challenge"]} onNavigate={onNavigate} primaryId="savings" />
