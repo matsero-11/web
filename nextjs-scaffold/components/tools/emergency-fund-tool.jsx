@@ -37,7 +37,7 @@ const ESSENTIAL_CATEGORIES = [
   { id: "transporte", label: "Transporte", icon: Car, default: 100 },
 ];
 
-// SLIDER HÍBRIDO DEFINITIVO
+// SLIDER HÍBRIDO BLINDADO
 function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
@@ -69,13 +69,14 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "
 
   const handleSliderChange = (e) => {
     const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
+    if (!isNaN(val)) {
+      setValue(val);
+      setTextVal(String(val));
+    }
   };
 
   const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
   
-  // Máximo dinámico: Si el valor es 1000, el slider llega hasta 2000 (o hasta 5000 por defecto).
   const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 5000, min + 1000) : max;
   const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
@@ -167,14 +168,18 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
     [breakdown]
   );
   const expenses = useBreakdown ? breakdownTotal : simpleExpenses;
-  const goal = Math.min(expenses * monthsTarget, MAX_FINANCIAL_LIMIT);
-
-  // ELIMINADO el useEffect que forzaba current <= goal para que el slider no rebote.
+  
+  // SANITIZACIÓN PARA EVITAR QUE LA GRÁFICA SE ROMPA
+  const safeExpenses = Number.isFinite(expenses) ? expenses : 0;
+  const safeMonths = Number.isFinite(monthsTarget) ? monthsTarget : 0;
+  const goal = Math.min(safeExpenses * safeMonths, MAX_FINANCIAL_LIMIT);
+  
+  const safeGoal = Number.isFinite(goal) ? goal : 0;
+  const safeCurrent = Number.isFinite(current) ? current : 0;
+  const safeMonthly = Number.isFinite(monthly) ? monthly : 0;
 
   const pageTitle = "Calculadora de fondo de emergencia: cuánto ahorrar y en cuántos meses | MetaBox";
   const pageDescription = "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos esenciales desglosados por categoría, cuánto llevas ahorrado y en cuántos meses lo conseguirás. Gratis y sin registro.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO
   const pageUrl = "https://metabox-web.vercel.app/herramientas/fondo-de-emergencia";
 
   return (
@@ -184,12 +189,6 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
         <meta name="description" content={pageDescription} />
         <meta name="keywords" content="fondo de emergencia, cuánto ahorrar fondo de emergencia, calculadora fondo de emergencia, meses de gastos ahorrados, desglose gastos esenciales" />
         <link rel="canonical" href={pageUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -262,16 +261,16 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       </Card>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", textAlign: "center" }}>
-        Objetivo calculado: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(goal)}</span>
+        Objetivo calculado: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(safeGoal)}</span>
       </div>
 
-      <GoalProjection goal={goal} current={current} monthly={monthly} extra={0} monthsSavedLabel="" />
+      <GoalProjection goal={safeGoal} current={safeCurrent} monthly={safeMonthly} extra={0} monthsSavedLabel="" />
 
       <AdviceBlock
         text={
-          current >= goal
+          safeCurrent >= safeGoal
             ? "Ya tienes cubierto tu fondo de emergencia con este objetivo. Podrías redirigir la aportación mensual hacia otra meta."
-            : monthly > 0 && Math.ceil((goal - current) / monthly) > 24
+            : safeMonthly > 0 && Math.ceil((safeGoal - safeCurrent) / safeMonthly) > 24
             ? "Al ritmo actual tardarás más de 2 años en completarlo. Si es posible, prioriza este fondo antes que metas menos urgentes."
             : "Vas por buen camino. Un fondo de emergencia sólido te da margen para no tocar tus otros ahorros ante un imprevisto."
         }
@@ -290,17 +289,17 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Fondo de emergencia: gasto esencial ${fmtEUR(expenses)}/mes × ${monthsTarget} meses = objetivo ${fmtEUR(goal)}. Ya ahorrado ${fmtEUR(current)}, aportando ${fmtEUR(monthly)}/mes.`
+            `Fondo de emergencia: gasto esencial ${fmtEUR(safeExpenses)}/mes × ${safeMonths} meses = objetivo ${fmtEUR(safeGoal)}. Ya ahorrado ${fmtEUR(safeCurrent)}, aportando ${fmtEUR(safeMonthly)}/mes.`
           }
         />
         <ExportCSVButton
           filename="fondo-emergencia"
           getRows={() => [
-            { metrica: "Gasto esencial mensual", valor: expenses.toFixed(2) },
-            { metrica: "Meses de cobertura", valor: monthsTarget },
-            { metrica: "Objetivo total", valor: goal.toFixed(2) },
-            { metrica: "Ya ahorrado", valor: current.toFixed(2) },
-            { metrica: "Aportación mensual", valor: monthly.toFixed(2) },
+            { metrica: "Gasto esencial mensual", valor: safeExpenses.toFixed(2) },
+            { metrica: "Meses de cobertura", valor: safeMonths },
+            { metrica: "Objetivo total", valor: safeGoal.toFixed(2) },
+            { metrica: "Ya ahorrado", valor: safeCurrent.toFixed(2) },
+            { metrica: "Aportación mensual", valor: safeMonthly.toFixed(2) },
           ]}
         />
       </div>
