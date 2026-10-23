@@ -3,8 +3,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -16,7 +16,6 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -92,9 +91,6 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const animatedPayment = useAnimatedNumber(payment);
   const animatedInterest = useAnimatedNumber(totalInterest);
 
-  const maxPrincipalSlider = Math.max(MAX_FINANCIAL_LIMIT, principal * 1.5);
-  const maxExtraSlider = Math.max(MAX_FINANCIAL_LIMIT, payment * 2);
-
   const chartData = useMemo(() => {
     let balance = principal;
     let interestPaid = 0;
@@ -113,10 +109,17 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
     let balance = principal;
     let totalCost = 0;
     let m = 0;
+    // Añadido límite de seguridad para evitar bucles infinitos si el pago no cubre los intereses
     while (balance > 0.01 && m < 600) {
       m++;
       const interest = balance * monthlyRate;
       let principalPortion = payment - interest;
+      
+      // Si el pago mensual ni siquiera cubre los intereses, evitamos el bucle infinito
+      if (principalPortion + extraPayment <= 0) {
+        return { months: 600, totalCost: 9999999, totalInterest: 9999999 }; 
+      }
+
       let thisMonthPayment = payment;
       if (principalPortion + extraPayment >= balance) {
         thisMonthPayment = balance + interest;
@@ -134,34 +137,17 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const interestSaved = totalInterest - extraSimulation.totalInterest;
 
   const pageTitle = "Calculadora de cuota de préstamo e intereses totales | MetaBox";
-  const pageDescription =
-    "Calcula la cuota mensual de un préstamo, visualiza la amortización y descubre cuánto ahorrarías en intereses y tiempo si pagas una cuota extra cada mes. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/loan";
-
-  return (
+  const pageDescription = "Calcula la cuota mensual de un préstamo, visualiza la amortización y descubre cuánto ahorrarías en intereses y tiempo si pagas una cuota extra cada mes. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/calculadora-cuota-prestamo";
+    return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="calculadora cuota préstamo, cuánto pagaré de intereses préstamo, calculadora amortización préstamo, amortización anticipada préstamo"
-        />
+        <meta name="keywords" content="calculadora cuota préstamo, cuánto pagaré de intereses préstamo, calculadora amortización préstamo, amortización anticipada préstamo" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/loan.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/loan.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -205,25 +191,31 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
         </div>
         <div style={{ width: "100%", height: "190px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={chartMode === "saldo" ? T.coral : T.lavender} stopOpacity={0.4} />
+                  <stop offset="95%" stopColor={chartMode === "saldo" ? T.coral : T.lavender} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                formatter={(v) => [fmtEUR(v), chartMode === "saldo" ? "Pendiente" : "Intereses pagados"]}
+                contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem", fontWeight: "bold" }}
+                formatter={(v) => [fmtEUR(Number(v) || 0), chartMode === "saldo" ? "Pendiente" : "Intereses pagados"]}
                 labelFormatter={(l) => `Mes ${l}`}
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey={chartMode}
                 stroke={chartMode === "saldo" ? T.coral : T.lavender}
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 5 }}
+                strokeWidth={3}
+                fill="url(#colorSaldo)"
+                activeDot={{ r: 6, stroke: "#0a1214", strokeWidth: 2 }}
                 isAnimationActive={true}
-                animationDuration={400}
+                animationDuration={500}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </Card>
@@ -237,15 +229,15 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Amortización anticipada
           </div>
-          <SliderControl label="Extra al mes" value={extraPayment} min={0} max={maxExtraSlider} step={10} unit="€" onChange={setExtraPayment} accent="lavender" />
+          <SliderControl label="Extra al mes" value={extraPayment} min={0} max={10000} step={50} unit="€" onChange={setExtraPayment} accent="lavender" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginTop: "1.2rem" }}>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Terminas antes</div>
               <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
                 {monthsSaved > 0 ? `${monthsSaved} meses` : "—"}
               </div>
             </div>
-            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center" }}>
+            <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", border: `1px solid ${T.border}` }}>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Ahorras en intereses</div>
               <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.5rem", fontWeight: 700, marginTop: "0.3rem" }}>
                 {fmtEUR(Math.max(interestSaved, 0))}
@@ -267,7 +259,8 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Importe del préstamo" value={principal} min={500} max={maxPrincipalSlider} step={500} unit="€" onChange={setPrincipal} />
+          {/* SLIDERS CON MÁXIMOS FIJOS PARA EVITAR EL ATASCO */}
+          <SliderControl label="Importe del préstamo" value={principal} min={500} max={1000000} step={500} unit="€" onChange={setPrincipal} />
           <SliderControl label="TAE estimada" value={rate} min={0} max={20} step={0.1} unit="%" onChange={setRate} accent="lavender" />
           <SliderControl label="Plazo" value={months} min={1} max={360} step={1} unit="meses" onChange={setMonths} />
         </div>
@@ -310,4 +303,3 @@ function LoanPaymentTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default LoanPaymentTool;
-          
