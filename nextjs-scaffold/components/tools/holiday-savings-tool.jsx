@@ -30,7 +30,6 @@ const FAQS = [
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-// COMPONENTE DE INPUT DE DINERO
 function MoneyInput({ value, onChange }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
 
@@ -59,7 +58,7 @@ function MoneyInput({ value, onChange }) {
   };
 
   return (
-    <div className="flex items-center justify-end bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-3 py-2 rounded-xl border border-[var(--border,rgba(255,255,255,0.08))]" style={{ width: "110px" }}>
+    <div className="flex items-center justify-end bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-3 py-2 rounded-xl border border-[var(--border,rgba(255,255,255,0.08))]" style={{ width: "110px", flexShrink: 0 }}>
       <input
         type="text"
         inputMode="decimal"
@@ -114,8 +113,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const budget = useMemo(() => gifts.reduce((sum, g) => sum + (g.amount || 0), 0), [gifts]);
 
-  // ELIMINADO EL useEffect QUE FORZABA current <= budget (Causaba rebotes en el slider)
-
   const monthsLeft = currentMonth <= 12 ? 12 - currentMonth + 1 : 12;
   const remaining = Math.max(budget - current, 0);
   const requiredMonthly = monthsLeft > 0 ? remaining / monthsLeft : remaining;
@@ -142,8 +139,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const pageTitle = "Calculadora de ahorro para Navidad con lista de regalos | MetaBox";
   const pageDescription = "Haz tu lista de regalos y gastos de Navidad, suma el presupuesto total automáticamente y calcula cuánto ahorrar cada mes hasta diciembre. Gratis y sin registro.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-para-navidad";
 
   return (
@@ -204,8 +199,8 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.8rem", fontWeight: 700 }}>{monthsLeft}</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{monthsLeft === 1 ? "mes" : "meses"}</div>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 700 }}>{monthsLeft}</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{monthsLeft === 1 ? "mes" : "meses"}</div>
           </div>
         </div>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>Ahorra al mes</div>
@@ -227,31 +222,33 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
             Tu lista de Navidad
           </div>
-          <div style={{ ...fontBody, color: T.lime, fontSize: "0.9rem", fontWeight: 700 }}>{fmtEUR(budget)}</div>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.1rem", fontWeight: 700 }}>{fmtEUR(budget)}</div>
         </div>
+        
         <div className="flex flex-col gap-3">
           {gifts.map((g) => (
-            <div key={g.id} className="flex items-center gap-2">
+            <div key={g.id} className="flex items-center gap-2" style={{ background: T.surface, padding: "0.5rem", borderRadius: "0.8rem", border: `1px solid ${T.border}` }}>
               <input
                 value={g.name}
                 onChange={(e) => updateName(g.id, e.target.value)}
                 placeholder="Nombre"
                 style={{
-                  ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`,
-                  borderRadius: "0.7rem", padding: "0.6rem 0.8rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
+                  ...fontBody, flex: 1, minWidth: 0, background: "transparent", border: "none",
+                  padding: "0.4rem 0.5rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
                 }}
               />
               <MoneyInput value={g.amount} onChange={(v) => updateAmount(g.id, v)} />
               <button
                 onClick={() => removeGift(g.id)}
                 aria-label={`Eliminar ${g.name}`}
-                style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.3rem", flexShrink: 0 }}
+                style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.4rem", flexShrink: 0 }}
               >
                 <X size={18} />
               </button>
             </div>
           ))}
         </div>
+
         <div className="flex items-center gap-2" style={{ marginTop: "1rem" }}>
           <input
             value={newName}
@@ -272,16 +269,18 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>Mes actual</div>
-            <div className="flex flex-wrap gap-2">
+            <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Mes actual</div>
+            <div className="grid grid-cols-4 gap-2">
               {MONTHS.map((m, i) => (
                 <Chip key={m} label={m} active={currentMonth === i + 1} onClick={() => setCurrentMonth(i + 1)} />
               ))}
             </div>
           </div>
           <div>
-             <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.5rem" }}>Ya ahorrado</div>
-             <MoneyInput value={current} onChange={setCurrent} />
+             <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Ya ahorrado</div>
+             <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                <MoneyInput value={current} onChange={setCurrent} />
+             </div>
           </div>
         </div>
       </Card>
