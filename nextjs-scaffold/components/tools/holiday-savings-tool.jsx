@@ -3,19 +3,15 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Plus, X } from "lucide-react";
 import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, AdviceBlock } from "@/components/ui";
+import { Card, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -32,6 +28,51 @@ const FAQS = [
   },
 ];
 
+const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+// COMPONENTE DE INPUT DE DINERO
+function MoneyInput({ value, onChange }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) onChange(parsed);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      onChange(0);
+      setTextVal("0");
+    } else {
+      onChange(parsed);
+      setTextVal(String(parsed));
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-end bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-3 py-2 rounded-xl border border-[var(--border,rgba(255,255,255,0.08))]" style={{ width: "110px" }}>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={textVal}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        className="bg-transparent text-right font-semibold"
+        style={{ ...fontBody, color: T.lime, fontSize: "1rem", width: "100%", outline: "none" }}
+      />
+      <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginLeft: "4px" }}>€</span>
+    </div>
+  );
+}
 function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const realMonth = new Date().getMonth() + 1;
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -73,11 +114,8 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const budget = useMemo(() => gifts.reduce((sum, g) => sum + (g.amount || 0), 0), [gifts]);
 
-  useEffect(() => {
-    if (current > budget) setCurrent(budget);
-  }, [budget, current]);
+  // ELIMINADO EL useEffect QUE FORZABA current <= budget (Causaba rebotes en el slider)
 
-  const maxCurrentSlider = Math.max(budget, current, MAX_FINANCIAL_LIMIT);
   const monthsLeft = currentMonth <= 12 ? 12 - currentMonth + 1 : 12;
   const remaining = Math.max(budget - current, 0);
   const requiredMonthly = monthsLeft > 0 ? remaining / monthsLeft : remaining;
@@ -85,6 +123,10 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const updateAmount = (id, amount) => {
     setGifts((prev) => prev.map((g) => (g.id === id ? { ...g, amount } : g)));
+  };
+
+  const updateName = (id, name) => {
+    setGifts((prev) => prev.map((g) => (g.id === id ? { ...g, name } : g)));
   };
 
   const addGift = () => {
@@ -99,34 +141,18 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
   };
 
   const pageTitle = "Calculadora de ahorro para Navidad con lista de regalos | MetaBox";
-  const pageDescription =
-    "Haz tu lista de regalos y gastos de Navidad, suma el presupuesto total automáticamente y calcula cuánto ahorrar cada mes hasta diciembre. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/holiday";
+  const pageDescription = "Haz tu lista de regalos y gastos de Navidad, suma el presupuesto total automáticamente y calcula cuánto ahorrar cada mes hasta diciembre. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-para-navidad";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="ahorro para Navidad, cuánto ahorrar para Navidad, lista de regalos de Navidad, calculadora presupuesto Navidad"
-        />
+        <meta name="keywords" content="ahorro para Navidad, cuánto ahorrar para Navidad, lista de regalos de Navidad, calculadora presupuesto Navidad" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/holiday.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/holiday.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -203,50 +229,64 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
           </div>
           <div style={{ ...fontBody, color: T.lime, fontSize: "0.9rem", fontWeight: 700 }}>{fmtEUR(budget)}</div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {gifts.map((g) => (
-            <div key={g.id} style={{ position: "relative" }}>
-              <SliderControl label={g.name} value={g.amount} min={0} max={MAX_FINANCIAL_LIMIT} step={5} unit="€" onChange={(v) => updateAmount(g.id, v)} />
+            <div key={g.id} className="flex items-center gap-2">
+              <input
+                value={g.name}
+                onChange={(e) => updateName(g.id, e.target.value)}
+                placeholder="Nombre"
+                style={{
+                  ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                  borderRadius: "0.7rem", padding: "0.6rem 0.8rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
+                }}
+              />
+              <MoneyInput value={g.amount} onChange={(v) => updateAmount(g.id, v)} />
               <button
                 onClick={() => removeGift(g.id)}
                 aria-label={`Eliminar ${g.name}`}
-                style={{
-                  position: "absolute", top: "-4px", right: "-4px",
-                  background: T.coral, borderRadius: "50%", width: "18px", height: "18px",
-                  display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer",
-                }}
+                style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.3rem", flexShrink: 0 }}
               >
-                <X size={11} color="#fff" />
+                <X size={18} />
               </button>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-1.5" style={{ marginTop: "1.2rem" }}>
+        <div className="flex items-center gap-2" style={{ marginTop: "1rem" }}>
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addGift()}
             placeholder="Añadir regalo o gasto (ej. Mamá)..."
             style={{
-              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
-              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none",
+              ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+              padding: "0.65rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none",
             }}
           />
-          <button onClick={addGift} aria-label="Añadir a la lista" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-            <Plus size={18} color="#12200A" />
+          <button onClick={addGift} aria-label="Añadir a la lista" style={{ background: T.lime, border: "none", borderRadius: "0.7rem", padding: "0.65rem 1rem", display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", flexShrink: 0, ...fontBody, fontWeight: 600, color: "#0a1214" }}>
+            <Plus size={18} /> Añadir
           </button>
         </div>
       </Card>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Mes actual" value={currentMonth} min={1} max={12} step={1} unit="" onChange={setCurrentMonth} />
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={maxCurrentSlider} step={10} unit="€" onChange={setCurrent} accent="lavender" />
+          <div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>Mes actual</div>
+            <div className="flex flex-wrap gap-2">
+              {MONTHS.map((m, i) => (
+                <Chip key={m} label={m} active={currentMonth === i + 1} onClick={() => setCurrentMonth(i + 1)} />
+              ))}
+            </div>
+          </div>
+          <div>
+             <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.5rem" }}>Ya ahorrado</div>
+             <MoneyInput value={current} onChange={setCurrent} />
+          </div>
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["savings", "challenge"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -271,4 +311,3 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default HolidaySavingsTool;
-            
