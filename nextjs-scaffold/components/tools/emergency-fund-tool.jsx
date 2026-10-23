@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { T, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
+import { Card, Chip, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -37,6 +37,80 @@ const ESSENTIAL_CATEGORIES = [
   { id: "transporte", label: "Transporte", icon: Car, default: 100 },
 ];
 
+// SLIDER HÍBRIDO DEFINITIVO
+function DecimalSliderRow({ label, value, setValue, min, max, step = 1, unit = "€", accent = "lime", subtitle, useDynamicMax = true }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const ABSOLUTE_MAX = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      setValue(min);
+      setTextVal(String(min));
+    } else {
+      const clamped = Math.min(Math.max(parsed, min), ABSOLUTE_MAX);
+      setValue(clamped);
+      setTextVal(String(clamped));
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
+  
+  // Máximo dinámico: Si el valor es 1000, el slider llega hasta 2000 (o hasta 5000 por defecto).
+  const dynamicMax = useDynamicMax ? Math.max(safeValue * 2, 5000, min + 1000) : max;
+  const sliderPos = Math.max(0, Math.min(safeValue, dynamicMax));
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={handleBlur}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
+        </div>
+      </div>
+      {subtitle && <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>{subtitle}</div>}
+      <input
+        type="range"
+        min={min}
+        max={dynamicMax}
+        step={step}
+        value={sliderPos}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [monthsTarget, setMonthsTarget] = useState(() => {
     const p = initialParams?.monthsTarget;
@@ -95,41 +169,27 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
   const expenses = useBreakdown ? breakdownTotal : simpleExpenses;
   const goal = Math.min(expenses * monthsTarget, MAX_FINANCIAL_LIMIT);
 
-  useEffect(() => {
-    if (current > goal) setCurrent(goal);
-  }, [goal, current]);
-
-  const maxCurrentSlider = Math.max(goal, current, MAX_FINANCIAL_LIMIT);
+  // ELIMINADO el useEffect que forzaba current <= goal para que el slider no rebote.
 
   const pageTitle = "Calculadora de fondo de emergencia: cuánto ahorrar y en cuántos meses | MetaBox";
-  const pageDescription =
-    "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos esenciales desglosados por categoría, cuánto llevas ahorrado y en cuántos meses lo conseguirás. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/emergency";
+  const pageDescription = "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos esenciales desglosados por categoría, cuánto llevas ahorrado y en cuántos meses lo conseguirás. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/fondo-de-emergencia";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="fondo de emergencia, cuánto ahorrar fondo de emergencia, calculadora fondo de emergencia, meses de gastos ahorrados, desglose gastos esenciales"
-        />
+        <meta name="keywords" content="fondo de emergencia, cuánto ahorrar fondo de emergencia, calculadora fondo de emergencia, meses de gastos ahorrados, desglose gastos esenciales" />
         <link rel="canonical" href={pageUrl} />
-
         <meta property="og:type" content="website" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/emergency.png" />
         <meta property="og:site_name" content="MetaBox" />
         <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/emergency.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -161,7 +221,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           {!useBreakdown ? (
-            <SliderControl label="Gasto esencial mensual" value={simpleExpenses} min={300} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setSimpleExpenses} />
+            <DecimalSliderRow label="Gasto esencial mensual" value={simpleExpenses} min={300} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" setValue={setSimpleExpenses} useDynamicMax={true} />
           ) : (
             <div>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>
@@ -169,7 +229,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
               </div>
               <div className="flex flex-col gap-5">
                 {ESSENTIAL_CATEGORIES.map((c) => (
-                  <SliderControl
+                  <DecimalSliderRow
                     key={c.id}
                     label={c.label}
                     value={breakdown[c.id] || 0}
@@ -177,7 +237,8 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
                     max={MAX_FINANCIAL_LIMIT}
                     step={10}
                     unit="€"
-                    onChange={(v) => setBreakdown((b) => ({ ...b, [c.id]: v }))}
+                    setValue={(v) => setBreakdown((b) => ({ ...b, [c.id]: v }))}
+                    useDynamicMax={true}
                   />
                 ))}
               </div>
@@ -218,13 +279,12 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={maxCurrentSlider} step={50} unit="€" onChange={setCurrent} />
-          <SliderControl label="Aportación mensual" value={monthly} min={10} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setMonthly} accent="lavender" />
+          <DecimalSliderRow label="Ya ahorrado" value={current} min={0} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" setValue={setCurrent} useDynamicMax={true} />
+          <DecimalSliderRow label="Aportación mensual" value={monthly} min={10} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" accent="lavender" setValue={setMonthly} useDynamicMax={true} />
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["savings", "budget", "percent"]} onNavigate={onNavigate} primaryId="savings" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -255,4 +315,3 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default EmergencyFundTool;
-
