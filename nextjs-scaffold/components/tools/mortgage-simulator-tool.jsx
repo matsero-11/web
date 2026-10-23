@@ -262,7 +262,8 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
         
         <div style={{ width: "100%", height: "240px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            {/* AÑADIDO barCategoryGap PARA BARRAS MÁS ANCHAS */}
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barCategoryGap="25%">
               <defs>
                 <linearGradient id="colorCapital" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={T.lavender} stopOpacity={0.9}/>
@@ -280,8 +281,9 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
                 contentStyle={{ background: "#111c1f", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: "12px", fontSize: "13px", color: T.text, boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }} 
                 cursor={{ fill: "rgba(255,255,255,0.05)" }}
               />
-              <Bar dataKey="Dinero prestado" stackId="a" fill="url(#colorCapital)" radius={[0, 0, 4, 4]} maxBarSize={60} />
-              <Bar dataKey="Intereses al banco" stackId="a" fill="url(#colorIntereses)" radius={[8, 8, 0, 0]} maxBarSize={60} />
+              {/* AUMENTADO maxBarSize A 80 */}
+              <Bar dataKey="Dinero prestado" stackId="a" fill="url(#colorCapital)" radius={[0, 0, 4, 4]} maxBarSize={80} />
+              <Bar dataKey="Intereses al banco" stackId="a" fill="url(#colorIntereses)" radius={[8, 8, 0, 0]} maxBarSize={80} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -319,4 +321,4 @@ export default function MortgageSimulatorTool({ onBack, onNavigate, initialParam
       </div>
     </div>
   );
-                  }
+           }
