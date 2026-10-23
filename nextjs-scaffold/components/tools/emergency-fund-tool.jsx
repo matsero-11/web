@@ -34,10 +34,11 @@ const ESSENTIAL_CATEGORIES = [
   { id: "transporte", label: "Transporte", icon: Car, default: 100 },
 ];
 
-// SLIDER HTML PURO (A PRUEBA DE BOMBAS)
-function SafeSlider({ label, value, setValue, max, step = 1, unit = "€", accent = "lime" }) {
+// SLIDER NATIVO HTML (A PRUEBA DE BOMBAS Y DE LIBRERÍAS)
+function NativeSlider({ label, value, setValue, max = MAX_FINANCIAL_LIMIT, step = 1, unit = "€", accent = "lime" }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
-  
+  const MAX_LIMIT = Math.max(max, MAX_FINANCIAL_LIMIT || 10000000);
+
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
       setTextVal(String(value ?? 0));
@@ -63,13 +64,20 @@ function SafeSlider({ label, value, setValue, max, step = 1, unit = "€", accen
   };
 
   const handleSliderChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setValue(val);
-    setTextVal(String(val));
+    // El slider va de 0 a 1000 (porcentaje)
+    const percentage = parseFloat(e.target.value) / 1000;
+    const val = percentage * MAX_LIMIT;
+    
+    // Redondeamos al step más cercano para evitar decimales infinitos
+    const stepped = Math.round(val / step) * step;
+    setValue(stepped);
+    setTextVal(String(stepped));
   };
 
-  // Si el valor es mayor que el máximo, el input range se clava al final.
-  const safeValue = isNaN(value) ? 0 : Math.max(0, Math.min(value, max));
+  // Calculamos la posición del slider en base al porcentaje real
+  const safeValue = isNaN(value) ? 0 : Math.max(0, Math.min(value, MAX_LIMIT));
+  const sliderPos = (safeValue / MAX_LIMIT) * 1000;
+  
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
   return (
@@ -92,12 +100,12 @@ function SafeSlider({ label, value, setValue, max, step = 1, unit = "€", accen
       <input
         type="range"
         min={0}
-        max={max}
-        step={step}
-        value={safeValue}
+        max={1000}
+        step={1}
+        value={sliderPos}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
-        style={{ accentColor, accentColor } as React.CSSProperties}
+        style={{ accentColor: accentColor }}
       />
     </div>
   );
@@ -162,7 +170,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
   
   const safeExpenses = Number.isFinite(expenses) ? expenses : 0;
   const safeMonths = Number.isFinite(monthsTarget) ? monthsTarget : 0;
-  const goal = Math.min(safeExpenses * safeMonths, MAX_FINANCIAL_LIMIT);
+  const goal = Math.min(safeExpenses * safeMonths, 10000000);
   
   const safeGoal = Number.isFinite(goal) ? goal : 0;
   const safeCurrent = Number.isFinite(current) ? current : 0;
@@ -172,7 +180,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
   const pageDescription = "Calcula cuánto dinero necesitas en tu fondo de emergencia según tus gastos esenciales desglosados por categoría, cuánto llevas ahorrado y en cuántos meses lo conseguirás. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/fondo-de-emergencia";
 
-  // Lógica para ocultar la gráfica si ya se ha superado el objetivo
+  // Ocultar gráfica si el ahorro supera exageradamente el objetivo
   const showProjection = safeCurrent <= safeGoal * 2;
 
   return (
@@ -180,7 +188,6 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content="fondo de emergencia, cuánto ahorrar fondo de emergencia, calculadora fondo de emergencia, meses de gastos ahorrados, desglose gastos esenciales" />
         <link rel="canonical" href={pageUrl} />
         <script type="application/ld+json">
           {JSON.stringify({
@@ -213,7 +220,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           {!useBreakdown ? (
-            <SafeSlider label="Gasto esencial mensual" value={simpleExpenses} max={10000} step={50} unit="€" setValue={setSimpleExpenses} />
+            <NativeSlider label="Gasto esencial mensual" value={simpleExpenses} max={10000} step={50} unit="€" setValue={setSimpleExpenses} />
           ) : (
             <div>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>
@@ -221,7 +228,7 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
               </div>
               <div className="flex flex-col gap-5">
                 {ESSENTIAL_CATEGORIES.map((c) => (
-                  <SafeSlider
+                  <NativeSlider
                     key={c.id}
                     label={c.label}
                     value={breakdown[c.id] || 0}
@@ -255,7 +262,6 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
         Objetivo calculado: <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(safeGoal)}</span>
       </div>
 
-      {/* MOSTRAMOS LA GRÁFICA SOLO SI TIENE SENTIDO */}
       {showProjection && (
         <GoalProjection goal={safeGoal} current={safeCurrent} monthly={safeMonthly} extra={0} monthsSavedLabel="" />
       )}
@@ -272,8 +278,9 @@ function EmergencyFundTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SafeSlider label="Ya ahorrado" value={current} max={100000} step={50} unit="€" setValue={setCurrent} />
-          <SafeSlider label="Aportación mensual" value={monthly} max={10000} step={10} unit="€" accent="lavender" setValue={setMonthly} />
+          {/* Usamos el nuevo slider nativo para "Ya ahorrado" */}
+          <NativeSlider label="Ya ahorrado" value={current} max={1000000} step={100} unit="€" setValue={setCurrent} />
+          <NativeSlider label="Aportación mensual" value={monthly} max={10000} step={50} unit="€" accent="lavender" setValue={setMonthly} />
         </div>
       </Card>
 
