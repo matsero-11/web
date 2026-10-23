@@ -8,7 +8,6 @@ import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -40,14 +39,7 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size, margin: "0 auto" }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke={T.surfaceAlt}
-          strokeWidth={strokeWidth}
-        />
+        <circle cx={center} cy={center} r={radius} fill="none" stroke={T.surfaceAlt} strokeWidth={strokeWidth} />
         {total > 0 ? (
           data.map((item, index) => {
             const value = Math.max(item.value, 0);
@@ -79,14 +71,7 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
             );
           })
         ) : (
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={T.border}
-            strokeWidth={strokeWidth}
-          />
+          <circle cx={center} cy={center} r={radius} fill="none" stroke={T.border} strokeWidth={strokeWidth} />
         )}
       </svg>
     </div>
@@ -95,6 +80,7 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
 
 function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit = "€", accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
+  const ABSOLUTE_MAX = Math.max(max, value || 0, 100);
 
   useEffect(() => {
     if (value !== parseFloat(textVal.replace(",", "."))) {
@@ -106,9 +92,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     const raw = e.target.value;
     setTextVal(raw);
     const parsed = parseFloat(raw.replace(",", "."));
-    if (!isNaN(parsed)) {
-      setValue(parsed);
-    }
+    if (!isNaN(parsed)) setValue(parsed);
   };
 
   const handleSliderChange = (e) => {
@@ -117,6 +101,7 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     setTextVal(String(val));
   };
 
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, ABSOLUTE_MAX));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
   return (
@@ -131,21 +116,11 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
             onChange={handleInputChange}
             onBlur={() => {
               const parsed = parseFloat(textVal.replace(",", "."));
-              if (isNaN(parsed)) {
-                setTextVal(String(value ?? 0));
-              } else {
-                setValue(parsed);
-                setTextVal(String(parsed));
-              }
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
             }}
             className="bg-transparent text-right font-semibold"
-            style={{
-              ...fontBody,
-              color: accentColor,
-              fontSize: "0.9rem",
-              width: "75px",
-              outline: "none",
-            }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "75px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
         </div>
@@ -154,9 +129,9 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
       <input
         type="range"
         min={min}
-        max={Math.max(max, value || 0, 100)}
+        max={ABSOLUTE_MAX}
         step={step}
-        value={isNaN(value) ? 0 : value}
+        value={safeValue}
         onChange={handleSliderChange}
         className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))] accent-current"
         style={{ accentColor }}
@@ -164,128 +139,84 @@ function DecimalSliderRow({ label, value, setValue, min, max, step = 0.01, unit 
     </div>
   );
 }
-
 function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
-  const [income, setIncome] = useState(() => {
-    const p = initialParams?.income;
-    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800;
-  });
-
-  const [needsPct, setNeedsPct] = useState(() => {
-    const p = initialParams?.needsPct;
-    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 50;
-  });
-
-  const [wantsPct, setWantsPct] = useState(() => {
-    const p = initialParams?.wantsPct;
-    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 30;
-  });
-
+  const [income, setIncome] = useState(() => Number(initialParams?.income) || 1800);
+  const [needsPct, setNeedsPct] = useState(() => Number(initialParams?.needsPct) || 50);
+  const [wantsPct, setWantsPct] = useState(() => Number(initialParams?.wantsPct) || 30);
   const savingsPct = Math.max(100 - needsPct - wantsPct, 0);
 
-  const recNeeds = income * (needsPct / 100);
-  const recWants = income * (wantsPct / 100);
-  const recSavings = income * (savingsPct / 100);
-
-  const [needs, setNeeds] = useState(() => {
-    const p = initialParams?.needs;
-    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800 * (50 / 100);
-  });
-
-  const [wants, setWants] = useState(() => {
-    const p = initialParams?.wants;
-    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800 * (30 / 100);
-  });
-
-  const [savings, setSavings] = useState(() => {
-    const p = initialParams?.savings;
-    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1800 * (20 / 100);
-  });
-
-  const [donutView, setDonutView] = useState(() => {
-    const p = initialParams?.donutView;
-    return typeof p === "string" && p.trim() !== "" ? p : "actual";
-  });
+  const [needs, setNeeds] = useState(() => Number(initialParams?.needs) || (1800 * 50) / 100);
+  const [wants, setWants] = useState(() => Number(initialParams?.wants) || (1800 * 30) / 100);
+  const [savings, setSavings] = useState(() => Number(initialParams?.savings) || (1800 * 20) / 100);
+  const [donutView, setDonutView] = useState(() => initialParams?.donutView || "actual");
 
   useEffect(() => {
     if (typeof onStateChange === "function") {
-      onStateChange({
-        income,
-        needsPct: needsPct !== 50 ? needsPct : null,
-        wantsPct: wantsPct !== 30 ? wantsPct : null,
-        needs,
-        wants,
-        savings,
-        donutView: donutView !== "actual" ? donutView : null,
-      });
+      onStateChange({ income, needsPct, wantsPct, needs, wants, savings, donutView });
     }
   }, [income, needsPct, wantsPct, needs, wants, savings, donutView, onStateChange]);
 
+  // Sincronizar cantidades si el ingreso cambia
   const prevIncome = useRef(income);
   useEffect(() => {
     if (prevIncome.current > 0 && income !== prevIncome.current) {
       const ratio = income / prevIncome.current;
-      setNeeds((n) => Number((n * ratio).toFixed(2)));
-      setWants((w) => Number((w * ratio).toFixed(2)));
-      setSavings((s) => Number((s * ratio).toFixed(2)));
-    } else if (prevIncome.current === 0 && income > 0) {
-      setNeeds(Number(recNeeds.toFixed(2)));
-      setWants(Number(recWants.toFixed(2)));
-      setSavings(Number(recSavings.toFixed(2)));
+      setNeeds(Number((needs * ratio).toFixed(2)));
+      setWants(Number((wants * ratio).toFixed(2)));
+      setSavings(Number((savings * ratio).toFixed(2)));
     }
     prevIncome.current = income;
   }, [income]);
 
+  // Sincronizar cantidades si los porcentajes cambian
+  const prevNeedsPct = useRef(needsPct);
+  const prevWantsPct = useRef(wantsPct);
+  useEffect(() => {
+    if (prevNeedsPct.current !== needsPct || prevWantsPct.current !== wantsPct) {
+      setNeeds(Number(((income * needsPct) / 100).toFixed(2)));
+      setWants(Number(((income * wantsPct) / 100).toFixed(2)));
+      setSavings(Number(((income * (100 - needsPct - wantsPct)) / 100).toFixed(2)));
+    }
+    prevNeedsPct.current = needsPct;
+    prevWantsPct.current = wantsPct;
+  }, [needsPct, wantsPct, income]);
+
   const total = Number(needs) + Number(wants) + Number(savings);
   const diff = Number((income - total).toFixed(2));
   const animatedDiff = useAnimatedNumber(diff);
+
+  const recNeeds = (income * needsPct) / 100;
+  const recWants = (income * wantsPct) / 100;
+  const recSavings = (income * savingsPct) / 100;
 
   const donutData = useMemo(() => {
     if (donutView === "actual") {
       return [
         { name: "Necesidades", value: Math.max(Number(needs) || 0, 0), color: T.lime },
         { name: "Deseos", value: Math.max(Number(wants) || 0, 0), color: T.lavender },
-        { name: "Ahorro", value: Math.max(Number(savings) || 0, 0), color: "#7FA8C9" },
+        { name: "Ahorro", value: Math.max(Number(savings) || 0, 0), color: "#00B4D8" },
       ];
     }
     return [
       { name: "Necesidades", value: Math.max(recNeeds, 0), color: T.lime },
       { name: "Deseos", value: Math.max(recWants, 0), color: T.lavender },
-      { name: "Ahorro", value: Math.max(recSavings, 0), color: "#7FA8C9" },
+      { name: "Ahorro", value: Math.max(recSavings, 0), color: "#00B4D8" },
     ];
   }, [donutView, needs, wants, savings, recNeeds, recWants, recSavings]);
 
   const currentDonutTotal = donutData.reduce((acc, cur) => acc + cur.value, 0);
 
   const pageTitle = "Regla 50/30/20: reparte tu ingreso entre necesidades, deseos y ahorro | MetaBox";
-  const pageDescription =
-    "Aplica la regla 50/30/20 a tu ingreso mensual con soporte completo de decimales. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/rule502030";
+  const pageDescription = "Aplica la regla 50/30/20 a tu ingreso mensual con soporte completo de decimales. Compara tu reparto real con el recomendado en un gráfico interactivo. Gratis.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/regla-50-30-20-calculadora";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="regla 50/30/20, qué es la regla 50 30 20, cómo repartir el sueldo, calculadora regla 50 30 20 personalizada"
-        />
+        <meta name="keywords" content="regla 50/30/20, qué es la regla 50 30 20, cómo repartir el sueldo, calculadora regla 50 30 20 personalizada" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/rule502030.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/rule502030.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -299,63 +230,45 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
             description: pageDescription,
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Regla 50/30/20" subtitle="Reparte tu ingreso entre necesidades, deseos y ahorro." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <DecimalSliderRow
-          label="Ingreso mensual"
-          value={income}
-          min={0}
-          max={MAX_FINANCIAL_LIMIT}
-          step={1}
-          unit="€"
-          accent="lime"
-          setValue={setIncome}
-        />
+        <DecimalSliderRow label="Ingreso mensual" value={income} min={0} max={10000} step={10} unit="€" accent="lime" setValue={setIncome} />
       </Card>
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
+      <div style={{ background: `linear-gradient(145deg, rgba(196,222,78,0.05) 0%, rgba(10,18,20,1) 100%)`, borderRadius: "1.5rem", padding: "1.5rem", border: `1px solid ${T.border}`, textAlign: "center" }}>
         <div className="mb-4">
-          <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "1.8rem", fontWeight: 700 }}>
+          <div style={{ ...fontDisplay, color: diff >= 0 ? T.lime : T.coral, fontSize: "2rem", fontWeight: 800, textShadow: "0 4px 12px rgba(0,0,0,0.4)" }}>
             {fmtEUR(Math.abs(animatedDiff))}
           </div>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem" }}>{diff >= 0 ? "sin asignar" : "de más"}</div>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {diff >= 0 ? "sin asignar" : "de más"}
+          </div>
         </div>
 
-        <DonutChart data={donutData} size={170} strokeWidth={22} />
+        <DonutChart data={donutData} size={180} strokeWidth={24} />
 
-        <div className="flex justify-center gap-4 mt-4 flex-wrap">
+        <div className="flex justify-center gap-4 mt-6 flex-wrap">
           {donutData.map((item, idx) => {
             const pct = currentDonutTotal > 0 ? Math.round((item.value / currentDonutTotal) * 100) : 0;
             return (
-              <div key={idx} className="flex items-center gap-1.5" style={{ ...fontBody, fontSize: "0.8rem" }}>
-                <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item.color }} />
+              <div key={idx} className="flex items-center gap-1.5" style={{ ...fontBody, fontSize: "0.85rem" }}>
+                <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: item.color }} />
                 <span style={{ color: T.text, fontWeight: 500 }}>{item.name}:</span>
-                <span style={{ color: item.color, fontWeight: 600 }}>{pct}%</span>
+                <span style={{ color: item.color, fontWeight: 700 }}>{pct}%</span>
                 <span style={{ color: T.textMuted }}>({fmtEUR(item.value)})</span>
               </div>
             );
           })}
         </div>
 
-        <div className="flex gap-2 justify-center mt-4">
+        <div className="flex gap-2 justify-center mt-5">
           <Chip label="Tu reparto" active={donutView === "actual"} onClick={() => setDonutView("actual")} />
           <Chip label="Recomendado" active={donutView === "recomendado"} onClick={() => setDonutView("recomendado")} />
         </div>
-      </Card>
+      </div>
 
       <AdviceBlock
         text={
@@ -368,9 +281,7 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
       />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
-          Personaliza los porcentajes de referencia
-        </div>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>Personaliza los porcentajes de referencia</div>
         <div className="flex flex-col gap-6">
           <DecimalSliderRow
             label="Necesidades (%)"
@@ -398,72 +309,33 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
               setWantsPct(Math.min(v, maxAllowed));
             }}
           />
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
-            Ahorro (resto): <span style={{ color: T.lime, fontWeight: 600 }}>{savingsPct}%</span>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
+            Ahorro (resto): <span style={{ color: T.lime, fontWeight: 700 }}>{savingsPct}%</span>
           </div>
         </div>
       </Card>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <DecimalSliderRow
-            label={`Necesidades (${needsPct}%)`}
-            value={needs}
-            min={0}
-            max={income}
-            step={0.01}
-            unit="€"
-            accent="lime"
-            subtitle={`Recomendado: ${fmtEUR(recNeeds)}`}
-            setValue={setNeeds}
-          />
-          <DecimalSliderRow
-            label={`Deseos (${wantsPct}%)`}
-            value={wants}
-            min={0}
-            max={income}
-            step={0.01}
-            unit="€"
-            accent="lavender"
-            subtitle={`Recomendado: ${fmtEUR(recWants)}`}
-            setValue={setWants}
-          />
-          <DecimalSliderRow
-            label={`Ahorro (${savingsPct}%)`}
-            value={savings}
-            min={0}
-            max={income}
-            step={0.01}
-            unit="€"
-            accent="lime"
-            subtitle={`Recomendado: ${fmtEUR(recSavings)}`}
-            setValue={setSavings}
-          />
+          <DecimalSliderRow label={`Necesidades (${needsPct}%)`} value={needs} min={0} max={Math.max(income, 1000)} step={0.01} unit="€" accent="lime" subtitle={`Recomendado: ${fmtEUR(recNeeds)}`} setValue={setNeeds} />
+          <DecimalSliderRow label={`Deseos (${wantsPct}%)`} value={wants} min={0} max={Math.max(income, 1000)} step={0.01} unit="€" accent="lavender" subtitle={`Recomendado: ${fmtEUR(recWants)}`} setValue={setWants} />
+          <DecimalSliderRow label={`Ahorro (${savingsPct}%)`} value={savings} min={0} max={Math.max(income, 1000)} step={0.01} unit="€" accent="lime" subtitle={`Recomendado: ${fmtEUR(recSavings)}`} setValue={setSavings} />
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         50/30/20 es una guía orientativa, no una recomendación financiera personalizada.
       </div>
-
       <RelatedTools ids={["budget", "percent"]} onNavigate={onNavigate} primaryId="budget" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <CopySummaryButton
-          getText={() =>
-            `Regla ${needsPct}/${wantsPct}/${savingsPct} con ingreso ${fmtEUR(income)}: necesidades ${fmtEUR(needs)}, deseos ${fmtEUR(wants)}, ahorro ${fmtEUR(savings)}.`
-          }
-        />
-        <ExportCSVButton
-          filename="regla-50-30-20"
-          getRows={() => [
-            { categoria: "Necesidades", recomendado: recNeeds.toFixed(2), actual: Number(needs).toFixed(2) },
-            { categoria: "Deseos", recomendado: recWants.toFixed(2), actual: Number(wants).toFixed(2) },
-            { categoria: "Ahorro", recomendado: recSavings.toFixed(2), actual: Number(savings).toFixed(2) },
-          ]}
-        />
+        <CopySummaryButton getText={() => `Regla ${needsPct}/${wantsPct}/${savingsPct} con ingreso ${fmtEUR(income)}: necesidades ${fmtEUR(needs)}, deseos ${fmtEUR(wants)}, ahorro ${fmtEUR(savings)}.`} />
+        <ExportCSVButton filename="regla-50-30-20" getRows={() => [
+          { categoria: "Necesidades", recomendado: recNeeds.toFixed(2), actual: Number(needs).toFixed(2) },
+          { categoria: "Deseos", recomendado: recWants.toFixed(2), actual: Number(wants).toFixed(2) },
+          { categoria: "Ahorro", recomendado: recSavings.toFixed(2), actual: Number(savings).toFixed(2) },
+        ]} />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
@@ -476,4 +348,3 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
 }
 
 export default Rule502030Tool;
-      
