@@ -1,17 +1,14 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Plus, X, ArrowRight,
-} from "lucide-react";
+import { Plus, X, ArrowRight } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, AdviceBlock } from "@/components/ui";
+import { Card, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -24,6 +21,49 @@ const FAQS = [
   },
 ];
 
+// COMPONENTE DE INPUT DE DINERO (SIN SLIDER, MÁS RÁPIDO Y PRECISO)
+function MoneyInput({ value, onChange }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) onChange(parsed);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      onChange(0);
+      setTextVal("0");
+    } else {
+      onChange(parsed);
+      setTextVal(String(parsed));
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-end bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-3 py-2 rounded-xl border border-[var(--border,rgba(255,255,255,0.08))]" style={{ width: "120px" }}>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={textVal}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        className="bg-transparent text-right font-semibold"
+        style={{ ...fontBody, color: T.lime, fontSize: "1rem", width: "100%", outline: "none" }}
+      />
+      <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginLeft: "4px" }}>€</span>
+    </div>
+  );
+}
 function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [people, setPeople] = useState(() => {
     const p = initialParams?.people;
@@ -50,7 +90,6 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
 
   const total = people.reduce((sum, p) => sum + (p.paid || 0), 0);
   const share = people.length > 0 ? total / people.length : 0;
-  const maxSliderValue = Math.max(MAX_FINANCIAL_LIMIT, total, ...people.map(p => p.paid || 0));
 
   const updatePaid = (id, paid) => {
     setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, paid } : p)));
@@ -71,10 +110,24 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
     setPeople((prev) => prev.filter((p) => p.id !== id));
   };
 
+  // MATEMÁTICAS BLINDADAS (USANDO CÉNTIMOS PARA EVITAR DECIMALES INFINITOS)
   const settlements = useMemo(() => {
-    const balances = people.map((p) => ({ name: p.name, balance: (p.paid || 0) - share }));
-    const debtors = balances.filter((b) => b.balance < -0.01).map((b) => ({ ...b, balance: -b.balance })).sort((a, b) => b.balance - a.balance);
-    const creditors = balances.filter((b) => b.balance > 0.01).sort((a, b) => b.balance - a.balance);
+    const totalCents = people.reduce((sum, p) => sum + Math.round((p.paid || 0) * 100), 0);
+    const shareCents = Math.round(totalCents / people.length);
+
+    const balances = people.map((p) => ({
+      name: p.name,
+      balanceCents: Math.round((p.paid || 0) * 100) - shareCents,
+    }));
+
+    const debtors = balances
+      .filter((b) => b.balanceCents < -1)
+      .map((b) => ({ ...b, balanceCents: -b.balanceCents }))
+      .sort((a, b) => b.balanceCents - a.balanceCents);
+
+    const creditors = balances
+      .filter((b) => b.balanceCents > 1)
+      .sort((a, b) => b.balanceCents - a.balanceCents);
 
     const result = [];
     let di = 0, ci = 0;
@@ -82,47 +135,35 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
     const c = creditors.map((x) => ({ ...x }));
 
     while (di < d.length && ci < c.length) {
-      const amount = Math.min(d[di].balance, c[ci].balance);
-      if (amount > 0.01) {
-        result.push({ from: d[di].name, to: c[ci].name, amount });
+      const amountCents = Math.min(d[di].balanceCents, c[ci].balanceCents);
+      if (amountCents > 1) {
+        result.push({
+          from: d[di].name,
+          to: c[ci].name,
+          amount: amountCents / 100,
+        });
       }
-      d[di].balance -= amount;
-      c[ci].balance -= amount;
-      if (d[di].balance < 0.01) di++;
-      if (c[ci].balance < 0.01) ci++;
+      d[di].balanceCents -= amountCents;
+      c[ci].balanceCents -= amountCents;
+      if (d[di].balanceCents < 1) di++;
+      if (c[ci].balanceCents < 1) ci++;
     }
     return result;
-  }, [people, share]);
+  }, [people]);
 
   const pageTitle = "Calculadora para dividir gastos entre amigos o grupo | MetaBox";
-  const pageDescription =
-    "Divide un gasto compartido entre varias personas, introduce lo que pagó cada una, y calcula al instante las transferencias mínimas necesarias para saldar todas las deudas del grupo. Gratis.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/groupsplit";
+  const pageDescription = "Divide un gasto compartido entre varias personas, introduce lo que pagó cada una, y calcula al instante las transferencias mínimas necesarias para saldar todas las deudas del grupo. Gratis.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/reparto-gastos-en-grupo";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="dividir gastos entre amigos, calculadora reparto de gastos, cómo repartir una cuenta entre varios, quién debe pagar a quién grupo"
-        />
+        <meta name="keywords" content="dividir gastos entre amigos, calculadora reparto de gastos, cómo repartir una cuenta entre varios, quién debe pagar a quién grupo" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/groupsplit.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/groupsplit.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -165,45 +206,45 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           ¿Quién pagó qué?
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {people.map((p) => (
             <div key={p.id} className="flex items-center gap-2">
               <input
                 value={p.name}
                 onChange={(e) => updateName(p.id, e.target.value)}
+                placeholder="Nombre"
                 style={{
-                  ...fontBody, width: "7rem", background: T.surfaceAlt, border: `1px solid ${T.border}`,
-                  borderRadius: "0.6rem", padding: "0.5rem 0.7rem", color: T.text, fontSize: "0.85rem", outline: "none", flexShrink: 0,
+                  ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                  borderRadius: "0.7rem", padding: "0.6rem 0.8rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
                 }}
               />
-              <div style={{ flex: 1 }}>
-                <SliderControl label="" value={p.paid} min={0} max={maxSliderValue} step={5} unit="€" onChange={(v) => updatePaid(p.id, v)} />
-              </div>
+              <MoneyInput value={p.paid} onChange={(v) => updatePaid(p.id, v)} />
               {people.length > 2 && (
                 <button
                   onClick={() => removePerson(p.id)}
                   aria-label={`Eliminar ${p.name}`}
                   style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.3rem", flexShrink: 0 }}
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               )}
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-1.5" style={{ marginTop: "1rem" }}>
+        
+        <div className="flex items-center gap-2" style={{ marginTop: "1rem" }}>
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addPerson()}
             placeholder="Nombre de la nueva persona..."
             style={{
-              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
-              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none",
+              ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+              padding: "0.65rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none",
             }}
           />
-          <button onClick={addPerson} aria-label="Añadir persona" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-            <Plus size={18} color="#12200A" />
+          <button onClick={addPerson} aria-label="Añadir persona" style={{ background: T.lime, border: "none", borderRadius: "0.7rem", padding: "0.65rem 1rem", display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", flexShrink: 0, ...fontBody, fontWeight: 600, color: "#0a1214" }}>
+            <Plus size={18} /> Añadir
           </button>
         </div>
       </Card>
@@ -213,19 +254,19 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
           Quién debe pagar a quién
         </div>
         {settlements.length === 0 ? (
-          <div style={{ ...fontBody, color: T.lime, fontSize: "0.9rem", textAlign: "center" }}>
+          <div style={{ ...fontBody, color: T.lime, fontSize: "0.9rem", textAlign: "center", padding: "1rem 0" }}>
             Todo cuadra — nadie debe nada a nadie.
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {settlements.map((s, i) => (
-              <div key={i} className="flex items-center justify-between" style={{ background: T.surfaceAlt, borderRadius: "0.7rem", padding: "0.7rem 0.9rem" }}>
-                <div className="flex items-center gap-2" style={{ ...fontBody, fontSize: "0.88rem" }}>
+              <div key={i} className="flex items-center justify-between" style={{ background: T.surfaceAlt, borderRadius: "0.8rem", padding: "0.8rem 1rem", border: `1px solid ${T.border}` }}>
+                <div className="flex items-center gap-2" style={{ ...fontBody, fontSize: "0.9rem" }}>
                   <span style={{ color: T.coral, fontWeight: 600 }}>{s.from}</span>
                   <ArrowRight size={14} color={T.textMuted} />
                   <span style={{ color: T.lime, fontWeight: 600 }}>{s.to}</span>
                 </div>
-                <span style={{ ...fontDisplay, color: T.text, fontWeight: 700, fontSize: "0.95rem" }}>{fmtEUR(s.amount)}</span>
+                <span style={{ ...fontDisplay, color: T.text, fontWeight: 700, fontSize: "1.1rem" }}>{fmtEUR(s.amount)}</span>
               </div>
             ))}
           </div>
@@ -241,7 +282,6 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
       />
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["tip", "budget"]} onNavigate={onNavigate} primaryId="tip" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -270,4 +310,3 @@ function GroupSplitTool({ onBack, onNavigate, initialParams = {}, onStateChange 
 }
 
 export default GroupSplitTool;
-      
