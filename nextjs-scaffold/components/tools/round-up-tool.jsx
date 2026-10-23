@@ -1,15 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { Plus, X } from "lucide-react";
+import { Plus, X, PiggyBank, Sparkles } from "lucide-react";
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -19,7 +13,6 @@ import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -36,6 +29,49 @@ const FAQS = [
   },
 ];
 
+function MoneyInput({ value, onChange, placeholder = "0,00" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) onChange(parsed);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      onChange(0);
+      setTextVal("0");
+    } else {
+      onChange(parsed);
+      setTextVal(String(parsed));
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.6rem 1rem", width: "100%" }}>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={textVal}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        placeholder={placeholder}
+        className="bg-transparent text-right font-semibold"
+        style={{ ...fontBody, color: T.lime, fontSize: "1rem", width: "100%", outline: "none" }}
+      />
+      <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginLeft: "4px" }}>€</span>
+    </div>
+  );
+}
 function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [purchasesPerWeek, setPurchasesPerWeek] = useState(() => {
     const p = initialParams?.purchasesPerWeek;
@@ -57,15 +93,10 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
 
   useEffect(() => {
     if (typeof onStateChange === "function") {
-      onStateChange({
-        purchasesPerWeek,
-        avgAmount,
-        roundTo,
-      });
+      onStateChange({ purchasesPerWeek, avgAmount, roundTo });
     }
   }, [purchasesPerWeek, avgAmount, roundTo, onStateChange]);
 
-  const maxAvgSlider = Math.max(MAX_FINANCIAL_LIMIT, avgAmount * 1.5);
   const rem = avgAmount % roundTo;
   const roundUpPerPurchase = rem === 0 ? 0 : roundTo - rem;
   const weekly = purchasesPerWeek * roundUpPerPurchase;
@@ -73,7 +104,6 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
   const annual = weekly * 52;
 
   const piggyBank = history.reduce((acc, cur) => acc + cur.roundUp, 0);
-
   const animatedMonthly = useAnimatedNumber(monthly);
   const animatedAnnual = useAnimatedNumber(annual);
   const animatedPiggy = useAnimatedNumber(piggyBank);
@@ -101,34 +131,16 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
   const resetPiggyBank = () => setHistory([]);
 
   const pageTitle = "Calculadora de ahorro por redondeo de compras | MetaBox";
-  const pageDescription =
-    "Estima cuánto ahorrarías redondeando tus compras y lleva una hucha real con historial de movimientos y opción de eliminar entradas. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/roundup";
+  const pageDescription = "Estima cuánto ahorrarías redondeando tus compras y lleva una hucha real con historial de movimientos y opción de eliminar entradas. Gratis y sin registro.";
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-por-redondeo";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="ahorro por redondeo, cómo funciona el redondeo de compras, ahorrar redondeando compras, hucha de redondeo"
-        />
+        <meta name="keywords" content="ahorro por redondeo, cómo funciona el redondeo de compras, ahorrar redondeando compras, hucha de redondeo" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/roundup.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/roundup.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -140,17 +152,6 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
             inLanguage: "es",
             offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
             description: pageDescription,
-          })}
-        </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
           })}
         </script>
       </Helmet>
@@ -165,52 +166,61 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
         </div>
       </Card>
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Tu hucha real acumulada</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
+      {/* TARJETA PREMIUM DE LA HUCHA */}
+      <div style={{
+        background: `linear-gradient(145deg, rgba(196,222,78,0.1) 0%, rgba(10,18,20,1) 100%)`,
+        borderRadius: "1.5rem",
+        padding: "2rem 1.5rem",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+        border: `1px solid rgba(196,222,78,0.3)`,
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8)`
+      }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.5rem" }}>
+          <div style={{ background: "rgba(196,222,78,0.2)", padding: "0.8rem", borderRadius: "50%", display: "inline-flex" }}>
+            <PiggyBank size={32} color={T.lime} />
+          </div>
+        </div>
+        
+        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>Tu hucha real acumulada</div>
+        <div style={{ ...fontDisplay, color: T.lime, fontSize: "3rem", fontWeight: 800, margin: "0.3rem 0", textShadow: "0 0 20px rgba(196,222,78,0.4)" }}>
           {fmtEUR(animatedPiggy)}
         </div>
-        <div className="flex items-center gap-1.5" style={{ marginTop: "0.8rem" }}>
-          <input
-            value={newPurchase}
-            onChange={(e) => setNewPurchase(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addRealPurchase()}
-            placeholder="Importe de la compra..."
-            inputMode="decimal"
-            style={{
-              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
-              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", textAlign: "center",
-            }}
-          />
-          <button onClick={addRealPurchase} aria-label="Añadir redondeo" style={{ background: T.lime, border: "none", borderRadius: "50%", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-            <Plus size={18} color="#12200A" />
+
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.5rem", maxWidth: "400px", margin: "1.5rem auto 0" }}>
+          <div style={{ flex: 1 }}>
+            <MoneyInput value={newPurchase} onChange={setNewPurchase} placeholder="Ej. 4,50" />
+          </div>
+          <button onClick={addRealPurchase} aria-label="Añadir redondeo" style={{ background: T.lime, border: "none", borderRadius: "0.8rem", padding: "0 1.2rem", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+            <Plus size={22} color="#12200A" />
           </button>
         </div>
 
         {history.length > 0 && (
-          <div className="flex flex-col gap-2 mt-4 text-left" style={{ maxHeight: "160px", overflowY: "auto", paddingRight: "4px" }}>
+          <div className="flex flex-col gap-2 mt-6 text-left" style={{ maxHeight: "180px", overflowY: "auto", paddingRight: "4px" }}>
             <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Últimos movimientos
             </div>
             {history.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between py-1.5 px-2.5 rounded-lg"
-                style={{ background: T.surfaceAlt, border: `1px solid ${T.border}` }}
+                className="flex items-center justify-between py-2 px-3 rounded-lg"
+                style={{ background: "rgba(255,255,255,0.03)", border: `1px solid rgba(255,255,255,0.05)` }}
               >
-                <div style={{ ...fontBody, fontSize: "0.82rem", color: T.text }}>
+                <div style={{ ...fontBody, fontSize: "0.85rem", color: T.text }}>
                   Compra de <span style={{ fontWeight: 600 }}>{fmtEUR(item.amount)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span style={{ ...fontBody, fontSize: "0.82rem", color: T.lime, fontWeight: 600 }}>
+                  <span style={{ ...fontBody, fontSize: "0.85rem", color: T.lime, fontWeight: 600 }}>
                     +{fmtEUR(item.roundUp)}
                   </span>
                   <button
                     onClick={() => removePurchase(item.id)}
                     aria-label="Eliminar movimiento"
-                    style={{ background: "transparent", border: "none", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center" }}
+                    style={{ background: "transparent", border: "none", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center", opacity: 0.6 }}
                   >
-                    <X size={14} color={T.textMuted} />
+                    <X size={16} color={T.text} />
                   </button>
                 </div>
               </div>
@@ -221,16 +231,16 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
         {piggyBank > 0 && (
           <button
             onClick={resetPiggyBank}
-            style={{ ...fontBody, background: "transparent", border: "none", color: T.textMuted, fontSize: "0.75rem", cursor: "pointer", marginTop: "0.8rem", textDecoration: "underline" }}
+            style={{ ...fontBody, background: "transparent", border: "none", color: T.textMuted, fontSize: "0.75rem", cursor: "pointer", marginTop: "1rem", textDecoration: "underline" }}
           >
             Vaciar hucha completa
           </button>
         )}
-      </Card>
+      </div>
 
       <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.6rem" }}>
-          Estimación media (si mantienes el ritmo)
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.6rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <Sparkles size={16} color={T.lime} /> Estimación media (si mantienes el ritmo)
         </div>
         <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{fmtEUR(monthly)} al mes · {fmtEUR(annual)} al año</div>
         <div style={{ width: "100%", height: "160px", marginTop: "0.6rem" }}>
@@ -238,10 +248,7 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
             <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
               <XAxis type="number" hide domain={[0, "auto"]} />
               <YAxis type="category" dataKey="periodo" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
-              <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
-                formatter={(v) => [fmtEUR(v), "Ahorro"]}
-              />
+              <Tooltip contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }} formatter={(v) => [fmtEUR(v), "Ahorro"]} />
               <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={26} animationDuration={400}>
                 {barData.map((_, i) => (
                   <Cell key={i} fill={[T.textMuted, T.lime, T.lavender][i]} />
@@ -263,31 +270,27 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
           <SliderControl label="Compras por semana" value={purchasesPerWeek} min={0} max={30} step={1} unit="compras" onChange={setPurchasesPerWeek} />
-          <SliderControl label="Importe medio por compra" value={avgAmount} min={0.5} max={MAX_FINANCIAL_LIMIT} step={0.5} unit="€" onChange={setAvgAmount} accent="lavender" />
+          
+          <div>
+            <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.5rem" }}>Importe medio por compra</div>
+            <div style={{ maxWidth: "200px" }}>
+              <MoneyInput value={avgAmount} onChange={setAvgAmount} />
+            </div>
+          </div>
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
-      <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
-        La estimación es simplificada a partir de un importe medio; la hucha real refleja las compras que registres tú.
-      </div>
-
       <RelatedTools ids={["daily", "challenge"]} onNavigate={onNavigate} primaryId="daily" />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <CopySummaryButton
-          getText={() => `Ahorro por redondeo: hucha real ${fmtEUR(piggyBank)}. Estimación redondeando a ${roundTo}€ con ${purchasesPerWeek} compras/semana → ${fmtEUR(monthly)}/mes.`}
-        />
-        <ExportCSVButton
-          filename="ahorro-redondeo"
-          getRows={() => [
-            { concepto: "Hucha real acumulada", importe: piggyBank.toFixed(2) },
-            { concepto: "Ahorro estimado semanal", importe: weekly.toFixed(2) },
-            { concepto: "Ahorro estimado mensual", importe: monthly.toFixed(2) },
-            { concepto: "Ahorro estimado anual", importe: annual.toFixed(2) },
-          ]}
-        />
+        <CopySummaryButton getText={() => `Ahorro por redondeo: hucha real ${fmtEUR(piggyBank)}. Estimación redondeando a ${roundTo}€ con ${purchasesPerWeek} compras/semana → ${fmtEUR(monthly)}/mes.`} />
+        <ExportCSVButton filename="ahorro-redondeo" getRows={() => [
+          { concepto: "Hucha real acumulada", importe: piggyBank.toFixed(2) },
+          { concepto: "Ahorro estimado semanal", importe: weekly.toFixed(2) },
+          { concepto: "Ahorro estimado mensual", importe: monthly.toFixed(2) },
+          { concepto: "Ahorro estimado anual", importe: annual.toFixed(2) },
+        ]} />
       </div>
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
@@ -300,4 +303,3 @@ function RoundUpTool({ onBack, onNavigate, initialParams = {}, onStateChange }) 
 }
 
 export default RoundUpTool;
-            
