@@ -37,7 +37,7 @@ const SUGGESTIONS = [
   { name: "Regalo pareja", amount: 100 },
 ];
 
-function MoneyInput({ value, onChange, icon }) {
+function MoneyInput({ value, onChange, icon, width = "90px" }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
 
   useEffect(() => {
@@ -65,8 +65,8 @@ function MoneyInput({ value, onChange, icon }) {
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.4rem 0.8rem", width: "110px", flexShrink: 0 }}>
-      {icon && <div style={{ marginRight: "0.4rem", color: T.textMuted }}>{icon}</div>}
+    <div style={{ display: "flex", alignItems: "center", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.6rem", padding: "0.3rem 0.6rem", width: width, flexShrink: 0 }}>
+      {icon && <div style={{ marginRight: "0.3rem", color: T.textMuted, display: "flex" }}>{icon}</div>}
       <input
         type="text"
         inputMode="decimal"
@@ -74,49 +74,9 @@ function MoneyInput({ value, onChange, icon }) {
         onChange={handleInputChange}
         onBlur={handleBlur}
         className="bg-transparent text-right font-semibold"
-        style={{ ...fontBody, color: T.lime, fontSize: "1rem", width: "100%", outline: "none" }}
+        style={{ ...fontBody, color: T.lime, fontSize: "0.95rem", width: "100%", outline: "none" }}
       />
-      <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginLeft: "4px" }}>€</span>
-    </div>
-  );
-}
-
-function Snowfall() {
-  const flakes = Array.from({ length: 15 });
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 1, opacity: 0.4 }}>
-      <style>{`
-        @keyframes snow {
-          0% { transform: translateY(-20px) translateX(0px) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(250px) translateX(20px) rotate(360deg); opacity: 0; }
-        }
-        .snowflake {
-          position: absolute;
-          background: white;
-          border-radius: 50%;
-          filter: blur(1px);
-        }
-      `}</style>
-      {flakes.map((_, i) => {
-        const size = Math.random() * 4 + 2;
-        const left = Math.random() * 100;
-        const delay = Math.random() * 5;
-        const duration = Math.random() * 3 + 3;
-        return (
-          <div
-            key={i}
-            className="snowflake"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              left: `${left}%`,
-              top: `-10px`,
-              animation: `snow ${duration}s linear infinite`,
-              animationDelay: `${delay}s`,
-            }}
-          />
-        );
-      })}
+      <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginLeft: "2px" }}>€</span>
     </div>
   );
 }
@@ -149,7 +109,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const [newName, setNewName] = useState("");
   
-  // Estado para el efecto 3D
   const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0, hover: false });
 
@@ -188,7 +147,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     setGifts((prev) => prev.filter((g) => g.id !== id));
   };
 
-  // Cálculo del progreso y niveles
   const progressPct = budget > 0 ? Math.min((current / budget) * 100, 100) : 0;
   let levelText = "Novato Navideño";
   let levelIcon = <Gift size={14} />;
@@ -203,7 +161,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     levelIcon = <PiggyBank size={14} />;
   }
 
-  // Manejadores para el Tilt 3D
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
@@ -220,7 +177,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
   const pageDescription = "Haz tu lista de regalos y gastos de Navidad, suma el presupuesto total automáticamente y calcula cuánto ahorrar cada mes hasta diciembre. Gratis y sin registro.";
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-para-navidad";
 
-  // Estilos dinámicos para el 3D
   const tiltStyle = tilt.hover
     ? {
         transform: `perspective(1000px) rotateX(${-tilt.y * 15}deg) rotateY(${tilt.x * 15}deg) scale3d(1.02, 1.02, 1.02)`,
@@ -243,6 +199,12 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
     zIndex: 10,
   };
 
+  const pieData = Array.from({ length: 12 }, (_, i) => ({
+    mes: i + 1,
+    value: 1,
+    fill: i + 1 >= currentMonth ? T.lime : T.surfaceAlt,
+  }));
+
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <style>{`
@@ -250,6 +212,10 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
           0% { transform: translate(0px, 0px) scale(1); }
           50% { transform: translate(10px, -15px) scale(1.1); }
           100% { transform: translate(0px, 0px) scale(1); }
+        }
+        @keyframes snow-fall {
+          0% { transform: translateY(-20px) translateX(0px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(300px) translateX(20px) rotate(360deg); opacity: 0; }
         }
       `}</style>
 
@@ -261,7 +227,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
       <ToolHeader title="Ahorro para Navidad" subtitle="Haz tu lista de regalos y calculamos cuánto ahorrar al mes." onBack={onBack} />
 
-      {/* TARJETA MÁGICA 3D CON NIEVE */}
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
@@ -272,15 +237,30 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
       >
         <Card glow result style={{ textAlign: "center", paddingTop: "1.5rem", paddingBottom: "1.5rem", position: "relative", overflow: "hidden" }}>
           
-          {/* Luces de Fondo */}
           <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", opacity: 0.6, zIndex: 0 }}>
             <div style={{ position: "absolute", top: "10%", left: "20%", width: "60px", height: "60px", borderRadius: "50%", background: T.lime, filter: "blur(25px)", animation: "float-christmas 6s ease-in-out infinite" }} />
             <div style={{ position: "absolute", bottom: "20%", right: "15%", width: "80px", height: "80px", borderRadius: "50%", background: T.lavender, filter: "blur(30px)", animation: "float-christmas 8s ease-in-out infinite reverse" }} />
             <div style={{ position: "absolute", top: "40%", right: "30%", width: "40px", height: "40px", borderRadius: "50%", background: T.coral, filter: "blur(20px)", animation: "float-christmas 5s ease-in-out infinite 2s" }} />
           </div>
 
-          {/* Nieve Cayendo */}
-          <Snowfall />
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 1, opacity: 0.5 }}>
+            {[...Array(10)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  width: "4px",
+                  height: "4px",
+                  background: "#fff",
+                  borderRadius: "50%",
+                  top: "-10px",
+                  left: `${(i * 10) + 5}%`,
+                  animation: `snow-fall ${3 + (i % 3)}s linear infinite`,
+                  animationDelay: `${i * 0.4}s`,
+                }}
+              />
+            ))}
+          </div>
           
           <div style={glareStyle} />
 
@@ -289,7 +269,7 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, value: 1 }))}
+                    data={pieData}
                     dataKey="value"
                     innerRadius="68%"
                     outerRadius="95%"
@@ -297,11 +277,10 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
                     endAngle={-270}
                     paddingAngle={4}
                     stroke="none"
-                    isAnimationActive={true}
-                    animationDuration={500}
+                    isAnimationActive={false}
                   >
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <Cell key={i} fill={i + 1 >= currentMonth ? T.lime : T.surfaceAlt} />
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -319,7 +298,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
         </Card>
       </div>
 
-      {/* BARRA DE PROGRESO Y NIVEL */}
       <div style={{ background: T.surfaceAlt, padding: "1rem", borderRadius: "1rem", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem" }}>
           {levelIcon} {levelText}
@@ -349,23 +327,35 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
           
           <div className="flex flex-col gap-2">
             {gifts.map((g) => (
-              <div key={g.id} className="flex items-center gap-2" style={{ background: T.surface, padding: "0.4rem 0.6rem", borderRadius: "0.8rem", border: `1px solid ${T.border}` }}>
+              <div key={g.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: T.surfaceAlt, padding: "0.5rem", borderRadius: "0.8rem", border: `1px solid ${T.border}` }}>
                 <input
                   value={g.name}
                   onChange={(e) => updateName(g.id, e.target.value)}
                   placeholder="Nombre"
                   style={{
                     ...fontBody, flex: 1, minWidth: 0, background: "transparent", border: "none",
-                    padding: "0.4rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
+                    padding: "0.2rem 0.4rem", color: T.text, fontSize: "0.9rem", outline: "none", fontWeight: 500
                   }}
                 />
                 <MoneyInput value={g.amount} onChange={(v) => updateAmount(g.id, v)} />
                 <button
                   onClick={() => removeGift(g.id)}
                   aria-label={`Eliminar ${g.name}`}
-                  style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", padding: "0.4rem", flexShrink: 0 }}
+                  style={{ 
+                    background: "rgba(255, 100, 100, 0.1)", 
+                    border: "none", 
+                    color: T.coral, 
+                    cursor: "pointer", 
+                    width: "28px", 
+                    height: "28px", 
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0 
+                  }}
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
             ))}
@@ -378,7 +368,7 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
               onKeyDown={(e) => e.key === "Enter" && addGift()}
               placeholder="Añadir (ej. Mamá)..."
               style={{
-                ...fontBody, flex: 1, minWidth: 0, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
+                ...fontBody, flex: 1, minWidth: 0, background: T.surface, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
                 padding: "0.65rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none",
               }}
             />
@@ -387,7 +377,6 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
             </button>
           </div>
           
-          {/* SUGERENCIAS RÁPIDAS */}
           <div style={{ marginTop: "1rem" }}>
             <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginBottom: "0.5rem" }}>Añadir rápido:</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
@@ -396,7 +385,7 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
                   key={s.name}
                   onClick={() => addGift(s.name, s.amount)}
                   style={{
-                    ...fontBody, background: T.surfaceAlt, border: `1px dashed ${T.border}`, borderRadius: "999px",
+                    ...fontBody, background: T.surface, border: `1px dashed ${T.border}`, borderRadius: "999px",
                     padding: "0.3rem 0.6rem", fontSize: "0.75rem", color: T.textMuted, cursor: "pointer",
                   }}
                 >
@@ -411,17 +400,16 @@ function HolidaySavingsTool({ onBack, onNavigate, initialParams = {}, onStateCha
           <div className="flex flex-col gap-6">
             <div>
               <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Mes actual</div>
-              <div className="grid grid-cols-4 gap-2">
+              {/* GRID DE MESES FORZADO */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem" }}>
                 {MONTHS.map((m, i) => (
                   <Chip key={m} label={m} active={currentMonth === i + 1} onClick={() => setCurrentMonth(i + 1)} />
                 ))}
               </div>
             </div>
-            <div>
-               <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.8rem" }}>Ya ahorrado</div>
-               <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                  <MoneyInput value={current} onChange={setCurrent} icon={<PiggyBank size={18} />} />
-               </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+               <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.9rem" }}>Ya ahorrado</div>
+               <MoneyInput value={current} onChange={setCurrent} icon={<PiggyBank size={16} />} width="100px" />
             </div>
           </div>
         </Card>
