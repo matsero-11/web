@@ -1,10 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import { CalendarDays, Plane, PiggyBank } from "lucide-react";
+import { CalendarDays, Plane, TrendingUp } from "lucide-react";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip
+} from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, AdviceBlock, Chip, ProgressBar } from "@/components/ui";
+import { Card, AdviceBlock } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
@@ -156,38 +159,18 @@ function TimeSlider({ label, value, setValue, min = 0, max = 60, unit = "meses" 
   );
 }
 function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
-  const [budget, setBudget] = useState(() => {
-    const p = initialParams?.budget;
-    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 1200;
-  });
-
-  const [current, setCurrent] = useState(() => {
-    const p = initialParams?.current;
-    return p !== undefined && !isNaN(parseFloat(p)) ? parseFloat(p) : 200;
-  });
-
-  const [tripDate, setTripDate] = useState(() => {
-    const p = initialParams?.tripDate;
-    return typeof p === "string" ? p : "";
-  });
-
-  const [monthsLeft, setMonthsLeft] = useState(() => {
-    const p = initialParams?.monthsLeft;
-    return p !== undefined && !isNaN(parseInt(p, 10)) ? parseInt(p, 10) : 6;
-  });
+  const [budget, setBudget] = useState(() => Number(initialParams?.budget) || 1200);
+  const [current, setCurrent] = useState(() => Number(initialParams?.current) || 200);
+  const [tripDate, setTripDate] = useState(() => (typeof initialParams?.tripDate === "string" ? initialParams.tripDate : ""));
+  const [monthsLeft, setMonthsLeft] = useState(() => Number(initialParams?.monthsLeft) || 6);
 
   useEffect(() => {
     if (typeof onStateChange === "function") {
       onStateChange({
-        budget,
-        current,
-        tripDate: tripDate ? tripDate : null,
-        monthsLeft: !tripDate ? monthsLeft : null,
+        budget, current, tripDate: tripDate ? tripDate : null, monthsLeft: !tripDate ? monthsLeft : null,
       });
     }
   }, [budget, current, tripDate, monthsLeft, onStateChange]);
-
-  // ELIMINADO el useEffect que forzaba current <= budget
 
   const safeBudget = Number.isFinite(budget) ? budget : 0;
   const safeCurrent = Number.isFinite(current) ? current : 0;
@@ -197,13 +180,23 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const remaining = Math.max(safeBudget - safeCurrent, 0);
   const requiredMonthly = effectiveMonths > 0 ? remaining / effectiveMonths : remaining;
   const animatedRequired = useAnimatedNumber(requiredMonthly);
+  
   const pct = safeBudget > 0 ? (safeCurrent / safeBudget) * 100 : 0;
-  const animatedPct = useAnimatedNumber(Math.min(pct, 100));
+
+  // GENERACIÓN DE DATOS PARA EL GRÁFICO DE EVOLUCIÓN
+  const chartData = useMemo(() => {
+    if (safeBudget === 0 || effectiveMonths === 0) return [];
+    const data = [{ mes: "Hoy", ahorro: safeCurrent, meta: safeBudget }];
+    let acc = safeCurrent;
+    for (let i = 1; i <= effectiveMonths; i++) {
+      acc += requiredMonthly;
+      data.push({ mes: `M${i}`, ahorro: Math.min(acc, safeBudget), meta: safeBudget });
+    }
+    return data;
+  }, [safeBudget, safeCurrent, effectiveMonths, requiredMonthly]);
 
   const pageTitle = "Calculadora de ahorro para un viaje: cuánto ahorrar al mes | MetaBox";
   const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para cubrir el presupuesto de tu próximo viaje, poniendo la fecha exacta del viaje o los meses que faltan. Gratis y sin registro.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO
   const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-para-un-viaje";
 
   return (
@@ -230,40 +223,74 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <ToolHeader title="Ahorro para un viaje" subtitle="Fija la fecha o los meses, y calculamos cuánto ahorrar cada mes." onBack={onBack} />
 
-      {/* HERO CARD PREMIUM */}
+      {/* HERO CARD PREMIUM CON ICONO DE FONDO Y NEÓN */}
       <div style={{
-        background: `linear-gradient(145deg, rgba(196,222,78,0.08) 0%, rgba(10,18,20,1) 100%)`,
+        background: `linear-gradient(145deg, rgba(196,222,78,0.05) 0%, rgba(10,18,20,1) 100%)`,
         borderRadius: "1.5rem",
         padding: "2.5rem 1.5rem",
         textAlign: "center",
         position: "relative",
         overflow: "hidden",
         border: `1px solid ${T.lime}40`,
-        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8)`
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8), inset 0 0 20px ${T.lime}10`
       }}>
+        {/* Icono de avión de fondo */}
+        <Plane size={180} style={{ position: "absolute", top: "-10%", right: "-10%", color: T.lime, opacity: 0.03, transform: "rotate(-15deg)" }} />
+        
         <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: T.lime, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
         
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Necesitas ahorrar al mes
           </div>
-          <div style={{ ...fontDisplay, color: T.lime, fontSize: "3.2rem", fontWeight: 800, margin: "0.5rem 0", textShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+          <div style={{ 
+            ...fontDisplay, 
+            color: T.lime, 
+            fontSize: "3.5rem", 
+            fontWeight: 800, 
+            margin: "0.5rem 0", 
+            textShadow: `0 0 20px ${T.lime}60, 0 4px 10px rgba(0,0,0,0.5)` 
+          }}>
             {effectiveMonths > 0 ? fmtEUR(animatedRequired) : "—"}
           </div>
           
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginBottom: "1rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginTop: "0.5rem" }}>
             {pct.toFixed(0)}% del presupuesto ya cubierto
-          </div>
-
-          <div style={{ background: T.surfaceAlt, borderRadius: "999px", height: "8px", overflow: "hidden", maxWidth: "300px", margin: "0 auto" }}>
-            <div style={{ width: `${animatedPct}%`, height: "100%", background: T.lime, transition: "width 0.4s ease", boxShadow: `0 0 10px ${T.lime}` }} />
           </div>
         </div>
       </div>
 
+      {/* GRÁFICO DE EVOLUCIÓN "WOW" */}
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <TrendingUp size={16} color={T.lime} /> Tu evolución hasta el viaje
+        </div>
+        <div style={{ width: "100%", height: "190px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorAhorro" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
+                  <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={20} />
+              <YAxis hide domain={[0, safeBudget * 1.05]} />
+              <Tooltip 
+                formatter={(value, name) => [fmtEUR(value), name === "ahorro" ? "Ahorrado" : "Meta"]}
+                contentStyle={{ background: "#111c1f", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: "12px", fontSize: "13px", color: T.text, boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }} 
+              />
+              <Area type="monotone" dataKey="meta" stroke={T.textMuted} strokeDasharray="4 4" fill="none" strokeWidth={2} />
+              <Area type="monotone" dataKey="ahorro" stroke={T.lime} strokeWidth={3} fill="url(#colorAhorro)" activeDot={{ r: 6, stroke: "#0a1214", strokeWidth: 2 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      {/* TARJETA DE FECHA PREMIUM */}
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <CalendarDays size={16} color={T.lime} /> Fecha del viaje (opcional, más preciso)
+          <CalendarDays size={16} color={T.lime} /> Fecha del viaje
         </div>
         <input
           type="date"
