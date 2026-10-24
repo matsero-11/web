@@ -88,7 +88,7 @@ function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 10
       />
     </div>
   );
-}
+      }
 function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [income, setIncome] = useState(() => {
     const p = initialParams?.income;
@@ -127,8 +127,6 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
     }
   }, [income, savings, period, history, onStateChange]);
 
-  // ELIMINADO el useEffect que forzaba savings <= income para que el slider no rebote.
-
   const pct = income > 0 ? (savings / income) * 100 : 0;
   const animatedPct = useAnimatedNumber(pct);
 
@@ -146,8 +144,6 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const pageTitle = "Calculadora de porcentaje de ahorro sobre tu sueldo | MetaBox";
   const pageDescription = "Calcula qué porcentaje de tu sueldo estás ahorrando cada mes, guarda tu histórico y comprueba si tu tasa de ahorro mejora con el tiempo. Gratis y sin registro.";
-  
-  // CORRECCIÓN CRÍTICA DE SEO
   const pageUrl = "https://metabox-web.vercel.app/herramientas/porcentaje-de-ahorro";
 
   return (
@@ -181,7 +177,7 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
         </div>
       </Card>
 
-      {/* HERO CARD PREMIUM CON EL GAUGE */}
+      {/* HERO CARD CON TEXTO BORDEADO EN BLANCO Y RELLENO DE COLOR */}
       <div style={{
         background: `linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(10,18,20,1) 100%)`,
         borderRadius: "1.5rem",
@@ -216,8 +212,19 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
               </RadialBarChart>
             </ResponsiveContainer>
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "1.5rem" }}>
-              <div style={{ ...fontDisplay, color: band.color, fontSize: "3rem", fontWeight: 800, textShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>{animatedPct.toFixed(1)}%</div>
-              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>de tu ingreso</div>
+              {/* TEXTO CON BORDE BLANCO Y RELLENO DINÁMICO */}
+              <div style={{ 
+                ...fontDisplay, 
+                color: band.color, 
+                WebkitTextStroke: "1.5px #ffffff", 
+                fontSize: "3.5rem", 
+                fontWeight: 800, 
+                lineHeight: 1,
+                textShadow: "0 8px 25px rgba(0,0,0,0.6)" 
+              }}>
+                {animatedPct.toFixed(1)}%
+              </div>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>de tu ingreso</div>
             </div>
           </div>
           
