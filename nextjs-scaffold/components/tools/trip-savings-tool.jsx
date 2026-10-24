@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { CalendarDays, Plane, TrendingUp } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -182,18 +182,15 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
   const animatedRequired = useAnimatedNumber(requiredMonthly);
   
   const pct = safeBudget > 0 ? (safeCurrent / safeBudget) * 100 : 0;
-
-  // GENERACIÓN DE DATOS PARA EL GRÁFICO DE EVOLUCIÓN
-  const chartData = useMemo(() => {
-    if (safeBudget === 0 || effectiveMonths === 0) return [];
-    const data = [{ mes: "Hoy", ahorro: safeCurrent, meta: safeBudget }];
-    let acc = safeCurrent;
-    for (let i = 1; i <= effectiveMonths; i++) {
-      acc += requiredMonthly;
-      data.push({ mes: `M${i}`, ahorro: Math.min(acc, safeBudget), meta: safeBudget });
-    }
-    return data;
-  }, [safeBudget, safeCurrent, effectiveMonths, requiredMonthly]);
+  const animatedPct = useAnimatedNumber(Math.min(pct, 100));
+  
+  // DATOS PARA EL GRÁFICO DE ANILLO (DONUT)
+  const pieData = safeBudget <= 0 
+    ? [{ name: "Empty", value: 1 }] 
+    : [
+        { name: "Ahorrado", value: Math.max(safeCurrent, 0) },
+        { name: "Restante", value: Math.max(remaining, 0) }
+      ];
 
   const pageTitle = "Calculadora de ahorro para un viaje: cuánto ahorrar al mes | MetaBox";
   const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para cubrir el presupuesto de tu próximo viaje, poniendo la fecha exacta del viaje o los meses que faltan. Gratis y sin registro.";
@@ -234,9 +231,7 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
         border: `1px solid ${T.lime}40`,
         boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8), inset 0 0 20px ${T.lime}10`
       }}>
-        {/* Icono de avión de fondo */}
         <Plane size={180} style={{ position: "absolute", top: "-10%", right: "-10%", color: T.lime, opacity: 0.03, transform: "rotate(-15deg)" }} />
-        
         <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: T.lime, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
         
         <div style={{ position: "relative", zIndex: 1 }}>
@@ -253,37 +248,44 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
           }}>
             {effectiveMonths > 0 ? fmtEUR(animatedRequired) : "—"}
           </div>
-          
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginTop: "0.5rem" }}>
-            {pct.toFixed(0)}% del presupuesto ya cubierto
-          </div>
         </div>
       </div>
 
-      {/* GRÁFICO DE EVOLUCIÓN "WOW" */}
+      {/* NUEVO GRÁFICO DE ANILLO PREMIUM */}
       <Card style={{ paddingBottom: "1rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <TrendingUp size={16} color={T.lime} /> Tu evolución hasta el viaje
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", justifyContent: "center" }}>
+          <TrendingUp size={16} color={T.lime} /> Progreso de tu viaje
         </div>
-        <div style={{ width: "100%", height: "190px" }}>
+        <div style={{ height: "180px", position: "relative" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorAhorro" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={T.lime} stopOpacity={0.6}/>
-                  <stop offset="95%" stopColor={T.lime} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="mes" tick={{ fill: T.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={20} />
-              <YAxis hide domain={[0, safeBudget * 1.05]} />
-              <Tooltip 
-                formatter={(value, name) => [fmtEUR(value), name === "ahorro" ? "Ahorrado" : "Meta"]}
-                contentStyle={{ background: "#111c1f", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: "12px", fontSize: "13px", color: T.text, boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }} 
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                innerRadius="70%"
+                outerRadius="95%"
+                startAngle={90}
+                endAngle={-270}
+                paddingAngle={pieData.length > 1 ? 3 : 0}
+                stroke="none"
+                isAnimationActive={true}
+                animationDuration={500}
+                cornerRadius={6}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.name === "Ahorrado" ? T.lime : T.surfaceAlt} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ background: "#111c1f", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: "12px", fontSize: "13px", color: T.text, boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
+                formatter={(v, name) => [fmtEUR(v), name === "Restante" ? "Falta" : "Ahorrado"]}
               />
-              <Area type="monotone" dataKey="meta" stroke={T.textMuted} strokeDasharray="4 4" fill="none" strokeWidth={2} />
-              <Area type="monotone" dataKey="ahorro" stroke={T.lime} strokeWidth={3} fill="url(#colorAhorro)" activeDot={{ r: 6, stroke: "#0a1214", strokeWidth: 2 }} />
-            </AreaChart>
+            </PieChart>
           </ResponsiveContainer>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 800, textShadow: `0 0 10px ${T.lime}40` }}>{animatedPct.toFixed(0)}%</div>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>cubierto</div>
+          </div>
         </div>
       </Card>
 
