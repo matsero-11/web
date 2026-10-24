@@ -7,13 +7,12 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, Chip, AdviceBlock, Button } from "@/components/ui";
+import { Card, Chip, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { usePersistentState } from "@/lib/persistence";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -30,6 +29,66 @@ const FAQS = [
   },
 ];
 
+// SLIDER DE DINERO PREMIUM (HASTA 1.000.000)
+function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 1000, accent = "lime" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? 0 : Math.max(min, Math.min(value, max));
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeValue}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [income, setIncome] = useState(() => {
     const p = initialParams?.income;
@@ -68,9 +127,7 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
     }
   }, [income, savings, period, history, onStateChange]);
 
-  useEffect(() => {
-    if (savings > income) setSavings(income);
-  }, [income, savings]);
+  // ELIMINADO el useEffect que forzaba savings <= income para que el slider no rebote.
 
   const pct = income > 0 ? (savings / income) * 100 : 0;
   const animatedPct = useAnimatedNumber(pct);
@@ -88,34 +145,18 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
   };
 
   const pageTitle = "Calculadora de porcentaje de ahorro sobre tu sueldo | MetaBox";
-  const pageDescription =
-    "Calcula qué porcentaje de tu sueldo estás ahorrando cada mes, guarda tu histórico y comprueba si tu tasa de ahorro mejora con el tiempo. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/percent";
+  const pageDescription = "Calcula qué porcentaje de tu sueldo estás ahorrando cada mes, guarda tu histórico y comprueba si tu tasa de ahorro mejora con el tiempo. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/porcentaje-de-ahorro";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="porcentaje de ahorro sobre el sueldo, cuánto debería ahorrar de mi sueldo, calculadora porcentaje de ahorro, evolución tasa de ahorro"
-        />
+        <meta name="keywords" content="porcentaje de ahorro sobre el sueldo, cuánto debería ahorrar de mi sueldo, calculadora porcentaje de ahorro, evolución tasa de ahorro" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/percent.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/percent.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -129,17 +170,6 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
             description: pageDescription,
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Porcentaje de ahorro" subtitle="Qué parte de tu ingreso estás ahorrando." onBack={onBack} />
@@ -151,39 +181,53 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
         </div>
       </Card>
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ height: "170px", position: "relative" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart
-              innerRadius="72%"
-              outerRadius="100%"
-              data={gaugeData}
-              startAngle={180}
-              endAngle={0}
-              barSize={16}
-            >
-              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-              <RadialBar
-                dataKey="value"
-                cornerRadius={8}
-                background={{ fill: T.surfaceAlt }}
-                isAnimationActive={true}
-                animationDuration={500}
-              />
-            </RadialBarChart>
-          </ResponsiveContainer>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "0.6rem" }}>
-            <div style={{ ...fontDisplay, color: band.color, fontSize: "2.4rem", fontWeight: 700 }}>{animatedPct.toFixed(1)}%</div>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>de tu ingreso</div>
+      {/* HERO CARD PREMIUM CON EL GAUGE */}
+      <div style={{
+        background: `linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(10,18,20,1) 100%)`,
+        borderRadius: "1.5rem",
+        padding: "2rem 1.5rem",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+        border: `1px solid ${band.color}40`,
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8), inset 0 0 20px ${band.color}10`
+      }}>
+        <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: band.color, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
+        
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ height: "170px", position: "relative" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                innerRadius="72%"
+                outerRadius="100%"
+                data={gaugeData}
+                startAngle={180}
+                endAngle={0}
+                barSize={16}
+              >
+                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                <RadialBar
+                  dataKey="value"
+                  cornerRadius={8}
+                  background={{ fill: T.surfaceAlt }}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "1.5rem" }}>
+              <div style={{ ...fontDisplay, color: band.color, fontSize: "3rem", fontWeight: 800, textShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>{animatedPct.toFixed(1)}%</div>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>de tu ingreso</div>
+            </div>
+          </div>
+          
+          <div style={{ ...fontBody, color: band.color, fontSize: "0.95rem", fontWeight: 600, marginTop: "0.5rem" }}>
+            {band.text}
+          </div>
+          <div style={{ ...fontBody, color: T.text, fontSize: "1.05rem", marginTop: "0.5rem" }}>
+            Eso son <span style={{ color: T.lime, fontWeight: 700 }}>{fmtEUR(displayAmount)}</span> {period === "mes" ? "cada mes" : "cada año"}
           </div>
         </div>
-        <div style={{ ...fontBody, color: band.color, fontSize: "0.88rem", marginTop: "0.5rem", fontWeight: 500 }}>
-          {band.text}
-        </div>
-      </Card>
-
-      <div style={{ ...fontBody, color: T.text, textAlign: "center", fontSize: "0.98rem" }}>
-        Eso son <span style={{ color: T.lime, fontWeight: 600 }}>{fmtEUR(displayAmount)}</span> {period === "mes" ? "cada mes" : "cada año"}
       </div>
 
       <AdviceBlock
@@ -198,8 +242,8 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Ingreso mensual" value={income} min={0} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setIncome} />
-          <SliderControl label="Ahorro mensual" value={savings} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setSavings} accent="lavender" />
+          <MoneySlider label="Ingreso mensual" value={income} min={0} max={1000000} step={100} accent="lime" setValue={setIncome} />
+          <MoneySlider label="Ahorro mensual" value={savings} min={0} max={1000000} step={50} accent="lavender" setValue={setSavings} />
         </div>
       </Card>
 
@@ -217,34 +261,31 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={history} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="label" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis hide />
+                <YAxis hide domain={[0, "auto"]} />
                 <Tooltip
-                  contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                  contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem" }}
                   formatter={(v) => [`${v}%`, "Tasa de ahorro"]}
                 />
-                <Line type="monotone" dataKey="pct" stroke={T.lime} strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="pct" stroke={T.lime} strokeWidth={3} dot={{ r: 4, fill: T.lime, strokeWidth: 0 }} activeDot={{ r: 6, stroke: "#0a1214", strokeWidth: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         ) : (
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", padding: "0.5rem 0" }}>
             Guarda tu primer mes para empezar a ver la evolución de tu tasa de ahorro.
           </div>
         )}
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         Referencia orientativa, no un dato verificado ni una recomendación personalizada.
       </div>
-
+      
       <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <CopySummaryButton
-          getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${pct.toFixed(1)}%.`}
-        />
+        <CopySummaryButton getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${pct.toFixed(1)}%.`} />
         <ExportCSVButton
           filename="tasa-de-ahorro"
           getRows={() =>
@@ -257,7 +298,7 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.82rem", lineHeight: 1.6, borderTop: `1px solid ${T.border}`, paddingTop: "1.2rem" }}>
         <p>
-          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambien. Guarda tu porcentaje cada mes para ver si tu tasa de ahorro mejora con el tiempo.
+          Saber qué porcentaje de tu sueldo ahorras es más útil que fijarte solo en la cifra en euros, porque te permite compararte con referencias estándar y adaptar el objetivo si tus ingresos cambian. Guarda tu porcentaje cada mes para ver si tu tasa de ahorro mejora con el tiempo.
         </p>
       </div>
     </div>
@@ -265,4 +306,3 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 }
 
 export default SavingsPercentTool;
-
