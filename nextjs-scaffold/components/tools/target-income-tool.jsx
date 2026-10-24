@@ -6,12 +6,11 @@ import {
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, AdviceBlock, Button } from "@/components/ui";
+import { Card, AdviceBlock, Button } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -28,6 +27,89 @@ const FAQS = [
   },
 ];
 
+function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 50, accent = "lime" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? 0 : Math.max(min, Math.min(value, max));
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeValue}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
+
+function PercentSlider({ label, value, onChange, accent = "lavender" }) {
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <span style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", fontWeight: 700 }}>{value}%</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={5}
+        max={45}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [expenses, setExpenses] = useState(() => {
     const p = initialParams?.expenses;
@@ -59,40 +141,30 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
     }
   }, [expenses, desiredSavings, showGross, retentionPct, onStateChange]);
 
-  const requiredIncome = expenses + desiredSavings;
+  const safeExpenses = Number.isFinite(expenses) ? expenses : 0;
+  const safeSavings = Number.isFinite(desiredSavings) ? desiredSavings : 0;
+  
+  const requiredIncome = safeExpenses + safeSavings;
   const animatedIncome = useAnimatedNumber(requiredIncome);
   const annualNet = requiredIncome * 12;
-  const annualGross = retentionPct < 100 ? annualNet / (1 - retentionPct / 100) : annualNet;
+  
+  // Blindaje matemático: retención máxima del 99% para evitar división por cero
+  const safeRetention = Math.min(retentionPct, 99);
+  const annualGross = annualNet / (1 - safeRetention / 100);
 
   const pageTitle = "Calculadora de cuánto necesito ganar según mis gastos y ahorro | MetaBox";
-  const pageDescription =
-    "Calcula el ingreso neto mínimo que necesitas ganar al mes según tus gastos y ahorro deseado, y una estimación orientativa del salario bruto anual equivalente. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/targetincome";
+  const pageDescription = "Calcula el ingreso neto mínimo que necesitas ganar al mes según tus gastos y ahorro deseado, y una estimación orientativa del salario bruto anual equivalente. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/cuanto-necesito-ganar-ingreso-minimo";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="cuánto necesito ganar al mes, calculadora ingreso mínimo necesario, salario bruto necesario, calculadora neto a bruto"
-        />
+        <meta name="keywords" content="cuánto necesito ganar al mes, calculadora ingreso mínimo necesario, salario bruto necesario, calculadora neto a bruto" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/targetincome.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/targetincome.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -106,49 +178,68 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
             description: pageDescription,
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Cuánto necesito ganar" subtitle="A partir de tus gastos y lo que quieres ahorrar, el ingreso mínimo que necesitas." onBack={onBack} />
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Necesitas ingresar al mes (neto)</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
-          {fmtEUR(animatedIncome)}
+      {/* HERO CARD PREMIUM */}
+      <div style={{
+        background: `linear-gradient(145deg, rgba(196,222,78,0.08) 0%, rgba(10,18,20,1) 100%)`,
+        borderRadius: "1.5rem",
+        padding: "2.5rem 1.5rem",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+        border: `1px solid ${T.lime}40`,
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8)`
+      }}>
+        <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: T.lime, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
+        
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Necesitas ingresar al mes (neto)
+          </div>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "3.2rem", fontWeight: 800, margin: "0.5rem 0", textShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+            {fmtEUR(animatedIncome)}
+          </div>
+          <div style={{ ...fontBody, color: T.text, fontSize: "0.95rem" }}>
+            Para cubrir {fmtEUR(safeExpenses)} de gastos y ahorrar {fmtEUR(safeSavings)}.
+          </div>
         </div>
-      </Card>
+      </div>
 
-      <Card style={{ paddingBottom: "1rem", paddingTop: "1rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
+      <Card style={{ paddingBottom: "1rem", paddingTop: "1.2rem" }}>
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
           De qué se compone
         </div>
         <div style={{ width: "100%", height: "110px" }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={[{ nombre: "Ingreso", gastos: expenses, ahorro: desiredSavings }]} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+            <BarChart data={[{ nombre: "Ingreso", gastos: safeExpenses, ahorro: safeSavings }]} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+              <defs>
+                <linearGradient id="colorGastos" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={T.textMuted} stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor={T.textMuted} stopOpacity={0.5}/>
+                </linearGradient>
+                <linearGradient id="colorAhorro" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={T.lime} stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor={T.lime} stopOpacity={0.6}/>
+                </linearGradient>
+              </defs>
               <XAxis type="number" hide domain={[0, "auto"]} />
               <YAxis type="category" dataKey="nombre" hide />
               <Tooltip
-                contentStyle={{ background: T.surfaceAlt, border: "none", borderRadius: "0.5rem", color: T.text, fontSize: "0.8rem" }}
+                contentStyle={{ background: "#111c1f", border: `1px solid rgba(255,255,255,0.1)`, borderRadius: "12px", fontSize: "13px", color: T.text, boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
                 formatter={(v, n) => [fmtEUR(v), n === "gastos" ? "Gastos" : "Ahorro"]}
+                cursor={{ fill: "rgba(255,255,255,0.05)" }}
               />
-              <Bar dataKey="gastos" stackId="a" fill={T.textMuted} radius={[6, 0, 0, 6]} barSize={34} isAnimationActive={true} animationDuration={400} />
-              <Bar dataKey="ahorro" stackId="a" fill={T.lime} radius={[0, 6, 6, 0]} barSize={34} isAnimationActive={true} animationDuration={400} />
+              <Bar dataKey="gastos" stackId="a" fill="url(#colorGastos)" radius={[6, 0, 0, 6]} barSize={34} />
+              <Bar dataKey="ahorro" stackId="a" fill="url(#colorAhorro)" radius={[0, 6, 6, 0]} barSize={34} />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="flex justify-between mt-2 px-1">
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Gastos: {fmtEUR(expenses)}</span>
-          <span style={{ ...fontBody, color: T.lime, fontSize: "0.78rem" }}>Ahorro: {fmtEUR(desiredSavings)}</span>
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Gastos: <strong style={{ color: T.text }}>{fmtEUR(safeExpenses)}</strong></span>
+          <span style={{ ...fontBody, color: T.lime, fontSize: "0.85rem" }}>Ahorro: <strong>{fmtEUR(safeSavings)}</strong></span>
         </div>
       </Card>
 
@@ -161,12 +252,13 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
             Estimación de bruto anual
           </div>
-          <SliderControl label="Retención estimada (IRPF + SS)" value={retentionPct} min={5} max={45} step={1} unit="%" onChange={setRetentionPct} accent="lavender" />
-          <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1rem", textAlign: "center", marginTop: "1.1rem" }}>
-            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Bruto anual aproximado necesario</div>
-            <div style={{ ...fontDisplay, color: T.lavender, fontSize: "1.6rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(annualGross)}</div>
+          <PercentSlider label="Retención estimada (IRPF + SS)" value={retentionPct} onChange={setRetentionPct} />
+          
+          <div style={{ background: T.surfaceAlt, borderRadius: "0.9rem", padding: "1.5rem", textAlign: "center", marginTop: "1.5rem", border: `1px solid ${T.lavender}30` }}>
+            <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Bruto anual aproximado necesario</div>
+            <div style={{ ...fontDisplay, color: T.lavender, fontSize: "2rem", fontWeight: 800, marginTop: "0.5rem", textShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>{fmtEUR(annualGross)}</div>
           </div>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center", marginTop: "0.7rem" }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem", textAlign: "center", marginTop: "0.8rem" }}>
             Estimación orientativa, no un cálculo fiscal exacto.
           </div>
         </Card>
@@ -174,7 +266,7 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
 
       <AdviceBlock
         text={
-          requiredIncome > 0 && desiredSavings / requiredIncome > 0.25
+          requiredIncome > 0 && safeSavings / requiredIncome > 0.25
             ? "Estás pidiendo un ahorro ambicioso sobre el total. Si el ingreso real es más bajo, prueba primero con un objetivo de ahorro menor y súbelo con el tiempo."
             : "Este ingreso te cubre gastos y ahorro. Compáralo con lo que ganas hoy en 'Porcentaje de ahorro' para ver la diferencia real."
         }
@@ -182,23 +274,22 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Gastos fijos mensuales" value={expenses} min={0} max={MAX_FINANCIAL_LIMIT} step={25} unit="€" onChange={setExpenses} />
-          <SliderControl label="Cuánto quieres ahorrar" value={desiredSavings} min={0} max={MAX_FINANCIAL_LIMIT} step={10} unit="€" onChange={setDesiredSavings} accent="lavender" />
+          <MoneySlider label="Gastos fijos mensuales" value={expenses} min={0} max={1000000} step={50} accent="lime" setValue={setExpenses} />
+          <MoneySlider label="Cuánto quieres ahorrar" value={desiredSavings} min={0} max={1000000} step={25} accent="lavender" setValue={setDesiredSavings} />
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", textAlign: "center" }}>
         No incluye impuestos ni retenciones exactas: el neto es el mínimo necesario según lo que indiques.
       </div>
-
+      
       <RelatedTools ids={["percent", "budget"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Gastos ${fmtEUR(expenses)} + ahorro deseado ${fmtEUR(desiredSavings)} = necesitas ganar ${fmtEUR(requiredIncome)}/mes neto.` +
+            `Gastos ${fmtEUR(safeExpenses)} + ahorro deseado ${fmtEUR(safeSavings)} = necesitas ganar ${fmtEUR(requiredIncome)}/mes neto.` +
             (showGross ? ` Bruto anual aproximado: ${fmtEUR(annualGross)}.` : "")
           }
         />
@@ -207,8 +298,8 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
           getRows={() => [
             {
               concepto: "Objetivo de ingresos",
-              gastos_mes: expenses,
-              ahorro_deseado_mes: desiredSavings,
+              gastos_mes: safeExpenses,
+              ahorro_deseado_mes: safeSavings,
               ingreso_neto_mes: requiredIncome,
               bruto_anual_aprox: showGross ? annualGross.toFixed(2) : "N/A",
             },
@@ -226,4 +317,3 @@ function TargetIncomeTool({ onBack, onNavigate, initialParams = {}, onStateChang
 }
 
 export default TargetIncomeTool;
-          
