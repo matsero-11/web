@@ -125,14 +125,15 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
     }
   }, [income, savings, period, history, onStateChange]);
 
-  const pct = income > 0 ? (savings / income) * 100 : 0;
-  const animatedPct = useAnimatedNumber(pct);
-
+  const rawPct = income > 0 ? (savings / income) * 100 : 0;
+  const safePct = Number.isFinite(rawPct) ? Math.max(0, rawPct) : 0;
+  const animatedPct = useAnimatedNumber(safePct);
+  
   let band = { text: "Por debajo del 10%", color: T.coral };
-  if (pct >= 20) band = { text: "Por encima del 20%", color: T.lime };
-  else if (pct >= 10) band = { text: "Entre el 10% y el 20%", color: T.lavender };
+  if (safePct >= 20) band = { text: "Por encima del 20%", color: T.lime };
+  else if (safePct >= 10) band = { text: "Entre el 10% y el 20%", color: T.lavender };
 
-  const gaugeData = [{ name: "ahorro", value: Math.min(pct, 100), fill: band.color }];
+  const gaugeData = [{ name: "ahorro", value: Math.min(safePct, 100), fill: band.color }];
   const displayAmount = period === "mes" ? savings : savings * 12;
   
   const pctString = animatedPct.toFixed(1);
@@ -142,7 +143,7 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
     const snapshot = { 
       id: Date.now(),
       label: new Date().toLocaleDateString("es-ES", { day: '2-digit', month: "short" }), 
-      pct: Number(pct.toFixed(1)) 
+      pct: Number(safePct.toFixed(1)) 
     };
     setHistory((prev) => [snapshot, ...prev].slice(0, 12));
   };
@@ -205,18 +206,12 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
                 endAngle={0}
                 barSize={16}
               >
-                <defs>
-                  <linearGradient id="gaugeGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor={band.color} stopOpacity={1} />
-                    <stop offset="100%" stopColor={band.color} stopOpacity={0.2} />
-                  </linearGradient>
-                </defs>
                 <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
                 <RadialBar
                   dataKey="value"
                   cornerRadius={8}
-                  fill="url(#gaugeGradient)"
-                  background={{ fill: "rgba(255,255,255,0.05)" }}
+                  fill={band.color}
+                  background={{ fill: "rgba(255,255,255,0.03)" }}
                   isAnimationActive={true}
                   animationDuration={800}
                 />
@@ -230,7 +225,7 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
                 fontSize: numSize, 
                 fontWeight: 800, 
                 lineHeight: 1,
-                textShadow: "0 4px 15px rgba(0,0,0,0.8), 0 0 30px " + band.color + "40"
+                textShadow: "0 4px 15px rgba(0,0,0,0.8)"
               }}>
                 {pctString}%
               </div>
@@ -249,9 +244,9 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
       <AdviceBlock
         text={
-          pct < 10
+          safePct < 10
             ? "Un margen reducido no siempre es un problema: antes de subirlo, revisa en 'Presupuesto mensual' si hay gastos variables con recorte."
-            : pct < 20
+            : safePct < 20
             ? "Estás en un rango saludable. Mueve el ahorro mensual unos euros y mira cuánto sube el porcentaje."
             : "Tienes un margen amplio. Podrías comprobar en 'Objetivo de ahorro' cuánto antes alcanzarías una meta concreta con este ritmo."
         }
@@ -305,13 +300,13 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
       <RelatedTools ids={["savings", "rule502030"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
-        <CopySummaryButton getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${pct.toFixed(1)}%.`} />
+        <CopySummaryButton getText={() => `Porcentaje de ahorro: ${fmtEUR(savings)} de ${fmtEUR(income)} = ${safePct.toFixed(1)}%.`} />
         <ExportCSVButton
           filename="tasa-de-ahorro"
           getRows={() =>
             history.length > 0
               ? history.map((item) => ({ mes: item.label, tasa_ahorro_pct: item.pct }))
-              : [{ mes: "Actual", ingreso: income, ahorro: savings, tasa_ahorro_pct: pct.toFixed(1) }]
+              : [{ mes: "Actual", ingreso: income, ahorro: savings, tasa_ahorro_pct: safePct.toFixed(1) }]
           }
         />
       </div>
