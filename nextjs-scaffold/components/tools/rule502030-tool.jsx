@@ -78,7 +78,6 @@ function DonutChart({ data, size = 180, strokeWidth = 22 }) {
   );
 }
 
-// SLIDER DE PORCENTAJE NATIVO (FLUIDO Y SIN ATASCOS)
 function PercentSlider({ label, value, onChange, accent = "lime" }) {
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
   return (
@@ -103,8 +102,8 @@ function PercentSlider({ label, value, onChange, accent = "lime" }) {
   );
 }
 
-// SLIDER DE DINERO CON MÁXIMO ESTÁTICO DE 10.000
-function MoneySlider({ label, value, setValue, max = 10000, step = 1, accent = "lime", subtitle }) {
+// SLIDER DE DINERO CON LÍMITE DE 1.000.000 €
+function MoneySlider({ label, value, setValue, max = 1000000, step = 1000, accent = "lime", subtitle }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
 
@@ -145,7 +144,7 @@ function MoneySlider({ label, value, setValue, max = 10000, step = 1, accent = "
               else { setValue(parsed); setTextVal(String(parsed)); }
             }}
             className="bg-transparent text-right font-semibold"
-            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "75px", outline: "none" }}
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "80px", outline: "none" }}
           />
           <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
         </div>
@@ -258,7 +257,7 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
       <ToolHeader title="Regla 50/30/20" subtitle="Reparte tu ingreso entre necesidades, deseos y ahorro." onBack={onBack} />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <MoneySlider label="Ingreso mensual" value={income} min={0} max={10000} step={10} accent="lime" setValue={setIncome} />
+        <MoneySlider label="Ingreso mensual" value={income} max={1000000} step={1000} accent="lime" setValue={setIncome} />
       </Card>
 
       <div style={{ background: `linear-gradient(145deg, rgba(196,222,78,0.05) 0%, rgba(10,18,20,1) 100%)`, borderRadius: "1.5rem", padding: "1.5rem", border: `1px solid ${T.border}`, textAlign: "center" }}>
@@ -273,7 +272,6 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
 
         <DonutChart data={donutData} size={180} strokeWidth={24} />
 
-        {/* LEYENDA MEJORADA Y ESPACIOSA */}
         <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem", marginTop: "1.5rem", padding: "1.2rem", background: T.surfaceAlt, borderRadius: "1rem", border: `1px solid ${T.border}` }}>
           {donutData.map((item, idx) => {
             const pct = currentDonutTotal > 0 ? Math.round((item.value / currentDonutTotal) * 100) : 0;
@@ -342,9 +340,9 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <MoneySlider label={`Necesidades (${needsPct}%)`} value={needs} min={0} max={10000} step={10} accent="lime" subtitle={`Recomendado: ${fmtEUR(recNeeds)}`} setValue={setNeeds} />
-          <MoneySlider label={`Deseos (${wantsPct}%)`} value={wants} min={0} max={10000} step={10} accent="lavender" subtitle={`Recomendado: ${fmtEUR(recWants)}`} setValue={setWants} />
-          <MoneySlider label={`Ahorro (${savingsPct}%)`} value={savings} min={0} max={10000} step={10} accent="lime" subtitle={`Recomendado: ${fmtEUR(recSavings)}`} setValue={setSavings} />
+          <MoneySlider label={`Necesidades (${needsPct}%)`} value={needs} max={1000000} step={1000} accent="lime" subtitle={`Recomendado: ${fmtEUR(recNeeds)}`} setValue={setNeeds} />
+          <MoneySlider label={`Deseos (${wantsPct}%)`} value={wants} max={1000000} step={1000} accent="lavender" subtitle={`Recomendado: ${fmtEUR(recWants)}`} setValue={setWants} />
+          <MoneySlider label={`Ahorro (${savingsPct}%)`} value={savings} max={1000000} step={1000} accent="lime" subtitle={`Recomendado: ${fmtEUR(recSavings)}`} setValue={setSavings} />
         </div>
       </Card>
 
@@ -373,4 +371,3 @@ function Rule502030Tool({ onBack, onNavigate, initialParams = {}, onStateChange 
 }
 
 export default Rule502030Tool;
-
