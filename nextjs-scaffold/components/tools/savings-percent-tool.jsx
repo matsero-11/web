@@ -135,7 +135,6 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
   const gaugeData = [{ name: "ahorro", value: Math.min(pct, 100), fill: band.color }];
   const displayAmount = period === "mes" ? savings : savings * 12;
   
-  // Tamaño de fuente dinámico para que el número no se salga del arco
   const pctString = animatedPct.toFixed(1);
   const numSize = pctString.length > 6 ? "2rem" : pctString.length > 4 ? "2.8rem" : "3.5rem";
 
@@ -196,7 +195,7 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
         <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: band.color, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
         
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ height: "170px", position: "relative" }}>
+          <div style={{ height: "160px", position: "relative" }}>
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
                 innerRadius="72%"
@@ -206,30 +205,36 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
                 endAngle={0}
                 barSize={16}
               >
+                <defs>
+                  <linearGradient id="gaugeGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={band.color} stopOpacity={1} />
+                    <stop offset="100%" stopColor={band.color} stopOpacity={0.2} />
+                  </linearGradient>
+                </defs>
                 <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
                 <RadialBar
                   dataKey="value"
                   cornerRadius={8}
-                  background={{ fill: T.surfaceAlt }}
+                  fill="url(#gaugeGradient)"
+                  background={{ fill: "rgba(255,255,255,0.05)" }}
                   isAnimationActive={true}
                   animationDuration={800}
                 />
               </RadialBarChart>
             </ResponsiveContainer>
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "1.5rem" }}>
+            
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "40px" }}>
               <div style={{ 
                 ...fontDisplay, 
-                color: band.color, 
-                WebkitTextStroke: "1px #ffffff", 
+                color: "#ffffff", 
                 fontSize: numSize, 
                 fontWeight: 800, 
                 lineHeight: 1,
-                textShadow: "0 8px 25px rgba(0,0,0,0.6)",
-                paintOrder: "stroke fill"
+                textShadow: "0 4px 15px rgba(0,0,0,0.8), 0 0 30px " + band.color + "40"
               }}>
                 {pctString}%
               </div>
-              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>de tu ingreso</div>
+              <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.3rem" }}>de tu ingreso</div>
             </div>
           </div>
           
