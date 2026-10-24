@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  RadialBarChart, RadialBar, LineChart, Line,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, PolarAngleAxis,
+  RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis,
 } from "recharts";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
@@ -29,7 +28,6 @@ const FAQS = [
   },
 ];
 
-// SLIDER DE DINERO PREMIUM (HASTA 1.000.000)
 function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 1000, accent = "lime" }) {
   const [textVal, setTextVal] = useState(String(value ?? 0));
   const accentColor = accent === "lavender" ? T.lavender : T.lime;
@@ -88,7 +86,7 @@ function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 10
       />
     </div>
   );
-      }
+}
 function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [income, setIncome] = useState(() => {
     const p = initialParams?.income;
@@ -136,10 +134,18 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
 
   const gaugeData = [{ name: "ahorro", value: Math.min(pct, 100), fill: band.color }];
   const displayAmount = period === "mes" ? savings : savings * 12;
+  
+  // Tamaño de fuente dinámico para que el número no se salga del arco
+  const pctString = animatedPct.toFixed(1);
+  const numSize = pctString.length > 6 ? "2rem" : pctString.length > 4 ? "2.8rem" : "3.5rem";
 
   const saveSnapshot = () => {
-    const snapshot = { label: new Date().toLocaleDateString("es-ES", { month: "short", year: "2-digit" }), pct: Number(pct.toFixed(1)) };
-    setHistory((prev) => [...prev.slice(-11), snapshot]);
+    const snapshot = { 
+      id: Date.now(),
+      label: new Date().toLocaleDateString("es-ES", { day: '2-digit', month: "short" }), 
+      pct: Number(pct.toFixed(1)) 
+    };
+    setHistory((prev) => [snapshot, ...prev].slice(0, 12));
   };
 
   const pageTitle = "Calculadora de porcentaje de ahorro sobre tu sueldo | MetaBox";
@@ -177,7 +183,6 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
         </div>
       </Card>
 
-      {/* HERO CARD CON TEXTO BORDEADO EN BLANCO Y RELLENO DE COLOR */}
       <div style={{
         background: `linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(10,18,20,1) 100%)`,
         borderRadius: "1.5rem",
@@ -212,17 +217,17 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
               </RadialBarChart>
             </ResponsiveContainer>
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: "1.5rem" }}>
-              {/* TEXTO CON BORDE BLANCO Y RELLENO DINÁMICO */}
               <div style={{ 
                 ...fontDisplay, 
                 color: band.color, 
-                WebkitTextStroke: "1.5px #ffffff", 
-                fontSize: "3.5rem", 
+                WebkitTextStroke: "1px #ffffff", 
+                fontSize: numSize, 
                 fontWeight: 800, 
                 lineHeight: 1,
-                textShadow: "0 8px 25px rgba(0,0,0,0.6)" 
+                textShadow: "0 8px 25px rgba(0,0,0,0.6)",
+                paintOrder: "stroke fill"
               }}>
-                {animatedPct.toFixed(1)}%
+                {pctString}%
               </div>
               <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.5rem" }}>de tu ingreso</div>
             </div>
@@ -255,31 +260,34 @@ function SavingsPercentTool({ onBack, onNavigate, initialParams = {}, onStateCha
       </Card>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: history.length > 0 ? "1rem" : 0 }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: "1rem" }}>
           <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem" }}>
-            Evolución de tu tasa de ahorro
+            Historial de meses guardados
           </div>
-          <Button variant="ghost" onClick={saveSnapshot} style={{ width: "auto", padding: "0.5rem 0.9rem", fontSize: "0.8rem" }}>
+          <Button variant="ghost" onClick={saveSnapshot} style={{ width: "auto", padding: "0.5rem 0.9rem", fontSize: "0.8rem", border: `1px solid ${T.lime}` }}>
             Guardar este mes
           </Button>
         </div>
+        
         {history.length > 0 ? (
-          <div style={{ width: "100%", height: "150px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="label" stroke={T.textMuted} fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis hide domain={[0, "auto"]} />
-                <Tooltip
-                  contentStyle={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.5rem", color: T.text, fontSize: "0.85rem" }}
-                  formatter={(v) => [`${v}%`, "Tasa de ahorro"]}
-                />
-                <Line type="monotone" dataKey="pct" stroke={T.lime} strokeWidth={3} dot={{ r: 4, fill: T.lime, strokeWidth: 0 }} activeDot={{ r: 6, stroke: "#0a1214", strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div style={{ display: "flex", gap: "0.8rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
+            {history.map((item) => (
+              <div key={item.id} style={{ 
+                background: T.surfaceAlt, 
+                padding: "1rem", 
+                borderRadius: "1rem", 
+                border: `1px solid ${T.border}`, 
+                minWidth: "100px", 
+                textAlign: "center" 
+              }}>
+                <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.75rem", marginBottom: "0.4rem" }}>{item.label}</div>
+                <div style={{ ...fontDisplay, color: T.lime, fontSize: "1.3rem", fontWeight: 700 }}>{item.pct}%</div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", padding: "0.5rem 0" }}>
-            Guarda tu primer mes para empezar a ver la evolución de tu tasa de ahorro.
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", padding: "1rem 0", textAlign: "center", background: T.surfaceAlt, borderRadius: "0.8rem" }}>
+            Aún no has guardado ningún mes. Pulsa "Guardar este mes" para empezar tu historial.
           </div>
         )}
       </Card>
