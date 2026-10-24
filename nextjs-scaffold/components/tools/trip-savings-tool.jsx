@@ -1,24 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
+import { CalendarDays, Plane, PiggyBank } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock } from "@/components/ui";
+import { Card, AdviceBlock, Chip, ProgressBar } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -33,13 +23,138 @@ const FAQS = [
 
 function monthsBetween(dateStr) {
   if (!dateStr) return 0;
-  const target = new Date(dateStr);
+  const target = new Date(`${dateStr}T12:00:00`);
+  if (isNaN(target.getTime())) return 0;
   const now = new Date();
   const diffMs = target - now;
   if (diffMs <= 0) return 0;
-  return Math.max(Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 30.44)), 0);
+  return Math.max(Math.ceil(diffMs / (1000 * 60 * 60 * 24 * 30.4375)), 1);
 }
 
+function todayISO() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 50, accent = "lime" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? 0 : Math.max(min, Math.min(value, max));
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeValue}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
+
+function TimeSlider({ label, value, setValue, min = 0, max = 60, unit = "meses" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, max));
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: T.lavender, fontSize: "0.9rem", width: "60px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>{unit}</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={1}
+        value={safeValue}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor: T.lavender }}
+      />
+    </div>
+  );
+}
 function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [budget, setBudget] = useState(() => {
     const p = initialParams?.budget;
@@ -72,47 +187,32 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
     }
   }, [budget, current, tripDate, monthsLeft, onStateChange]);
 
-  useEffect(() => {
-    if (current > budget) setCurrent(budget);
-  }, [budget, current]);
+  // ELIMINADO el useEffect que forzaba current <= budget
 
-  const effectiveMonths = tripDate ? monthsBetween(tripDate) : monthsLeft;
+  const safeBudget = Number.isFinite(budget) ? budget : 0;
+  const safeCurrent = Number.isFinite(current) ? current : 0;
+  
+  const effectiveMonths = tripDate ? monthsBetween(tripDate) : (monthsLeft || 1);
 
-  const remaining = Math.max(budget - current, 0);
+  const remaining = Math.max(safeBudget - safeCurrent, 0);
   const requiredMonthly = effectiveMonths > 0 ? remaining / effectiveMonths : remaining;
   const animatedRequired = useAnimatedNumber(requiredMonthly);
-  const pct = budget > 0 ? (current / budget) * 100 : 0;
+  const pct = safeBudget > 0 ? (safeCurrent / safeBudget) * 100 : 0;
   const animatedPct = useAnimatedNumber(Math.min(pct, 100));
 
   const pageTitle = "Calculadora de ahorro para un viaje: cuánto ahorrar al mes | MetaBox";
-  const pageDescription =
-    "Calcula cuánto tienes que ahorrar cada mes para cubrir el presupuesto de tu próximo viaje, poniendo la fecha exacta del viaje o los meses que faltan. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/trip";
+  const pageDescription = "Calcula cuánto tienes que ahorrar cada mes para cubrir el presupuesto de tu próximo viaje, poniendo la fecha exacta del viaje o los meses que faltan. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/ahorro-para-un-viaje";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="cuánto ahorrar para un viaje, calculadora ahorro para viajar, cómo ahorrar para las vacaciones, cuenta atrás ahorro viaje"
-        />
+        <meta name="keywords" content="cuánto ahorrar para un viaje, calculadora ahorro para viajar, cómo ahorrar para las vacaciones, cuenta atrás ahorro viaje" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/trip.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/trip.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -126,48 +226,58 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
             description: pageDescription,
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Ahorro para un viaje" subtitle="Fija la fecha o los meses, y calculamos cuánto ahorrar cada mes." onBack={onBack} />
 
-      <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Necesitas ahorrar al mes</div>
-        <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
-          {effectiveMonths > 0 ? fmtEUR(animatedRequired) : "—"}
+      {/* HERO CARD PREMIUM */}
+      <div style={{
+        background: `linear-gradient(145deg, rgba(196,222,78,0.08) 0%, rgba(10,18,20,1) 100%)`,
+        borderRadius: "1.5rem",
+        padding: "2.5rem 1.5rem",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+        border: `1px solid ${T.lime}40`,
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8)`
+      }}>
+        <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: T.lime, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
+        
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Necesitas ahorrar al mes
+          </div>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "3.2rem", fontWeight: 800, margin: "0.5rem 0", textShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+            {effectiveMonths > 0 ? fmtEUR(animatedRequired) : "—"}
+          </div>
+          
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.9rem", marginBottom: "1rem" }}>
+            {pct.toFixed(0)}% del presupuesto ya cubierto
+          </div>
+
+          <div style={{ background: T.surfaceAlt, borderRadius: "999px", height: "8px", overflow: "hidden", maxWidth: "300px", margin: "0 auto" }}>
+            <div style={{ width: `${animatedPct}%`, height: "100%", background: T.lime, transition: "width 0.4s ease", boxShadow: `0 0 10px ${T.lime}` }} />
+          </div>
         </div>
-        <ProgressBar pct={animatedPct} gradientEnd={T.lavender} />
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginTop: "0.6rem" }}>
-          {pct.toFixed(0)}% del presupuesto ya cubierto
-        </div>
-      </Card>
+      </div>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.8rem" }}>
-          Fecha del viaje (opcional, más preciso)
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <CalendarDays size={16} color={T.lime} /> Fecha del viaje (opcional, más preciso)
         </div>
         <input
           type="date"
           value={tripDate}
+          min={todayISO()}
           onChange={(e) => setTripDate(e.target.value)}
           style={{
-            ...fontBody, width: "100%", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
-            padding: "0.7rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none",
+            ...fontBody, width: "100%", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.8rem",
+            padding: "0.75rem 1rem", color: T.text, fontSize: "0.95rem", outline: "none",
           }}
         />
         {tripDate && (
-          <div style={{ ...fontBody, color: T.lime, fontSize: "0.82rem", marginTop: "0.6rem" }}>
-            Faltan {effectiveMonths} {effectiveMonths === 1 ? "mes" : "meses"} para el viaje
+          <div style={{ ...fontBody, color: T.lime, fontSize: "0.85rem", marginTop: "0.8rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <Plane size={14} /> Faltan {effectiveMonths} {effectiveMonths === 1 ? "mes" : "meses"} para el viaje
           </div>
         )}
       </Card>
@@ -176,7 +286,7 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
         text={
           effectiveMonths === 0
             ? "Sin margen de tiempo, la única opción es tenerlo ya ahorrado o retrasar la fecha del viaje."
-            : requiredMonthly > budget * 0.4
+            : requiredMonthly > safeBudget * 0.4
             ? "La cuota mensual es alta para el tiempo que queda. Si puedes mover la fecha unas semanas, el esfuerzo mensual baja bastante."
             : "El ritmo necesario es razonable. Prueba a alargar unos meses el plazo y compara cuánto baja la cuota mensual."
         }
@@ -184,30 +294,29 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Presupuesto del viaje" value={budget} min={100} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setBudget} />
-          <SliderControl label="Ya ahorrado" value={current} min={0} max={budget} step={25} unit="€" onChange={setCurrent} />
+          <MoneySlider label="Presupuesto del viaje" value={budget} min={100} max={100000} step={50} accent="lime" setValue={setBudget} />
+          <MoneySlider label="Ya ahorrado" value={current} min={0} max={100000} step={25} accent="lavender" setValue={setCurrent} />
           {!tripDate && (
-            <SliderControl label="Meses hasta el viaje" value={monthsLeft} min={0} max={24} step={1} unit="meses" onChange={setMonthsLeft} accent="lavender" />
+            <TimeSlider label="Meses hasta el viaje" value={monthsLeft} min={1} max={60} unit="meses" setValue={setMonthsLeft} />
           )}
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["tripdaily", "currency"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Ahorro para un viaje: presupuesto ${fmtEUR(budget)}, ya ahorrado ${fmtEUR(current)}, ${effectiveMonths} meses hasta el viaje → necesitas ${fmtEUR(requiredMonthly)}/mes.`
+            `Ahorro para un viaje: presupuesto ${fmtEUR(safeBudget)}, ya ahorrado ${fmtEUR(safeCurrent)}, ${effectiveMonths} meses hasta el viaje → necesitas ${fmtEUR(requiredMonthly)}/mes.`
           }
         />
         <ExportCSVButton
           filename="ahorro-para-un-viaje"
           getRows={() => [
             {
-              presupuesto: budget,
-              ya_ahorrado: current,
+              presupuesto: safeBudget,
+              ya_ahorrado: safeCurrent,
               meses_restantes: effectiveMonths,
               necesario_mensual: requiredMonthly.toFixed(2),
               porcentaje_cubierto: pct.toFixed(1) + "%",
@@ -226,4 +335,3 @@ function TripSavingsTool({ onBack, onNavigate, initialParams = {}, onStateChange
 }
 
 export default TripSavingsTool;
-
