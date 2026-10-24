@@ -1,24 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  Target, PiggyBank, Plane, Home as HomeIcon,
-  ArrowLeft, TrendingUp, ShieldCheck, Utensils, Car, Tv, Popcorn, ShoppingBag,
-  MoreHorizontal, CalendarCheck,
-} from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  RadialBarChart, RadialBar, ComposedChart, PolarAngleAxis,
-} from "recharts";
+import { Plane, Calendar, Wallet } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, ProgressBar, Chip, IconTile, AdviceBlock, Button } from "@/components/ui";
+import { Card, AdviceBlock, Button, SliderControl } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -31,6 +21,65 @@ const FAQS = [
   },
 ];
 
+function MoneySlider({ label, value, setValue, min = 0, max = 1000000, step = 50, accent = "lime" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? 0 : Math.max(min, Math.min(value, max));
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: accentColor, fontSize: "0.9rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeValue}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
 function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [totalBudget, setTotalBudget] = useState(() => {
     const p = initialParams?.totalBudget;
@@ -56,67 +105,49 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
 
   useEffect(() => {
     if (typeof onStateChange === "function") {
-      onStateChange({
-        totalBudget,
-        totalDays,
-        spent,
-        daysElapsed,
-      });
+      onStateChange({ totalBudget, totalDays, spent, daysElapsed });
     }
   }, [totalBudget, totalDays, spent, daysElapsed, onStateChange]);
 
-  useEffect(() => {
-    if (spent > totalBudget) setSpent(totalBudget);
-  }, [totalBudget, spent]);
-  useEffect(() => {
-    if (daysElapsed > totalDays) setDaysElapsed(totalDays);
-  }, [totalDays, daysElapsed]);
+  const safeBudget = Number.isFinite(totalBudget) ? totalBudget : 0;
+  const safeSpent = Number.isFinite(spent) ? spent : 0;
+  const safeTotalDays = Number.isFinite(totalDays) && totalDays > 0 ? totalDays : 1;
+  const safeDaysElapsed = Number.isFinite(daysElapsed) ? daysElapsed : 0;
 
-  const remainingBudget = Math.max(totalBudget - spent, 0);
-  const remainingDays = Math.max(totalDays - daysElapsed, 0);
+  const remainingBudget = Math.max(safeBudget - safeSpent, 0);
+  const remainingDays = Math.max(safeTotalDays - safeDaysElapsed, 0);
   const dailyAllowanceLeft = remainingDays > 0 ? remainingBudget / remainingDays : remainingBudget;
-  const originalDailyPlan = totalDays > 0 ? totalBudget / totalDays : 0;
+  const originalDailyPlan = safeBudget / safeTotalDays;
 
   const animatedAllowance = useAnimatedNumber(dailyAllowanceLeft);
   const onTrack = dailyAllowanceLeft >= originalDailyPlan * 0.9;
+  
+  // Barra de progreso: % de presupuesto gastado
+  const spentPct = safeBudget > 0 ? Math.min((safeSpent / safeBudget) * 100, 100) : 0;
 
   const logToday = () => {
-    const amount = Number(String(todaySpend).replace(",", "."));
-    if (!Number.isFinite(amount) || amount <= 0) return;
-    setSpent((s) => Math.min(s + amount, totalBudget));
-    setDaysElapsed((d) => Math.min(d + (amount > 0 ? 0 : 0), totalDays));
-    setTodaySpend("");
+    // BUG CORREGIDO: Ahora sí suma +1 día al registrar un gasto
+    const amount = parseFloat(String(todaySpend).replace(",", "."));
+    if (!isNaN(amount) && amount > 0) {
+      setSpent((s) => Math.min(s + amount, safeBudget));
+      setDaysElapsed((d) => Math.min(d + 1, safeTotalDays));
+      setTodaySpend("");
+    }
   };
 
   const pageTitle = "Presupuesto diario de viaje: cuánto puedes gastar hoy | MetaBox";
-  const pageDescription =
-    "Controla tu presupuesto de viaje día a día: registra lo gastado hoy y descubre al instante cuánto puedes gastar cada día que te queda. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/tripdaily";
+  const pageDescription = "Controla tu presupuesto de viaje día a día: registra lo gastado hoy y descubre al instante cuánto puedes gastar cada día que te queda. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/presupuesto-diario-de-viaje";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="presupuesto diario de viaje, cuánto puedo gastar al día en un viaje, calculadora presupuesto viaje, registrar gasto diario viaje"
-        />
+        <meta name="keywords" content="presupuesto diario de viaje, cuánto puedo gastar al día en un viaje, calculadora presupuesto viaje, registrar gasto diario viaje" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/tripdaily.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/tripdaily.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -130,44 +161,56 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
             description: pageDescription,
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Presupuesto diario de viaje" subtitle="Registra lo gastado hoy y verás cuánto te queda por día." onBack={onBack} />
 
-      <Card glow={onTrack} result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Puedes gastar al día</div>
-        <div style={{ ...fontDisplay, color: onTrack ? T.lime : T.coral, fontSize: "2.4rem", fontWeight: 700, margin: "0.3rem 0" }}>
-          {remainingDays > 0 ? fmtEUR(animatedAllowance) : "—"}
+      {/* HERO CARD PREMIUM CON PROGRESO */}
+      <div style={{
+        background: `linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(10,18,20,1) 100%)`,
+        borderRadius: "1.5rem",
+        padding: "2rem 1.5rem",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+        border: `1px solid ${onTrack ? T.lime : T.coral}40`,
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8)`
+      }}>
+        <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: onTrack ? T.lime : T.coral, filter: "blur(100px)", opacity: 0.15, zIndex: 0 }} />
+        
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Puedes gastar al día
+          </div>
+          <div style={{ ...fontDisplay, color: onTrack ? T.lime : T.coral, fontSize: "3.2rem", fontWeight: 800, margin: "0.5rem 0", textShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
+            {remainingDays > 0 ? fmtEUR(animatedAllowance) : "—"}
+          </div>
+          
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "1rem" }}>
+            Plan original: {fmtEUR(originalDailyPlan)} / día · Quedan {remainingDays} {remainingDays === 1 ? "día" : "días"}
+          </div>
+
+          {/* Barra de progreso del presupuesto */}
+          <div style={{ background: T.surfaceAlt, borderRadius: "999px", height: "8px", overflow: "hidden", marginBottom: "1.5rem", maxWidth: "300px", margin: "0 auto 1.5rem" }}>
+            <div style={{ width: `${spentPct}%`, height: "100%", background: spentPct > 90 ? T.coral : T.lime, transition: "width 0.3s ease" }} />
+          </div>
+
+          <div style={{ display: "flex", gap: "0.5rem", maxWidth: "320px", margin: "0 auto" }}>
+            <input
+              value={todaySpend}
+              onChange={(e) => setTodaySpend(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && logToday()}
+              placeholder="¿Cuánto gastaste hoy?"
+              inputMode="decimal"
+              style={{
+                ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.8rem",
+                padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.9rem", outline: "none", textAlign: "center",
+              }}
+            />
+            <Button onClick={logToday} style={{ width: "auto", padding: "0.6rem 1.2rem" }}>Añadir</Button>
+          </div>
         </div>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>
-          Plan original: {fmtEUR(originalDailyPlan)} al día · {remainingDays} {remainingDays === 1 ? "día restante" : "días restantes"}
-        </div>
-        <div className="flex items-center gap-1.5" style={{ marginTop: "1rem" }}>
-          <input
-            value={todaySpend}
-            onChange={(e) => setTodaySpend(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && logToday()}
-            placeholder="¿Cuánto gastaste hoy?"
-            inputMode="decimal"
-            style={{
-              ...fontBody, flex: 1, background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.7rem",
-              padding: "0.6rem 0.9rem", color: T.text, fontSize: "0.85rem", outline: "none", textAlign: "center",
-            }}
-          />
-          <Button onClick={logToday} style={{ width: "auto", padding: "0.6rem 1rem" }}>Añadir</Button>
-        </div>
-      </Card>
+      </div>
 
       <AdviceBlock
         text={
@@ -175,27 +218,35 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
             ? "Vas por encima del ritmo previsto. Si quieres llegar sin sobresaltos, reduce un poco el gasto de los próximos días."
             : remainingDays === 0
             ? "El viaje ha terminado según estos datos. Compara el gasto real con el plan original para el próximo viaje."
-            : "Vas dentro del plan. Aun assim, deja algo de margen para imprevistos de última hora."
+            : "Vas dentro del plan. Aun así, deja algo de margen para imprevistos de última hora."
         }
       />
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <SliderControl label="Presupuesto total del viaje" value={totalBudget} min={50} max={MAX_FINANCIAL_LIMIT} step={50} unit="€" onChange={setTotalBudget} />
-          <SliderControl label="Días totales de viaje" value={totalDays} min={1} max={60} step={1} unit="días" onChange={setTotalDays} />
-          <SliderControl label="Gastado hasta ahora" value={spent} min={0} max={totalBudget} step={10} unit="€" onChange={setSpent} accent="lavender" />
-          <SliderControl label="Días ya pasados" value={daysElapsed} min={0} max={totalDays} step={1} unit="días" onChange={setDaysElapsed} accent="lavender" />
+          <MoneySlider label="Presupuesto total del viaje" value={totalBudget} min={50} max={100000} step={50} accent="lime" setValue={setTotalBudget} />
+          
+          <div>
+            <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.5rem" }}>Días totales de viaje</div>
+            <SliderControl label="" value={totalDays} min={1} max={60} step={1} unit="días" onChange={setTotalDays} />
+          </div>
+          
+          <MoneySlider label="Gastado hasta ahora" value={spent} min={0} max={totalBudget} step={10} accent="lavender" setValue={setSpent} />
+          
+          <div>
+            <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.5rem" }}>Días ya pasados</div>
+            <SliderControl label="" value={daysElapsed} min={0} max={totalDays} step={1} unit="días" onChange={setDaysElapsed} accent="lavender" />
+          </div>
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["trip", "currency"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
-            `Presupuesto de viaje: ${fmtEUR(totalBudget)} para ${totalDays} días, gastado ${fmtEUR(spent)} in ${daysElapsed} días → ${fmtEUR(dailyAllowanceLeft)}/día restante.`
+            `Presupuesto de viaje: ${fmtEUR(totalBudget)} para ${totalDays} días, gastado ${fmtEUR(spent)} en ${daysElapsed} días → ${fmtEUR(dailyAllowanceLeft)}/día restante.`
           }
         />
         <ExportCSVButton
@@ -222,4 +273,3 @@ function TripDailyBudgetTool({ onBack, onNavigate, initialParams = {}, onStateCh
 }
 
 export default TripDailyBudgetTool;
-
