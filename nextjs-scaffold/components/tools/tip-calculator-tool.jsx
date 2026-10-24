@@ -1,15 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Users, Receipt } from "lucide-react";
 import { T, fontDisplay, fontBody } from "@/lib/design-tokens";
 import { useAnimatedNumber, fmtEUR } from "@/lib/hooks";
-import { Card, SliderControl, Chip, AdviceBlock } from "@/components/ui";
+import { Card, Chip, AdviceBlock, SliderControl } from "@/components/ui";
 import ToolHeader from "@/components/ToolHeader";
 import { CopySummaryButton, ExportCSVButton } from "@/components/ExportActions";
 import RelatedTools from "@/components/RelatedTools";
 import AdSlot from "@/components/AdSlot";
-import { MAX_FINANCIAL_LIMIT } from "@/lib/financial-constants";
 
 const FAQS = [
   {
@@ -22,6 +21,110 @@ const FAQS = [
   },
 ];
 
+// Slider de dinero con input
+function MoneySlider({ label, value, setValue, min = 0, max = 10000, step = 1, accent = "lime" }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+  const accentColor = accent === "lavender" ? T.lavender : T.lime;
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) setValue(parsed);
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setValue(val);
+    setTextVal(String(val));
+  };
+
+  const safeValue = isNaN(value) ? 0 : Math.max(min, Math.min(value, max));
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex justify-between items-baseline">
+        <span style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500 }}>{label}</span>
+        <div className="flex items-center gap-1 bg-[var(--surface-alt,rgba(255,255,255,0.03))] px-2.5 py-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))]">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={textVal}
+            onChange={handleInputChange}
+            onBlur={() => {
+              const parsed = parseFloat(textVal.replace(",", "."));
+              if (isNaN(parsed)) setTextVal(String(value ?? 0));
+              else { setValue(parsed); setTextVal(String(parsed)); }
+            }}
+            className="bg-transparent text-right font-semibold"
+            style={{ ...fontBody, color: accentColor, fontSize: "0.95rem", width: "85px", outline: "none" }}
+          />
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem" }}>€</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeValue}
+        onChange={handleSliderChange}
+        className="w-full cursor-pointer h-1.5 rounded-lg appearance-none bg-[var(--surface-alt,rgba(255,255,255,0.1))]"
+        style={{ accentColor }}
+      />
+    </div>
+  );
+}
+
+// Input simple para los consumos
+function SimpleMoneyInput({ value, onChange }) {
+  const [textVal, setTextVal] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    if (value !== parseFloat(textVal.replace(",", "."))) {
+      setTextVal(String(value ?? 0));
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setTextVal(raw);
+    const parsed = parseFloat(raw.replace(",", "."));
+    if (!isNaN(parsed)) onChange(parsed);
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(textVal.replace(",", "."));
+    if (isNaN(parsed)) {
+      onChange(0);
+      setTextVal("0");
+    } else {
+      onChange(parsed);
+      setTextVal(String(parsed));
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: "0.8rem", padding: "0.5rem 0.8rem", flex: 1 }}>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={textVal}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        className="bg-transparent text-right font-semibold"
+        style={{ ...fontBody, color: T.text, fontSize: "0.9rem", width: "100%", outline: "none" }}
+      />
+      <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", marginLeft: "4px" }}>€</span>
+    </div>
+  );
+}
 function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChange }) {
   const [bill, setBill] = useState(() => {
     const p = initialParams?.bill;
@@ -68,9 +171,13 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
     }
   }, [bill, tipPct, people, byConsumption, consumers, onStateChange]);
 
-  const tipAmount = bill * (tipPct / 100);
-  const total = bill + tipAmount;
-  const perPerson = people > 0 ? total / people : total;
+  const safeBill = Number.isFinite(bill) ? bill : 0;
+  const safeTipPct = Number.isFinite(tipPct) ? tipPct : 0;
+  const safePeople = Number.isFinite(people) && people > 0 ? people : 1;
+
+  const tipAmount = safeBill * (safeTipPct / 100);
+  const total = safeBill + tipAmount;
+  const perPerson = total / safePeople;
   const animatedTotal = useAnimatedNumber(total);
   const animatedPerPerson = useAnimatedNumber(perPerson);
 
@@ -93,38 +200,22 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
   const consumerShare = (amount) => {
     if (consumersTotal === 0) return 0;
     const proportion = amount / consumersTotal;
-    return bill * proportion + tipAmount * proportion;
+    return safeBill * proportion + tipAmount * proportion;
   };
 
   const pageTitle = "Calculadora de propina y reparto de cuenta entre amigos | MetaBox";
-  const pageDescription =
-    "Calcula la propina de un restaurante y reparte el total entre varias personas a partes iguales o según lo que consumió cada una. Gratis y sin registro.";
-  const pageUrl = "https://metabox-web.vercel.app/herramientas/tip";
+  const pageDescription = "Calcula la propina de un restaurante y reparte el total entre varias personas a partes iguales o según lo que consumió cada una. Gratis y sin registro.";
+  
+  // CORRECCIÓN CRÍTICA DE SEO
+  const pageUrl = "https://metabox-web.vercel.app/herramientas/calculadora-de-propina";
 
   return (
     <div className="w-full flex flex-col gap-6 md:gap-8 pt-4 pb-24 view-enter">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta
-          name="keywords"
-          content="calculadora de propina, cuánto dejar de propina, dividir cuenta con propina entre amigos, reparto propina por consumo"
-        />
+        <meta name="keywords" content="calculadora de propina, cuánto dejar de propina, dividir cuenta con propina entre amigos, reparto propina por consumo" />
         <link rel="canonical" href={pageUrl} />
-
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="og:image" content="https://metabox-web.vercel.app/og/tip.png" />
-        <meta property="og:site_name" content="MetaBox" />
-        <meta property="og:locale" content="es_ES" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content="https://metabox-web.vercel.app/og/tip.png" />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -138,43 +229,52 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
             description: pageDescription,
           })}
         </script>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: FAQS.map((f) => ({
-              "@type": "Question",
-              name: f.q,
-              acceptedAnswer: { "@type": "Answer", text: f.a },
-            })),
-          })}
-        </script>
       </Helmet>
 
       <ToolHeader title="Calculadora de propina" subtitle="Añade la propina y reparte la cuenta sin hacer cuentas a mano." onBack={onBack} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card glow result style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Total con propina</div>
-          <div style={{ ...fontDisplay, color: T.lime, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>{fmtEUR(animatedTotal)}</div>
-        </Card>
-        <Card style={{ textAlign: "center", paddingTop: "1.2rem", paddingBottom: "1.2rem" }}>
-          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>{byConsumption ? "Personas" : "Por persona"}</div>
-          <div style={{ ...fontDisplay, color: T.lavender, fontSize: "2rem", fontWeight: 700, marginTop: "0.3rem" }}>
+      {/* HERO CARD DIVIDIDO */}
+      <div style={{
+        background: `linear-gradient(145deg, rgba(196,222,78,0.05) 0%, rgba(10,18,20,1) 100%)`,
+        borderRadius: "1.5rem",
+        padding: "2rem 1.5rem",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "1rem",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+        border: `1px solid ${T.lime}30`,
+        boxShadow: `0 20px 40px -10px rgba(0,0,0,0.8)`
+      }}>
+        <div style={{ position: "absolute", top: "-50%", left: "50%", transform: "translateX(-50%)", width: "80%", height: "100%", background: T.lime, filter: "blur(100px)", opacity: 0.1, zIndex: 0 }} />
+        
+        <div style={{ position: "relative", zIndex: 1, borderRight: `1px solid ${T.border}` }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total con propina</div>
+          <div style={{ ...fontDisplay, color: T.lime, fontSize: "2.2rem", fontWeight: 800, marginTop: "0.3rem", textShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
+            {fmtEUR(animatedTotal)}
+          </div>
+        </div>
+        
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{byConsumption ? "Personas" : "Por persona"}</div>
+          <div style={{ ...fontDisplay, color: T.lavender, fontSize: "2.2rem", fontWeight: 800, marginTop: "0.3rem", textShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
             {byConsumption ? consumers.length : fmtEUR(animatedPerPerson)}
           </div>
-        </Card>
+        </div>
       </div>
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-        <div style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem", marginBottom: "0.8rem" }}>Composición del total</div>
-        <div style={{ display: "flex", height: "22px", borderRadius: "999px", overflow: "hidden" }}>
-          <div style={{ width: `${total > 0 ? (bill / total) * 100 : 50}%`, background: T.surfaceAlt, transition: "width 0.4s ease" }} />
+        <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Receipt size={16} color={T.lime} /> Composición del total
+        </div>
+        <div style={{ display: "flex", height: "24px", borderRadius: "999px", overflow: "hidden", background: T.surfaceAlt }}>
+          <div style={{ width: `${total > 0 ? (safeBill / total) * 100 : 50}%`, background: T.textMuted, transition: "width 0.4s ease" }} />
           <div style={{ width: `${total > 0 ? (tipAmount / total) * 100 : 50}%`, background: T.lime, transition: "width 0.4s ease" }} />
         </div>
-        <div className="flex justify-between mt-2 px-1">
-          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.78rem" }}>Cuenta: {fmtEUR(bill)}</span>
-          <span style={{ ...fontBody, color: T.lime, fontSize: "0.78rem" }}>Propina: {fmtEUR(tipAmount)}</span>
+        <div className="flex justify-between mt-3 px-1">
+          <span style={{ ...fontBody, color: T.textMuted, fontSize: "0.85rem" }}>Cuenta: <strong style={{ color: T.text }}>{fmtEUR(safeBill)}</strong></span>
+          <span style={{ ...fontBody, color: T.lime, fontSize: "0.85rem" }}>Propina: <strong>{fmtEUR(tipAmount)}</strong></span>
         </div>
       </Card>
 
@@ -185,10 +285,10 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
       {byConsumption && (
         <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
-          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem" }}>
-            Lo que pidió cada uno
+          <div style={{ ...fontBody, color: T.text, fontWeight: 600, fontSize: "0.95rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Users size={16} color={T.lavender} /> Lo que pidió cada uno
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {consumers.map((c) => (
               <div key={c.id} className="flex items-center gap-2">
                 <input
@@ -196,18 +296,16 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
                   onChange={(e) => updateConsumerName(c.id, e.target.value)}
                   style={{
                     ...fontBody, width: "6rem", background: T.surfaceAlt, border: `1px solid ${T.border}`,
-                    borderRadius: "0.6rem", padding: "0.5rem 0.7rem", color: T.text, fontSize: "0.82rem", outline: "none", flexShrink: 0,
+                    borderRadius: "0.8rem", padding: "0.5rem 0.7rem", color: T.text, fontSize: "0.85rem", outline: "none", flexShrink: 0,
                   }}
                 />
-                <div style={{ flex: 1 }}>
-                  <SliderControl label="" value={c.amount} min={0} max={MAX_FINANCIAL_LIMIT} step={0.5} unit="€" onChange={(v) => updateConsumer(c.id, v)} />
-                </div>
-                <div style={{ ...fontBody, color: T.lime, fontSize: "0.8rem", fontWeight: 600, width: "4rem", textAlign: "right", flexShrink: 0 }}>
+                <SimpleMoneyInput value={c.amount} onChange={(v) => updateConsumer(c.id, v)} />
+                <div style={{ ...fontBody, color: T.lime, fontSize: "0.85rem", fontWeight: 700, width: "4.5rem", textAlign: "right", flexShrink: 0 }}>
                   {fmtEUR(consumerShare(c.amount))}
                 </div>
                 {consumers.length > 2 && (
                   <button onClick={() => removeConsumer(c.id)} aria-label={`Eliminar ${c.name}`} style={{ background: "transparent", border: "none", color: T.coral, cursor: "pointer", flexShrink: 0 }}>
-                    <X size={14} />
+                    <X size={16} />
                   </button>
                 )}
               </div>
@@ -215,13 +313,14 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
           </div>
           <button
             onClick={addConsumer}
-            style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: "transparent", border: `1px dashed ${T.border}`, borderRadius: "0.7rem", padding: "0.55rem", color: T.textMuted, fontSize: "0.82rem", cursor: "pointer", marginTop: "0.8rem", justifyContent: "center" }}
+            style={{ ...fontBody, display: "flex", alignItems: "center", gap: "0.35rem", background: "transparent", border: `1px dashed ${T.border}`, borderRadius: "0.8rem", padding: "0.6rem", color: T.textMuted, fontSize: "0.85rem", cursor: "pointer", marginTop: "1rem", justifyContent: "center", width: "100%" }}
           >
-            <Plus size={14} /> Añadir persona
+            <Plus size={16} /> Añadir persona
           </button>
-          {Math.abs(consumersTotal - bill) > 0.5 && (
-            <div style={{ ...fontBody, color: T.coral, fontSize: "0.75rem", marginTop: "0.6rem", textAlign: "center" }}>
-              Lo pedido suma {fmtEUR(consumersTotal)}, pero la cuenta es {fmtEUR(bill)} — ajusta para que cuadre.
+          
+          {Math.abs(consumersTotal - safeBill) > 0.5 && (
+            <div style={{ ...fontBody, color: T.coral, fontSize: "0.8rem", marginTop: "0.8rem", textAlign: "center", background: `${T.coral}15`, padding: "0.5rem", borderRadius: "0.5rem" }}>
+              Lo pedido suma {fmtEUR(consumersTotal)}, pero la cuenta es {fmtEUR(safeBill)} — ajusta para que cuadre.
             </div>
           )}
         </Card>
@@ -231,7 +330,7 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
         text={
           byConsumption
             ? "Este reparto es proporcional a lo que cada persona pidió, así que quien consumió más paga más — sin cálculos manuales."
-            : people > 1
+            : safePeople > 1
             ? "El reparto es a partes iguales. Si alguien pidió mucho más caro, cambia a 'Según lo que pidió cada uno' arriba."
             : "Sube o baja el porcentaje según el servicio — no hay un porcentaje único correcto en todos los sitios."
         }
@@ -239,29 +338,36 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
 
       <Card style={{ paddingBottom: "1.2rem", paddingTop: "1.2rem" }}>
         <div className="flex flex-col gap-6">
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center flex-wrap">
             {[5, 10, 15, 20].map((p) => (
-              <Chip key={p} label={`${p}%`} active={tipPct === p} onClick={() => setTipPct(p)} />
+              <Chip key={p} label={`${p}%`} active={safeTipPct === p} onClick={() => setTipPct(p)} />
             ))}
           </div>
-          <SliderControl label="Importe de la cuenta" value={bill} min={0} max={MAX_FINANCIAL_LIMIT} step={1} unit="€" onChange={setBill} />
-          <SliderControl label="Propina" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
+          <MoneySlider label="Importe de la cuenta" value={bill} min={0} max={10000} step={1} accent="lime" setValue={setBill} />
+          
+          <div>
+            <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.5rem" }}>Propina (%)</div>
+            <SliderControl label="" value={tipPct} min={0} max={30} step={1} unit="%" onChange={setTipPct} accent="lavender" />
+          </div>
+          
           {!byConsumption && (
-            <SliderControl label="Personas" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
+            <div>
+              <div style={{ ...fontBody, color: T.text, fontSize: "0.9rem", fontWeight: 500, marginBottom: "0.5rem" }}>Personas</div>
+              <SliderControl label="" value={people} min={1} max={15} step={1} unit="personas" onChange={setPeople} />
+            </div>
           )}
         </div>
       </Card>
 
       <AdSlot minHeight="0px" />
-
       <RelatedTools ids={["groupsplit"]} onNavigate={onNavigate} />
 
       <div className="flex flex-wrap justify-center gap-3 pt-2">
         <CopySummaryButton
           getText={() =>
             byConsumption
-              ? `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)}. Reparto por consumo: ` + consumers.map((c) => `${c.name} ${fmtEUR(consumerShare(c.amount))}`).join(", ")
-              : `Cuenta ${fmtEUR(bill)} + propina ${tipPct}% = ${fmtEUR(total)} total, ${fmtEUR(perPerson)}/persona entre ${people}.`
+              ? `Cuenta ${fmtEUR(safeBill)} + propina ${safeTipPct}% = ${fmtEUR(total)}. Reparto por consumo: ` + consumers.map((c) => `${c.name} ${fmtEUR(consumerShare(c.amount))}`).join(", ")
+              : `Cuenta ${fmtEUR(safeBill)} + propina ${safeTipPct}% = ${fmtEUR(total)} total, ${fmtEUR(perPerson)}/persona entre ${safePeople}.`
           }
         />
         <ExportCSVButton
@@ -269,7 +375,7 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
           getRows={() =>
             byConsumption
               ? consumers.map((c) => ({ persona: c.name, consumo: c.amount, total_con_propina: consumerShare(c.amount).toFixed(2) }))
-              : [{ cuenta: bill, propina_pct: tipPct, propina_eur: tipAmount.toFixed(2), total: total.toFixed(2), personas: people, por_persona: perPerson.toFixed(2) }]
+              : [{ cuenta: safeBill, propina_pct: safeTipPct, propina_eur: tipAmount.toFixed(2), total: total.toFixed(2), personas: safePeople, por_persona: perPerson.toFixed(2) }]
           }
         />
       </div>
@@ -284,4 +390,3 @@ function TipCalculatorTool({ onBack, onNavigate, initialParams = {}, onStateChan
 }
 
 export default TipCalculatorTool;
-
